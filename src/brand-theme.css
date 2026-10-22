@@ -1905,6 +1905,16 @@ html[data-theme="light"] .music-player .music-controls .play-button {
   line-height: 1.15;
 }
 
+/* The library shares the search column and should align to its full width. */
+.music-results {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+html[data-theme="light"] .lyrics-body p:not(.active) {
+  color: #34373d !important;
+}
+
 /* Selected state is expressed by colour and weight only, never a left rail. */
 .music-row.current,
 .music-nav.active,
