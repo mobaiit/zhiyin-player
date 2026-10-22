@@ -417,18 +417,22 @@ html[data-theme="light"] .docs-code-wrap {
   --zy-shadow-lg: 0 28px 80px rgba(5, 5, 8, 0.34);
 }
 
-html,
+html {
+  background: var(--zy-bg);
+  color: var(--zy-text);
+}
+
 body,
 #root {
-  background: var(--zy-bg);
+  background: transparent;
   color: var(--zy-text);
 }
 
 body {
   background:
-    radial-gradient(circle at 12% 0%, rgba(229, 72, 77, 0.09), transparent 28rem),
-    radial-gradient(circle at 92% 18%, rgba(120, 18, 25, 0.08), transparent 30rem),
-    var(--zy-bg);
+    radial-gradient(circle at 12% 4%, rgba(240, 91, 97, 0.18), transparent 30rem),
+    radial-gradient(circle at 88% 16%, rgba(130, 103, 138, 0.16), transparent 34rem),
+    linear-gradient(145deg, #292a32 0%, #202127 48%, #2b2429 100%);
   background-attachment: fixed;
 }
 
@@ -1479,5 +1483,55 @@ body {
 @media (max-width: 520px) {
   .docs-brand {
     margin-right: 120px;
+  }
+}
+
+/* Navigation and primary browsing controls sit directly on the artwork layer. */
+.admin-page,
+.admin-login,
+.docs-page {
+  background: transparent !important;
+}
+
+.lm-site-bar,
+.docs-hero,
+.admin-page > aside {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
+  background: transparent !important;
+}
+
+.music-search {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.music-search:focus-within {
+  border: 0 !important;
+}
+
+.music-nav,
+.music-nav:hover,
+.music-nav.active {
+  border: 0 !important;
+}
+
+.luri-music-clone .music-page {
+  padding-top: 0.375rem !important;
+}
+
+@media (max-width: 760px) {
+  .luri-music-clone .music-page {
+    padding-top: 0.175rem !important;
+  }
+
+  .luri-music-clone .music-page.mobile-view-now {
+    padding-top: 4px !important;
   }
 }
