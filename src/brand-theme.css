@@ -1899,3 +1899,32 @@ html[data-theme="light"] .music-player .music-controls .play-button {
   background: var(--zy-red-action) !important;
   color: #fff !important;
 }
+
+/* Dense library rows: halve the previous 60px rhythm without changing content. */
+.music-row {
+  min-height: 30px !important;
+  margin-block: 1px !important;
+  padding: 2px 8px !important;
+  border-radius: 8px !important;
+}
+
+.music-row .track-artist {
+  margin-top: 0;
+  line-height: 1.15;
+}
+
+/* Selected state is expressed by colour and weight only, never a left rail. */
+.music-row.current,
+.music-nav.active,
+.admin-page aside .active,
+.lm-provider-list article.active,
+.lm-quality-options label.active {
+  box-shadow: none !important;
+}
+
+.music-row.current::before,
+.music-nav.active::before,
+.docs-sidebar > a.active::before {
+  display: none !important;
+  content: none !important;
+}
