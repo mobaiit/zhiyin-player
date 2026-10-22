@@ -5,11 +5,20 @@ const decoder = new TextDecoder();
 const fromBase64 = (value) => Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
 const toBase64 = (value) => btoa(String.fromCharCode(...value));
 const parseBody = async (request) => request.json().catch(() => ({}));
+const providerAccessCache = new Map();
 
 async function providerFetch(url, options = {}) {
-  const response = await fetch(url, { ...options, redirect: 'manual' });
-  if (response.status >= 300 && response.status < 400) throw new Error('Provider 接口不允许重定向');
-  return response;
+  try {
+    const response = await fetch(url, { ...options, redirect: 'manual' });
+    if (response.status >= 300 && response.status < 400) throw new Error('Provider 接口返回了重定向，请在 Provider 配置中填写最终 HTTPS 地址');
+    return response;
+  } catch (error) {
+    if (error?.message?.startsWith('Provider 接口返回了重定向')) throw error;
+    const failure = new Error('无法连接 Provider，请确认地址可从公网访问、HTTPS 证书有效，并稍后重试');
+    failure.status = 502;
+    failure.code = 'provider_unreachable';
+    throw failure;
+  }
 }
 
 async function credentialKey(env) {
@@ -89,6 +98,47 @@ function validateManifest(value, connection) {
   return { ...manifest, presentation: cleanPresentation(manifest.presentation) };
 }
 
+function applyConnectionQuery(target, connection) {
+  const configured = new URL(connection.url);
+  configured.searchParams.forEach((value, key) => {
+    if (!target.searchParams.has(key)) target.searchParams.append(key, value);
+  });
+  return target;
+}
+
+async function providerResponseError(response, fallback) {
+  if (response.ok) return;
+  const data = await response.clone().json().catch(() => ({}));
+  const detail = data.error && typeof data.error === 'object' ? data.error : null;
+  const failure = new Error(detail?.message || (typeof data.error === 'string' ? data.error : '') || `${fallback}（HTTP ${response.status}）`);
+  failure.status = response.status === 401 || response.status === 403 ? response.status : response.status >= 400 && response.status < 500 ? 400 : 502;
+  failure.code = detail?.code || data.code || (response.status === 401 || response.status === 403 ? 'provider_access_denied' : 'provider_request_failed');
+  throw failure;
+}
+
+async function discoverConnection(connectionInput) {
+  const connection = normalizeConnection(connectionInput);
+  const target = new URL('/.well-known/music-provider.json', new URL(connection.url).origin);
+  const response = await providerFetch(target, { cache: 'no-store', headers: { accept: 'application/json' } });
+  await providerResponseError(response, '无法读取 Provider 协议声明');
+  const manifest = validateManifest(await response.json().catch(() => null), connection);
+  return { connection, manifest };
+}
+
+async function authenticateConnection(connection, manifest, user) {
+  const target = applyConnectionQuery(new URL(checkedEndpoint(manifest.endpoints.authenticate, connection.url)), connection);
+  const response = await providerFetch(target, {
+    method: 'POST',
+    cache: 'no-store',
+    headers: { accept: 'application/json', 'content-type': 'application/json', ...connection.headers },
+    body: JSON.stringify({ clientAccount: { id: String(user.id || '').slice(0, 100), name: String(user.display_name || '').slice(0, 80), email: String(user.email || '').trim().toLowerCase().slice(0, 160) } }),
+  });
+  await providerResponseError(response, 'Provider 认证失败');
+  const authorization = await response.json().catch(() => ({}));
+  if (!authorization.accessToken || (authorization.tokenType && authorization.tokenType !== 'Bearer')) throw new Error('Provider 认证响应无效，请联系 Provider 管理员检查接口配置');
+  return { accessToken: String(authorization.accessToken), expiresIn: Math.max(30, Number(authorization.expiresIn) || 900), presentation: cleanPresentation(authorization.presentation) };
+}
+
 function prepareConnection(data) {
   const connection = normalizeConnection(data.connection);
   const manifest = validateManifest(data.manifest, connection);
@@ -155,6 +205,93 @@ function accessHeaders(authType, credential, token) {
   if (authType === 'none') return { accept: 'application/json' };
   if (authType === 'api_key') return { accept: 'application/json', [credential.authorization.header]: `${credential.authorization.prefix}${token}` };
   return { accept: 'application/json', authorization: `Bearer ${token}` };
+}
+
+const PROVIDER_CAPABILITIES = new Set(['search', 'random', 'charts', 'resolve', 'lyrics', 'artwork']);
+
+async function proxyProviderRequest(config, credential, user, kind, params = {}) {
+  if (!PROVIDER_CAPABILITIES.has(kind)) {
+    const failure = new Error('不支持的 Provider 请求类型');
+    failure.status = 400;
+    throw failure;
+  }
+
+  let manifest = credential.manifest;
+  let headers = { accept: 'application/json' };
+  let connection = null;
+  const authType = config.auth_type || 'none';
+  const cacheKey = `${user.id}:${config.id}:${config.updated_at}`;
+  const cachedAccess = providerAccessCache.get(cacheKey);
+  const reusableAccess = cachedAccess?.expiresAt > Date.now() + 15000 ? cachedAccess : null;
+
+  if (authType === 'connection') {
+    if (reusableAccess) {
+      ({ manifest, connection, headers } = reusableAccess);
+    } else {
+      const discovered = await discoverConnection(credential.connection);
+      const authorization = await authenticateConnection(discovered.connection, discovered.manifest, user);
+      manifest = discovered.manifest;
+      connection = discovered.connection;
+      headers = { accept: 'application/json', authorization: `Bearer ${authorization.accessToken}` };
+      providerAccessCache.set(cacheKey, { manifest, connection, headers, expiresAt: Date.now() + authorization.expiresIn * 1000 });
+    }
+  } else if (authType === 'activation_code') {
+    if (reusableAccess) {
+      ({ headers } = reusableAccess);
+    } else {
+      const response = await providerFetch(checkedEndpoint(credential.refreshEndpoint, config.provider_url), {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': 'application/json' },
+        body: JSON.stringify({ refreshToken: credential.refreshToken }),
+      });
+      await providerResponseError(response, 'Provider 凭证刷新失败');
+      const refreshed = await response.json().catch(() => ({}));
+      if (!refreshed.accessToken) {
+        const failure = new Error('Provider 凭证已失效，请编辑配置并重新认证');
+        failure.status = 401;
+        failure.code = 'provider_access_denied';
+        throw failure;
+      }
+      headers = accessHeaders(authType, credential, refreshed.accessToken);
+      providerAccessCache.set(cacheKey, { headers, expiresAt: Date.now() + Math.max(30, Number(refreshed.expiresIn) || 900) * 1000 });
+    }
+  } else if (authType === 'api_key') {
+    headers = accessHeaders(authType, credential, credential.apiKey);
+  } else if (authType !== 'none') {
+    const failure = new Error('Provider 认证类型不受支持，请重新添加 Provider');
+    failure.status = 400;
+    throw failure;
+  }
+
+  const endpoint = manifest?.endpoints?.[kind];
+  if (!endpoint) {
+    const failure = new Error(`当前 Provider 不支持 ${kind} 能力`);
+    failure.status = 501;
+    failure.code = 'not_supported';
+    throw failure;
+  }
+
+  const target = new URL(checkedEndpoint(endpoint.replace(/\{(?:songId|id)\}/, encodeURIComponent(params.songId || '')), config.provider_url));
+  if (connection) applyConnectionQuery(target, connection);
+  const options = { headers, cache: ['lyrics', 'search'].includes(kind) ? 'no-store' : undefined };
+  if (kind === 'resolve') {
+    options.method = 'POST';
+    options.headers = { ...headers, 'content-type': 'application/json' };
+    options.body = JSON.stringify(params);
+  } else {
+    Object.entries(params)
+      .filter(([key, value]) => key !== 'songId' && value !== undefined && value !== '')
+      .forEach(([key, value]) => target.searchParams.set(key, typeof value === 'object' ? JSON.stringify(value) : String(value)));
+  }
+  const response = await providerFetch(target, options);
+  try {
+    await providerResponseError(response, 'Provider 请求失败');
+  } catch (error) {
+    if (error.status === 401 || error.status === 403) providerAccessCache.delete(cacheKey);
+    throw error;
+  }
+  const responseHeaders = new Headers({ 'content-type': response.headers.get('content-type') || 'application/json', 'cache-control': 'no-store' });
+  return new Response(response.body, { status: response.status, headers: responseHeaders });
 }
 
 async function activateCredential(manifest, providerUrl, data, user) {
@@ -230,6 +367,17 @@ export async function handleProviderRequest(request, env, action, user) {
     return json({ items, activeProviderId: preference?.active_provider_config_id || null, revision: preference?.provider_revision || 0, preferences: { playbackQuality } });
   }
 
+  if (action === 'providers/verify' && request.method === 'POST') {
+    try {
+      const data = await parseBody(request);
+      const discovered = await discoverConnection(data.connection);
+      const authorization = await authenticateConnection(discovered.connection, discovered.manifest, user);
+      return json({ connection: discovered.connection, manifest: { ...discovered.manifest, presentation: authorization.presentation || discovered.manifest.presentation } }, 200, { 'cache-control': 'no-store' });
+    } catch (error) {
+      return json({ error: error.message || 'Provider 连接验证失败', code: error.code || 'provider_request_failed' }, error.status || 400);
+    }
+  }
+
   if (action === 'providers/discover' && request.method === 'POST') {
     try { const providerUrl = normalizeProviderUrl((await parseBody(request)).providerUrl); const manifest = await discover(providerUrl); return json({ providerUrl, manifest }); }
     catch (error) { return json({ error: error.message || 'Provider 验证失败' }, 400); }
@@ -252,10 +400,19 @@ export async function handleProviderRequest(request, env, action, user) {
     } catch (error) { return json({ error: error.message || 'Provider 配置失败' }, error.status || 400); }
   }
 
-  const configMatch = action.match(/^providers\/([^/]+)(?:\/(activate|deactivate|token))?$/);
+  const configMatch = action.match(/^providers\/([^/]+)(?:\/(activate|deactivate|token|proxy))?$/);
   if (!configMatch) return json({ error: 'Not found' }, 404);
   const config = await env.LURI_MUSIC_DB.prepare('SELECT * FROM luri_music_provider_configs WHERE id=? AND user_id=?').bind(configMatch[1], user.id).first();
   if (!config) return json({ error: 'Provider 配置不存在' }, 404);
+
+  if (configMatch[2] === 'proxy' && request.method === 'POST') {
+    try {
+      const data = await parseBody(request);
+      return await proxyProviderRequest(config, await decryptCredential(config, env), user, String(data.kind || ''), data.params && typeof data.params === 'object' ? data.params : {});
+    } catch (error) {
+      return json({ error: error.message || 'Provider 请求失败，请稍后重试', code: error.code || 'provider_request_failed' }, error.status || 502);
+    }
+  }
 
   if (request.method === 'PATCH' && !configMatch[2]) {
     const data = await parseBody(request);

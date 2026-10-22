@@ -69,6 +69,26 @@ function normalizeConfig(data, password = '') {
   return config;
 }
 
+function friendlySmtpError(error) {
+  const message = String(error?.message || error || '');
+  if (/535|authentication credentials invalid|invalid (?:login|credentials)|auth(?:entication)? (?:failed|error)/i.test(message)) {
+    return new Error('SMTP 认证失败。请确认用户名填写完整邮箱，并使用邮箱服务商生成的 SMTP 授权码（通常不是网页登录密码）；修改后请先保存配置再测试。');
+  }
+  if (/550|553|sender.*(?:denied|rejected)|from.*(?:denied|rejected|not allowed)/i.test(message)) {
+    return new Error('发件地址被 SMTP 服务商拒绝。请将“发件邮箱”改为当前 SMTP 账号或已验证的发件地址。');
+  }
+  if (/certificate|tls|ssl|starttls/i.test(message)) {
+    return new Error('SMTP 加密连接失败。465 端口请启用 TLS/SSL；587 端口请关闭该选项以使用 STARTTLS。');
+  }
+  if (/timeout|timed out/i.test(message)) {
+    return new Error('连接 SMTP 服务器超时。请检查主机、端口和网络限制，稍后重试。');
+  }
+  if (/connect|econnrefused|enotfound|dns/i.test(message)) {
+    return new Error('无法连接 SMTP 服务器。请检查 SMTP 主机和端口是否正确、服务是否已开启。');
+  }
+  return new Error('测试邮件发送失败。请检查 SMTP 主机、端口、加密方式、用户名和授权码后重试。');
+}
+
 export async function saveSmtpConfig(env, data) {
   const current = await smtpConfig(env).catch(() => null);
   const config = normalizeConfig(data, current?.source === 'database' ? current.password : '');
@@ -82,23 +102,27 @@ async function send(env, recipient, subject, text, html) {
   const config = await smtpConfig(env);
   if (!config) throw new Error('邮件服务尚未配置');
   const { WorkerMailer } = await import('worker-mailer');
-  await WorkerMailer.send({
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
-    startTls: !config.secure,
-    credentials: config.username ? { username: config.username, password: config.password } : undefined,
-    authType: config.authType,
-    socketTimeoutMs: 15000,
-    responseTimeoutMs: 15000,
-  }, {
-    from: { email: config.from, name: config.fromName || 'ZY MUSIC' },
-    to: recipient,
-    reply: config.replyTo || undefined,
-    subject,
-    text,
-    html,
-  });
+  try {
+    await WorkerMailer.send({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      startTls: !config.secure,
+      credentials: config.username ? { username: config.username, password: config.password } : undefined,
+      authType: config.authType,
+      socketTimeoutMs: 15000,
+      responseTimeoutMs: 15000,
+    }, {
+      from: { email: config.from, name: config.fromName || 'ZY MUSIC' },
+      to: recipient,
+      reply: config.replyTo || undefined,
+      subject,
+      text,
+      html,
+    });
+  } catch (error) {
+    throw friendlySmtpError(error);
+  }
 }
 
 export async function sendVerificationEmail(env, recipient, purpose, code) {
