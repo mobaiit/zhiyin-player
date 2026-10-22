@@ -1915,6 +1915,63 @@ html[data-theme="light"] .lyrics-body p:not(.active) {
   color: #34373d !important;
 }
 
+html[data-theme="light"] .music-nav:not(.active) {
+  color: #25282e !important;
+}
+
+/* Quality tiers keep their own semantic colours instead of inheriting red. */
+.music-quality--low {
+  --music-quality-color: #b8bec8;
+}
+
+.music-quality--medium {
+  --music-quality-color: #72a7e8;
+}
+
+.music-quality--high {
+  --music-quality-color: #42c6ad;
+}
+
+.music-quality--lossless {
+  --music-quality-color: #5fd392;
+}
+
+.music-quality--hires {
+  --music-quality-color: #e3ad4f;
+}
+
+.music-quality {
+  border-color: color-mix(in srgb, var(--music-quality-color) 64%, transparent) !important;
+  background: color-mix(in srgb, var(--music-quality-color) 14%, transparent) !important;
+  color: var(--music-quality-color) !important;
+}
+
+html[data-theme="light"] .music-quality--low {
+  --music-quality-color: #525a66;
+}
+
+html[data-theme="light"] .music-quality--medium {
+  --music-quality-color: #1f5f9e;
+}
+
+html[data-theme="light"] .music-quality--high {
+  --music-quality-color: #067262;
+}
+
+html[data-theme="light"] .music-quality--lossless {
+  --music-quality-color: #12753f;
+}
+
+html[data-theme="light"] .music-quality--hires {
+  --music-quality-color: #875307;
+}
+
+html[data-theme="light"] .music-quality {
+  border-color: color-mix(in srgb, var(--music-quality-color) 58%, transparent) !important;
+  background: color-mix(in srgb, var(--music-quality-color) 10%, transparent) !important;
+  color: var(--music-quality-color) !important;
+}
+
 /* Selected state is expressed by colour and weight only, never a left rail. */
 .music-row.current,
 .music-nav.active,
