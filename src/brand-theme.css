@@ -1711,8 +1711,6 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
 
 /* Match the favourite control to the compact quality badge without shrinking its hit area. */
 .lyrics-track__actions .like-button {
-  position: relative;
-  isolation: isolate;
   width: 2rem;
   height: 2rem;
   border: 0 !important;
@@ -1723,31 +1721,24 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
 }
 
 .lyrics-track__actions .like-button::after {
-  position: absolute;
-  z-index: 0;
-  top: 50%;
-  left: 50%;
-  width: 1.55rem;
-  height: 1.05rem;
-  box-sizing: border-box;
-  border: 1px solid rgba(229, 72, 77, 0.45);
-  border-radius: 0.2rem;
-  background: rgba(229, 72, 77, 0.12);
-  content: "";
-  transform: translate(-50%, -50%);
-  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+  display: none !important;
+  content: none !important;
 }
 
 .lyrics-track__actions .like-button .music-icon {
-  position: relative;
-  z-index: 1;
   width: 0.7rem;
   height: 0.7rem;
+  box-sizing: content-box;
+  padding: 0.12rem 0.32rem;
+  border: 1px solid rgba(229, 72, 77, 0.45);
+  border-radius: 0.2rem;
+  background: rgba(229, 72, 77, 0.12);
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
-.lyrics-track__actions .like-button:hover::after,
-.lyrics-track__actions .like-button:focus-visible::after,
-.lyrics-track__actions .like-button.liked::after {
+.lyrics-track__actions .like-button:hover .music-icon,
+.lyrics-track__actions .like-button:focus-visible .music-icon,
+.lyrics-track__actions .like-button.liked .music-icon {
   border-color: rgba(229, 72, 77, 0.72);
   background: rgba(229, 72, 77, 0.2);
 }
@@ -1756,7 +1747,7 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
   outline: none;
 }
 
-.lyrics-track__actions .like-button:focus-visible::after {
+.lyrics-track__actions .like-button:focus-visible .music-icon {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--zy-focus) 32%, transparent);
 }
 
@@ -1885,7 +1876,7 @@ html[data-theme="light"] .music-row:hover {
 }
 
 html[data-theme="light"] .music-quality,
-html[data-theme="light"] .lyrics-track__actions .like-button::after,
+html[data-theme="light"] .lyrics-track__actions .like-button .music-icon,
 html[data-theme="light"] .lyrics-track__actions .music-download-button::after {
   border-color: rgba(199, 60, 67, 0.5) !important;
   background: rgba(199, 60, 67, 0.1) !important;
@@ -1938,5 +1929,21 @@ html[data-theme="light"] .music-player .music-controls .play-button {
     textarea
   ) {
     font-size: 16px !important;
+  }
+}
+
+/* Touch browsers can retain :hover while a list is being swiped. */
+@media (hover: none), (pointer: coarse) {
+  .music-row:hover:not(.current),
+  .music-row:active:not(.current) {
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .music-row:hover:not(.current) .track-action,
+  .music-row:active:not(.current) .track-action {
+    color: var(--zy-muted) !important;
+    opacity: 0.35;
   }
 }
