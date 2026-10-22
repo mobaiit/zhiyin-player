@@ -312,7 +312,7 @@ body {
 }
 
 .lm-site-bar {
-  border-color: rgba(255, 255, 255, 0.09) !important;
+  border-color: transparent !important;
   background: rgba(25, 25, 28, 0.84) !important;
   box-shadow: var(--zy-shadow-sm) !important;
   backdrop-filter: blur(18px) saturate(1.08);
@@ -325,7 +325,7 @@ body {
 .lm-docs-button,
 .lm-announcement-button,
 .lm-account-trigger {
-  border-color: var(--zy-border) !important;
+  border-color: transparent !important;
   background: var(--zy-surface) !important;
   color: var(--zy-text-secondary) !important;
 }
@@ -431,7 +431,7 @@ body {
 }
 
 .music-shell {
-  border-color: rgba(255, 255, 255, 0.09) !important;
+  border-color: transparent !important;
   background: rgba(20, 20, 22, 0.36) !important;
   box-shadow: var(--zy-shadow-lg) !important;
 }
@@ -442,7 +442,7 @@ body {
 .music-player,
 .music-search,
 .music-search-history {
-  border-color: rgba(255, 255, 255, 0.09) !important;
+  border-color: transparent !important;
   background: rgba(32, 32, 36, 0.82) !important;
   color: var(--zy-text) !important;
   box-shadow: var(--zy-shadow-sm) !important;
@@ -535,7 +535,7 @@ body {
 }
 
 .music-player {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
   background: rgba(24, 24, 27, 0.58) !important;
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
   backdrop-filter: blur(24px) saturate(1.16);
@@ -547,7 +547,7 @@ body {
 .music-download-button,
 .like-button,
 .music-player__lyrics-button {
-  border-color: var(--zy-border) !important;
+  border-color: transparent !important;
   background: var(--zy-surface-raised) !important;
   color: var(--zy-text-secondary) !important;
 }
@@ -736,6 +736,20 @@ body {
   outline-offset: 2px;
 }
 
+.admin-page > aside,
+.admin-content > header,
+.admin-form,
+.filters,
+.admin-account-list,
+.user-table,
+.smtp-test-card,
+.config-status,
+.admin-empty,
+.admin-inline-loading {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Docs keeps its editorial layout while adopting the same product surfaces. */
 .docs-page {
   --docs-ink: var(--zy-text);
@@ -748,9 +762,9 @@ body {
 }
 
 .docs-hero {
-  border-color: var(--zy-border) !important;
-  background: rgba(11, 11, 13, 0.92) !important;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.24);
+  border-color: transparent !important;
+  background: rgba(25, 25, 28, 0.88) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 }
 
 .docs-brand,
@@ -833,6 +847,17 @@ body {
   border-color: var(--zy-red) !important;
   background: var(--zy-bg-subtle) !important;
   box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.14) !important;
+}
+
+.docs-note,
+.docs-cards article,
+.docs-endpoint,
+.docs-table,
+.docs-schema,
+.docs-retry-flow,
+.docs-retry-flow span {
+  border-color: transparent !important;
+  box-shadow: none;
 }
 
 .docs-content :not(pre) > code,
@@ -992,7 +1017,7 @@ body {
   width: min(100%, 1040px);
   max-width: 1040px;
   padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border: 1px solid transparent !important;
   border-radius: var(--radius-lg);
   background: rgba(20, 20, 22, 0.36) !important;
   box-shadow: var(--shadow-lg);
@@ -1070,10 +1095,16 @@ body {
 
 .music-results,
 .music-lyrics {
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border: 1px solid transparent !important;
   border-radius: var(--radius-md) !important;
   background: rgba(32, 32, 36, 0.8) !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-shadow: none !important;
+}
+
+.music-sidebar {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .music-results {
@@ -1149,7 +1180,7 @@ body {
   bottom: 12px !important;
   left: clamp(10px, 2vw, 24px) !important;
   width: auto !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
   border-radius: 20px !important;
   background: rgba(24, 24, 27, 0.58) !important;
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
@@ -1163,6 +1194,7 @@ body {
 .music-download-button,
 .like-button,
 .music-player__lyrics-button {
+  border-color: transparent !important;
   border-radius: 10px !important;
   transition: color var(--transition), border-color var(--transition), background var(--transition), box-shadow var(--transition), transform var(--transition);
 }
