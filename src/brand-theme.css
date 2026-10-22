@@ -1578,7 +1578,6 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
 .lm-site-bar,
 .docs-hero,
 .admin-page > aside,
-.music-search,
 .music-player {
   background: var(--zy-player-glass) !important;
   box-shadow: var(--zy-player-glass-shadow) !important;
@@ -1588,14 +1587,9 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
 
 .lm-site-bar,
 .docs-hero,
-.admin-page > aside,
-.music-search {
+.admin-page > aside {
   border-inline: 0 !important;
   border-top: 0 !important;
-}
-
-.music-search:focus-within {
-  background: var(--zy-player-glass) !important;
 }
 
 /* Match the favourite control to the compact quality badge without shrinking its hit area. */
@@ -1731,7 +1725,10 @@ html[data-theme="light"] .ui-toast--error {
 
 .music-search,
 .music-search:focus-within {
-  background: var(--zy-player-glass) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .music-search input,
