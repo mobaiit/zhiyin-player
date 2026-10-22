@@ -208,6 +208,14 @@ function accessHeaders(authType, credential, token) {
 }
 
 const PROVIDER_CAPABILITIES = new Set(['search', 'random', 'charts', 'resolve', 'lyrics', 'artwork']);
+const PROVIDER_CAPABILITY_LABELS = {
+  search: '搜索',
+  random: '随机推荐',
+  charts: '榜单',
+  resolve: '播放地址解析',
+  lyrics: '歌词',
+  artwork: '封面',
+};
 
 async function proxyProviderRequest(config, credential, user, kind, params = {}) {
   if (!PROVIDER_CAPABILITIES.has(kind)) {
@@ -218,7 +226,6 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
 
   let manifest = credential.manifest;
   let headers = { accept: 'application/json' };
-  let connection = null;
   const authType = config.auth_type || 'none';
   const cacheKey = `${user.id}:${config.id}:${config.updated_at}`;
   const cachedAccess = providerAccessCache.get(cacheKey);
@@ -226,14 +233,13 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
 
   if (authType === 'connection') {
     if (reusableAccess) {
-      ({ manifest, connection, headers } = reusableAccess);
+      ({ manifest, headers } = reusableAccess);
     } else {
       const discovered = await discoverConnection(credential.connection);
       const authorization = await authenticateConnection(discovered.connection, discovered.manifest, user);
       manifest = discovered.manifest;
-      connection = discovered.connection;
       headers = { accept: 'application/json', authorization: `Bearer ${authorization.accessToken}` };
-      providerAccessCache.set(cacheKey, { manifest, connection, headers, expiresAt: Date.now() + authorization.expiresIn * 1000 });
+      providerAccessCache.set(cacheKey, { manifest, headers, expiresAt: Date.now() + authorization.expiresIn * 1000 });
     }
   } else if (authType === 'activation_code') {
     if (reusableAccess) {
@@ -272,12 +278,15 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
   }
 
   const target = new URL(checkedEndpoint(endpoint.replace(/\{(?:songId|id)\}/, encodeURIComponent(params.songId || '')), config.provider_url));
-  if (connection) applyConnectionQuery(target, connection);
   const options = { headers, cache: ['lyrics', 'search'].includes(kind) ? 'no-store' : undefined };
   if (kind === 'resolve') {
     options.method = 'POST';
     options.headers = { ...headers, 'content-type': 'application/json' };
     options.body = JSON.stringify(params);
+  } else if (kind === 'search' || kind === 'random' || kind === 'charts') {
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== '')
+      .forEach(([key, value]) => target.searchParams.set(key, String(value)));
   } else {
     Object.entries(params)
       .filter(([key, value]) => key !== 'songId' && value !== undefined && value !== '')
@@ -285,7 +294,7 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
   }
   const response = await providerFetch(target, options);
   try {
-    await providerResponseError(response, 'Provider 请求失败');
+    await providerResponseError(response, `Provider ${PROVIDER_CAPABILITY_LABELS[kind]}请求失败`);
   } catch (error) {
     if (error.status === 401 || error.status === 403) providerAccessCache.delete(cacheKey);
     throw error;

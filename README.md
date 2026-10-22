@@ -32,7 +32,7 @@ ZY MUSIC 仅提供播放器、账号系统和 Provider 接入能力，不托管�
 - 播放器：`/`
 - Provider 协议文档：`/docs`
 - 管理后台：`/?admin=1`
-- API：`/api/luri-music/*`
+- API：`/api/*`
 
 ## 本地开发
 

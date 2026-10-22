@@ -25,7 +25,7 @@
   --ui-soft: #eff6ff;
   position: fixed;
   z-index: 1500;
-  top: max(calc(env(safe-area-inset-top, 0px) + 14px), 14px);
+  top: max(calc(env(safe-area-inset-top, 0px) + 72px), 72px);
   right: auto;
   left: 50%;
   display: grid;
@@ -276,7 +276,7 @@
 }
 @media (max-width: 600px) {
   .ui-toast {
-    top: max(calc(env(safe-area-inset-top, 0px) + 10px), 10px);
+    top: max(calc(env(safe-area-inset-top, 0px) + 62px), 62px);
     width: min(320px, calc(100vw - 20px));
   }
 

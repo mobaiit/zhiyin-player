@@ -8,7 +8,7 @@ import './auth-ux.css';
 import './account-provider.css';
 import './ui-feedback.css';
 
-const api = async (path, options = {}) => { const response = await fetch(`/api/luri-music/${path}`, { credentials: 'same-origin', headers: { 'content-type': 'application/json' }, ...options }); const data = await response.json().catch(() => ({})); if (!response.ok) throw Error(data.error || '请求失败，请稍后重试'); return data; };
+const api = async (path, options = {}) => { const response = await fetch(`/api/${path}`, { credentials: 'same-origin', headers: { 'content-type': 'application/json' }, ...options }); const data = await response.json().catch(() => ({})); if (!response.ok) throw Error(data.error || '请求失败，请稍后重试'); return data; };
 const ANNOUNCEMENT_DISMISSED = 'luri.music.announcement.dismissed.v2';
 const TERMS_VERSION = '2026-09-22.1';
 const PROVIDER_PROTOCOL_DOCS = '/docs#protocol';

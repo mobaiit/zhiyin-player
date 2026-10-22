@@ -10,7 +10,7 @@ const PROVIDER_ERROR_MESSAGES = {
 const providerMessage = (code, fallback) => PROVIDER_ERROR_MESSAGES[code] || fallback;
 
 const api = async (path, options = {}) => {
-  const response = await fetch(`/api/luri-music/${path}`, {
+  const response = await fetch(`/api/${path}`, {
     credentials: 'same-origin',
     headers: { 'content-type': 'application/json' },
     ...options,
@@ -175,7 +175,7 @@ export default class ProviderClient {
     if (cached) return cached;
     const deadline = requestDeadline(signal);
     try {
-      const response = await providerError(await fetch(`/api/luri-music/providers/${encodeURIComponent(this.config.id)}/proxy`, {
+      const response = await providerError(await fetch(`/api/providers/${encodeURIComponent(this.config.id)}/proxy`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'content-type': 'application/json' },

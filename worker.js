@@ -11,7 +11,7 @@ export default {
     if (pathname.startsWith('/api/music/') || pathname.startsWith('/api/luri-music/music/')) {
       return json({ error: 'Music capabilities are provided by the configured Provider' }, 404);
     }
-    if (pathname.startsWith('/api/luri-music/')) {
+    if (pathname.startsWith('/api/')) {
       try {
         return await handleLuriMusic(request, env);
       } catch (error) {

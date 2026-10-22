@@ -62,7 +62,8 @@ const consumeEmailCode = async (env, mail, purpose, value) => {
 
 export async function handleLuriMusic(request, env) {
   if (!env.LURI_MUSIC_DB) return json({ error: '音乐服务尚未配置' }, 503);
-  const action = new URL(request.url).pathname.replace('/api/luri-music/', '');
+  const pathname = new URL(request.url).pathname;
+  const action = pathname.startsWith('/api/luri-music/') ? pathname.slice('/api/luri-music/'.length) : pathname.slice('/api/'.length);
   if (action === 'auth/me') { const user = await currentUser(request, env, true); return json({ user: await userPayload(user), turnstile: { enabled: Boolean(env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY), siteKey: env.TURNSTILE_SITE_KEY || '' } }); }
   if (action === 'preferences' && request.method === 'PATCH') {
     const user = await currentUser(request, env); if (!user) return json({ error: '请先登录' }, 401);

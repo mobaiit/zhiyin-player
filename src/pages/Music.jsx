@@ -387,7 +387,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       const mutation = favoriteMutationRef.current; const items = minimalFavorites(likedTracksRef.current); const snapshot = JSON.stringify(items);
       let wrote = false; let synced = false;
       try {
-        const response = await fetch('/api/luri-music/favorites', { method: 'PUT', credentials: 'same-origin', keepalive, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items }) });
+        const response = await fetch('/api/favorites', { method: 'PUT', credentials: 'same-origin', keepalive, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items }) });
         const payload = response.ok ? await response.json() : null;
         if (response.ok) { rememberSyncedAt(payload?.updatedAt); wrote = true; }
         const latestSnapshot = JSON.stringify(minimalFavorites(likedTracksRef.current));
@@ -406,7 +406,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (stopped || state.pulling || state.syncing || readDirtySince()) return;
       state.pulling = true; const mutation = favoriteMutationRef.current;
       try {
-        const response = await fetch('/api/luri-music/favorites', { credentials: 'same-origin', cache: 'no-store' });
+        const response = await fetch('/api/favorites', { credentials: 'same-origin', cache: 'no-store' });
         const payload = response.ok ? await response.json() : null;
         if (!stopped && response.ok && mutation === favoriteMutationRef.current && !readDirtySince()) {
           const items = minimalFavorites(payload?.items);
