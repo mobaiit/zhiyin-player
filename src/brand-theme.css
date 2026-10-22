@@ -66,7 +66,7 @@ html[data-theme="light"] {
   --zy-focus: #b82e34;
   --zy-shadow-sm: 0 12px 32px rgba(72, 45, 42, 0.1);
   --zy-shadow-lg: 0 28px 80px rgba(72, 45, 42, 0.16);
-  --zy-player-glass: rgba(255, 250, 247, 0.42);
+  --zy-player-glass: rgba(255, 250, 247, 0.3);
   --zy-player-glass-shadow: 0 18px 52px rgba(72, 45, 42, 0.16);
 }
 
@@ -89,7 +89,7 @@ html[data-theme="light"] .music-page::before {
 }
 
 html[data-theme="light"] .music-artwork-backdrop {
-  filter: blur(34px) saturate(0.94) brightness(0.92);
+  filter: blur(34px) saturate(0.86) brightness(0.84) contrast(0.94);
 }
 
 html[data-theme="light"] .music-shell {
@@ -417,7 +417,7 @@ html[data-theme="light"] .docs-code-wrap {
   --zy-focus: #ff8589;
   --zy-shadow-sm: 0 12px 32px rgba(5, 5, 8, 0.2);
   --zy-shadow-lg: 0 28px 80px rgba(5, 5, 8, 0.34);
-  --zy-player-glass: rgba(35, 36, 42, 0.34);
+  --zy-player-glass: rgba(35, 36, 42, 0.22);
   --zy-player-glass-shadow: 0 18px 52px rgba(5, 5, 8, 0.3);
 }
 
@@ -564,7 +564,7 @@ body {
   z-index: -1;
   opacity: 1;
   background:
-    linear-gradient(180deg, rgba(28, 29, 33, 0.04), rgba(28, 29, 33, 0.24) 64%, rgba(28, 29, 33, 0.4)),
+    linear-gradient(180deg, rgba(22, 23, 27, 0.2), rgba(22, 23, 27, 0.32) 64%, rgba(22, 23, 27, 0.46)),
     radial-gradient(circle at 18% 10%, rgba(229, 72, 77, 0.1), transparent 26rem) !important;
   filter: none;
   transform: none;
@@ -577,14 +577,14 @@ body {
   opacity: 0;
   background-position: center;
   background-size: cover;
-  filter: blur(34px) saturate(1) brightness(0.78);
+  filter: blur(34px) saturate(0.82) brightness(0.68) contrast(0.92);
   transform: scale(1.1);
   transition: opacity 380ms ease;
   pointer-events: none;
 }
 
 .music-artwork-backdrop.is-visible {
-  opacity: 0.9;
+  opacity: 0.76;
 }
 
 .music-shell {
@@ -1706,4 +1706,57 @@ html[data-theme="light"] .ui-toast--warning {
 
 html[data-theme="light"] .ui-toast--error {
   --ui-accent: #bd343a;
+}
+
+/* Keep navigation and search to one glass layer; child controls must not stack dark cards. */
+.lm-site-bar > .lm-docs-button,
+.lm-site-bar > .lm-announcement-button,
+.lm-site-bar > .theme-toggle,
+.lm-site-bar > .lm-account-wrap > .lm-account-trigger {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.lm-site-bar > .lm-docs-button:hover,
+.lm-site-bar > .lm-announcement-button:hover,
+.lm-site-bar > .theme-toggle:hover,
+.lm-site-bar > .lm-account-wrap > .lm-account-trigger:hover,
+.lm-site-bar > .lm-account-wrap > .lm-account-trigger[aria-expanded="true"] {
+  background: var(--zy-red-soft) !important;
+  color: var(--zy-text) !important;
+}
+
+.music-search,
+.music-search:focus-within {
+  background: var(--zy-player-glass) !important;
+}
+
+.music-search input,
+.music-search button,
+.music-search .music-icon-button,
+.music-search .music-search-clear,
+.music-search .music-random-button {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Metadata remains legible over both the light and dark regions of artwork. */
+.lyrics-track > div:not(.lyrics-track__actions) > span {
+  color: var(--zy-text-secondary) !important;
+  opacity: 1;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.72);
+}
+
+html[data-theme="light"] .lyrics-track > div:not(.lyrics-track__actions) > span {
+  text-shadow: 0 1px 5px rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 760px) {
+  /* A legacy static-position rule detached the favourite badge from its icon. */
+  .music-page.mobile-view-now .lyrics-track__actions .like-button {
+    position: relative !important;
+  }
 }
