@@ -82,20 +82,20 @@ html[data-theme="light"] .docs-hero {
 
 html[data-theme="light"] .music-page::before {
   background:
-    linear-gradient(180deg, rgba(245, 242, 239, 0.12), rgba(245, 242, 239, 0.66) 68%, var(--zy-bg)),
+    linear-gradient(180deg, rgba(245, 242, 239, 0.04), rgba(245, 242, 239, 0.28) 68%, rgba(245, 242, 239, 0.4)),
     radial-gradient(circle at 18% 10%, rgba(200, 62, 67, 0.08), transparent 26rem) !important;
 }
 
 html[data-theme="light"] .music-artwork-backdrop {
-  filter: blur(56px) saturate(0.9) brightness(0.86);
+  filter: blur(34px) saturate(0.94) brightness(0.92);
 }
 
 html[data-theme="light"] .music-shell {
-  background: rgba(255, 250, 247, 0.38) !important;
+  background: transparent !important;
 }
 
 html[data-theme="light"] :is(.music-search, .music-search-history) {
-  background: rgba(255, 250, 247, 0.78) !important;
+  background: rgba(255, 250, 247, 0.46) !important;
 }
 
 html[data-theme="light"] :is(.music-results, .music-lyrics) {
@@ -103,12 +103,12 @@ html[data-theme="light"] :is(.music-results, .music-lyrics) {
 }
 
 html[data-theme="light"] .music-search:focus-within {
-  background: rgba(255, 250, 247, 0.94) !important;
+  background: rgba(255, 250, 247, 0.62) !important;
 }
 
 html[data-theme="light"] .music-player {
   border-color: rgba(74, 55, 53, 0.08) !important;
-  background: rgba(255, 250, 247, 0.68) !important;
+  background: rgba(255, 250, 247, 0.42) !important;
   box-shadow: 0 18px 52px rgba(72, 45, 42, 0.16) !important;
 }
 
@@ -556,7 +556,7 @@ body {
   z-index: -1;
   opacity: 1;
   background:
-    linear-gradient(180deg, rgba(28, 29, 33, 0.14), rgba(28, 29, 33, 0.56) 64%, var(--zy-bg)),
+    linear-gradient(180deg, rgba(28, 29, 33, 0.04), rgba(28, 29, 33, 0.24) 64%, rgba(28, 29, 33, 0.4)),
     radial-gradient(circle at 18% 10%, rgba(229, 72, 77, 0.1), transparent 26rem) !important;
   filter: none;
   transform: none;
@@ -569,20 +569,20 @@ body {
   opacity: 0;
   background-position: center;
   background-size: cover;
-  filter: blur(56px) saturate(0.96) brightness(0.7);
+  filter: blur(34px) saturate(1) brightness(0.78);
   transform: scale(1.1);
   transition: opacity 380ms ease;
   pointer-events: none;
 }
 
 .music-artwork-backdrop.is-visible {
-  opacity: 0.82;
+  opacity: 0.9;
 }
 
 .music-shell {
   border-color: transparent !important;
-  background: rgba(28, 29, 33, 0.3) !important;
-  box-shadow: var(--zy-shadow-lg) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .music-sidebar,
@@ -685,10 +685,10 @@ body {
 
 .music-player {
   border-color: rgba(255, 255, 255, 0.06) !important;
-  background: rgba(35, 36, 42, 0.54) !important;
+  background: rgba(35, 36, 42, 0.34) !important;
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
-  backdrop-filter: blur(24px) saturate(1.16);
-  -webkit-backdrop-filter: blur(24px) saturate(1.16);
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
 }
 
 .music-player .music-controls .music-icon-button,
@@ -1136,9 +1136,9 @@ body {
   padding: 24px;
   border: 1px solid transparent !important;
   border-radius: var(--radius-lg);
-  background: rgba(28, 29, 33, 0.3) !important;
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(20px);
+  background: transparent !important;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .music-search {
@@ -1147,14 +1147,14 @@ body {
   padding: 5px 6px 5px 16px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: var(--radius-md) !important;
-  background: rgba(42, 43, 50, 0.82) !important;
+  background: rgba(35, 36, 42, 0.34) !important;
   box-shadow: var(--shadow-xs) !important;
   transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
 .music-search:focus-within {
   border-color: rgba(229, 72, 77, 0.7) !important;
-  background: rgba(42, 43, 50, 0.94) !important;
+  background: rgba(35, 36, 42, 0.5) !important;
   box-shadow: 0 0 0 4px rgba(229, 72, 77, 0.14) !important;
 }
 
@@ -1316,10 +1316,10 @@ body {
   width: auto !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   border-radius: 20px !important;
-  background: rgba(35, 36, 42, 0.54) !important;
+  background: rgba(35, 36, 42, 0.34) !important;
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
-  backdrop-filter: blur(24px) saturate(1.16);
-  -webkit-backdrop-filter: blur(24px) saturate(1.16);
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
   overflow: hidden;
 }
 
