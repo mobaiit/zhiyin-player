@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Turnstile from './Turnstile';
 import { LoadingScreen, Spinner, Toast } from './UiFeedback';
-import useAutoHideNavigation from '../hooks/useAutoHideNavigation';
 import ThemeToggle from '../components/ThemeToggle';
 import './admin-netease.css';
 import './admin-ux.css';
@@ -13,13 +12,8 @@ const formatDate = (value) => value ? new Date(value).toLocaleString('zh-CN') : 
 
 export default function Admin() {
   const [booting, setBooting] = useState(true); const [admin, setAdmin] = useState(null); const [page, setPage] = useState('users'); const [turnstile, setTurnstile] = useState({ enabled: false, siteKey: '' }); const [toast, setToast] = useState(null); const [accountOpen, setAccountOpen] = useState(false);
-  const navigationHidden = useAutoHideNavigation({ suspended: booting || accountOpen, breakpoint: 800 });
   const notify = useCallback((title, message = '', type = 'info') => setToast({ title, message, type }), []);
   useEffect(() => { Promise.all([api('auth/me'), api('admin/me').catch(() => ({ admin: null }))]).then(([me, session]) => { setTurnstile(me.turnstile || { enabled: false, siteKey: '' }); setAdmin(session.admin || null); }).catch((error) => notify('加载失败', error.message, 'error')).finally(() => setBooting(false)); }, [notify]);
-  useEffect(() => {
-    document.body.classList.toggle('admin-navigation-hidden', navigationHidden);
-    return () => document.body.classList.remove('admin-navigation-hidden');
-  }, [navigationHidden]);
   if (booting) return <LoadingScreen label="正在加载管理后台…" />;
   if (!admin) return <><AdminLogin turnstile={turnstile} done={setAdmin} notify={notify} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   const logout = async () => { setAccountOpen(false); try { await api('admin/logout', { method: 'POST' }); setAdmin(null); notify('已退出登录', '', 'success'); } catch (error) { notify('退出失败', error.message, 'error'); } };
