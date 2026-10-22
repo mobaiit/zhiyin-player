@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./public/zhiyin-logo.png" alt="知音 Logo" width="112" />
+</p>
+
 # 知音
 
 知音是一个可扩展的 Web 音乐播放器，支持通过 Music Provider Protocol 连接用户选择的内容服务。

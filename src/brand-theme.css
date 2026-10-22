@@ -19,10 +19,10 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-width: 64px;
+  width: 38px;
+  min-width: 38px;
   min-height: 38px;
-  padding: 0 11px;
+  padding: 0;
   border: 0;
   border-radius: 10px;
   background: var(--zy-surface-raised);
@@ -38,12 +38,14 @@ body {
   color: var(--zy-text);
 }
 
-.theme-toggle__icon {
-  width: 12px;
-  height: 12px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  box-shadow: inset -3px -2px 0 0 var(--zy-surface-raised);
+.theme-toggle svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 html[data-theme="light"] {
@@ -92,8 +94,12 @@ html[data-theme="light"] .music-shell {
   background: rgba(255, 250, 247, 0.38) !important;
 }
 
-html[data-theme="light"] :is(.music-results, .music-lyrics, .music-search, .music-search-history) {
+html[data-theme="light"] :is(.music-search, .music-search-history) {
   background: rgba(255, 250, 247, 0.78) !important;
+}
+
+html[data-theme="light"] :is(.music-results, .music-lyrics) {
+  background: transparent !important;
 }
 
 html[data-theme="light"] .music-search:focus-within {
@@ -455,6 +461,23 @@ body {
 
 .lm-site-bar > strong {
   color: var(--zy-red) !important;
+}
+
+.lm-brand {
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+}
+
+.lm-brand-mark {
+  box-sizing: border-box;
+  width: 28px;
+  height: 38px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(255, 250, 247, 0.92);
+  object-fit: contain;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
 }
 
 .lm-docs-button,
@@ -1232,8 +1255,20 @@ body {
 .music-lyrics {
   border: 1px solid transparent !important;
   border-radius: var(--radius-md) !important;
-  background: rgba(32, 32, 36, 0.8) !important;
+  background: transparent !important;
   box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Keep every structural layer of the library and lyric views transparent so
+   the active artwork backdrop remains visible across desktop and mobile. */
+.music-results > .music-list,
+.music-list-head,
+.music-list-head small,
+.music-lyrics .lyrics-track,
+.music-lyrics .lyrics-body {
+  background: transparent !important;
 }
 
 .music-sidebar {
@@ -1398,11 +1433,10 @@ body {
   }
 
   .theme-toggle {
-    min-width: 50px;
+    width: 34px;
+    min-width: 34px;
     min-height: 34px;
-    gap: 5px;
-    padding-inline: 8px;
-    font-size: 11px;
+    padding: 0;
   }
 
   .lm-site-bar {
@@ -1421,6 +1455,17 @@ body {
 
   .lm-account-loading > span {
     display: none;
+  }
+
+  .lm-brand {
+    gap: 6px;
+  }
+
+  .lm-brand-mark {
+    width: 24px;
+    height: 32px;
+    padding: 2px;
+    border-radius: 7px;
   }
 
   .music-results,
