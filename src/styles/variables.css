@@ -1,11 +1,11 @@
 :root {
-  --color-bg: #0b0b0d;
-  --color-bg-alt: #121215;
-  --color-surface: rgba(21, 21, 24, 0.92);
-  --color-surface-raised: #1c1c20;
+  --color-bg: #141416;
+  --color-bg-alt: #19191c;
+  --color-surface: rgba(31, 31, 35, 0.88);
+  --color-surface-raised: #29292e;
   --color-text: #f5f5f6;
   --color-text-muted: #a3a3aa;
-  --color-border: #2a2a2f;
+  --color-border: #37373d;
   --color-accent: #e5484d;
   --color-accent-hover: #f05a5f;
   --color-accent-soft: rgba(229, 72, 77, 0.14);
