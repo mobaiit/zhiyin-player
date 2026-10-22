@@ -50,54 +50,54 @@ body {
 
 html[data-theme="light"] {
   color-scheme: light;
-  --zy-bg: #f5f2ef;
-  --zy-bg-subtle: #ece8e4;
-  --zy-surface: #fffaf7;
-  --zy-surface-raised: #eee9e5;
-  --zy-border: #d8d0ca;
-  --zy-border-strong: #c5bbb4;
-  --zy-text: #211d1d;
-  --zy-text-secondary: #4e4646;
-  --zy-muted: #706767;
-  --zy-red: #c83e43;
-  --zy-red-hover: #a82c31;
-  --zy-red-action: #b82e34;
-  --zy-red-soft: rgba(200, 62, 67, 0.11);
-  --zy-focus: #b82e34;
-  --zy-shadow-sm: 0 12px 32px rgba(72, 45, 42, 0.1);
-  --zy-shadow-lg: 0 28px 80px rgba(72, 45, 42, 0.16);
-  --zy-player-glass: rgba(255, 250, 247, 0.3);
-  --zy-player-glass-shadow: 0 18px 52px rgba(72, 45, 42, 0.16);
+  --zy-bg: #f1f2f4;
+  --zy-bg-subtle: #e7e9ec;
+  --zy-surface: #fafbfc;
+  --zy-surface-raised: #e9ebef;
+  --zy-border: #cdd1d7;
+  --zy-border-strong: #b7bcc4;
+  --zy-text: #191b20;
+  --zy-text-secondary: #3d424b;
+  --zy-muted: #626873;
+  --zy-red: #c73c43;
+  --zy-red-hover: #a92f36;
+  --zy-red-action: #b9333a;
+  --zy-red-soft: rgba(199, 60, 67, 0.12);
+  --zy-focus: #b9333a;
+  --zy-shadow-sm: 0 12px 32px rgba(34, 38, 45, 0.1);
+  --zy-shadow-lg: 0 28px 80px rgba(34, 38, 45, 0.15);
+  --zy-player-glass: rgba(250, 251, 252, 0.56);
+  --zy-player-glass-shadow: 0 18px 52px rgba(34, 38, 45, 0.14);
 }
 
 html[data-theme="light"] body {
   background:
-    radial-gradient(circle at 12% 0%, rgba(200, 62, 67, 0.09), transparent 28rem),
-    radial-gradient(circle at 92% 18%, rgba(168, 44, 49, 0.06), transparent 30rem),
+    radial-gradient(circle at 12% 0%, rgba(199, 60, 67, 0.065), transparent 28rem),
+    radial-gradient(circle at 92% 18%, rgba(83, 91, 106, 0.07), transparent 30rem),
     var(--zy-bg);
 }
 
 html[data-theme="light"] .lm-site-bar,
 html[data-theme="light"] .docs-hero {
-  background: rgba(255, 250, 247, 0.86) !important;
+  background: var(--zy-player-glass) !important;
 }
 
 html[data-theme="light"] .music-page::before {
   background:
-    linear-gradient(180deg, rgba(245, 242, 239, 0.04), rgba(245, 242, 239, 0.28) 68%, rgba(245, 242, 239, 0.4)),
-    radial-gradient(circle at 18% 10%, rgba(200, 62, 67, 0.08), transparent 26rem) !important;
+    linear-gradient(180deg, rgba(241, 242, 244, 0.32), rgba(241, 242, 244, 0.46) 68%, rgba(241, 242, 244, 0.58)),
+    radial-gradient(circle at 18% 10%, rgba(199, 60, 67, 0.045), transparent 26rem) !important;
 }
 
 html[data-theme="light"] .music-artwork-backdrop {
-  filter: blur(34px) saturate(0.86) brightness(0.84) contrast(0.94);
+  filter: blur(34px) saturate(0.72) brightness(0.94) contrast(0.86);
 }
 
 html[data-theme="light"] .music-shell {
   background: transparent !important;
 }
 
-html[data-theme="light"] :is(.music-search, .music-search-history) {
-  background: rgba(255, 250, 247, 0.46) !important;
+html[data-theme="light"] .music-search-history {
+  background: rgba(250, 251, 252, 0.82) !important;
 }
 
 html[data-theme="light"] :is(.music-results, .music-lyrics) {
@@ -105,13 +105,13 @@ html[data-theme="light"] :is(.music-results, .music-lyrics) {
 }
 
 html[data-theme="light"] .music-search:focus-within {
-  background: rgba(255, 250, 247, 0.62) !important;
+  background: transparent !important;
 }
 
 html[data-theme="light"] .music-player {
-  border-color: rgba(74, 55, 53, 0.08) !important;
-  background: rgba(255, 250, 247, 0.42) !important;
-  box-shadow: 0 18px 52px rgba(72, 45, 42, 0.16) !important;
+  border-color: rgba(34, 38, 45, 0.08) !important;
+  background: var(--zy-player-glass) !important;
+  box-shadow: var(--zy-player-glass-shadow) !important;
 }
 
 html[data-theme="light"] .luri-music-clone {
@@ -1868,13 +1868,34 @@ html[data-theme="light"] .lyrics-track > div:not(.lyrics-track__actions) > span 
 }
 
 @media (max-width: 760px) {
-  /* Keep the mobile action compact; legacy positioning can detach its badge layer. */
+  /* Keep the badge layer attached to the mobile favourite control. */
   .music-page.mobile-view-now .lyrics-track__actions .like-button {
     position: relative !important;
   }
+}
 
-  .music-page.mobile-view-now .lyrics-track__actions .like-button::after {
-    display: none !important;
-    content: none !important;
-  }
+/* Light mode keeps the same hierarchy with neutral glass and restrained red accents. */
+html[data-theme="light"] .music-row.current {
+  background: linear-gradient(90deg, rgba(199, 60, 67, 0.14), rgba(250, 251, 252, 0.16)) !important;
+}
+
+html[data-theme="light"] .music-row:hover {
+  background: rgba(199, 60, 67, 0.08) !important;
+}
+
+html[data-theme="light"] .music-quality,
+html[data-theme="light"] .lyrics-track__actions .like-button::after,
+html[data-theme="light"] .lyrics-track__actions .music-download-button::after {
+  border-color: rgba(199, 60, 67, 0.5) !important;
+  background: rgba(199, 60, 67, 0.1) !important;
+}
+
+html[data-theme="light"] :is(.music-player .music-controls .music-icon-button, .music-player__lyrics-button) {
+  background: rgba(233, 235, 239, 0.78) !important;
+  color: var(--zy-text-secondary) !important;
+}
+
+html[data-theme="light"] .music-player .music-controls .play-button {
+  background: var(--zy-red-action) !important;
+  color: #fff !important;
 }
