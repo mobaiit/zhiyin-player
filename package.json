@@ -1,0 +1,28 @@
+{
+  "name": "zhiyin-player",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "license": "CC-BY-NC-SA-4.0",
+  "description": "ZY MUSIC - a standalone extensible web music player for Cloudflare Workers",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint src functions shared worker.js vite.config.js",
+    "preview": "vite preview",
+    "update:singers": "node scripts/update-singers.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "worker-mailer": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "oxlint": "^1.79.0",
+    "vite": "^8.2.2",
+    "wrangler": "^4.45.0"
+  }
+}

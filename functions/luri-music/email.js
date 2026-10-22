@@ -1,0 +1,114 @@
+const SMTP_SETTING = 'smtp_config_v1';
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+const toBase64 = (value) => btoa(String.fromCharCode(...value));
+const fromBase64 = (value) => Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
+const validEmail = (value) => /^\S+@\S+\.\S+$/.test(String(value || ''));
+
+async function encryptionKey(env) {
+  if (!env.PROVIDER_CREDENTIAL_KEY) throw new Error('请先配置 PROVIDER_CREDENTIAL_KEY，用于加密 SMTP 密码');
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(env.PROVIDER_CREDENTIAL_KEY));
+  return crypto.subtle.importKey('raw', digest, 'AES-GCM', false, ['encrypt', 'decrypt']);
+}
+
+async function encryptConfig(value, env) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await encryptionKey(env), encoder.encode(JSON.stringify(value)));
+  return JSON.stringify({ ciphertext: toBase64(new Uint8Array(encrypted)), iv: toBase64(iv) });
+}
+
+async function decryptConfig(value, env) {
+  const payload = JSON.parse(value);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64(payload.iv) }, await encryptionKey(env), fromBase64(payload.ciphertext));
+  return JSON.parse(decoder.decode(plain));
+}
+
+function environmentConfig(env) {
+  if (!env.SMTP_HOST || !env.SMTP_FROM) return null;
+  return {
+    host: String(env.SMTP_HOST),
+    port: Number(env.SMTP_PORT || 465),
+    secure: String(env.SMTP_SECURE ?? 'true') !== 'false',
+    authType: ['plain', 'login', 'cram-md5'].includes(env.SMTP_AUTH_TYPE) ? env.SMTP_AUTH_TYPE : 'plain',
+    username: String(env.SMTP_USERNAME || ''),
+    password: String(env.SMTP_PASSWORD || ''),
+    from: String(env.SMTP_FROM),
+    fromName: String(env.SMTP_FROM_NAME || 'ZY MUSIC'),
+    replyTo: String(env.SMTP_REPLY_TO || ''),
+  };
+}
+
+export async function smtpConfig(env) {
+  const setting = await env.LURI_MUSIC_DB.prepare('SELECT value FROM luri_music_settings WHERE key=?').bind(SMTP_SETTING).first();
+  if (setting?.value) return { ...(await decryptConfig(setting.value, env)), source: 'database' };
+  const config = environmentConfig(env);
+  return config ? { ...config, source: 'environment' } : null;
+}
+
+export async function publicSmtpConfig(env) {
+  const config = await smtpConfig(env);
+  if (!config) return { configured: false, source: 'none', host: '', port: 465, secure: true, authType: 'plain', username: '', passwordConfigured: false, from: 'no-reply@zhiyin.us.ci', fromName: 'ZY MUSIC', replyTo: '' };
+  return { configured: true, source: config.source, host: config.host, port: config.port, secure: config.secure, authType: config.authType, username: config.username, passwordConfigured: Boolean(config.password), from: config.from, fromName: config.fromName, replyTo: config.replyTo };
+}
+
+function normalizeConfig(data, password = '') {
+  const config = {
+    host: String(data.host || '').trim(),
+    port: Number(data.port),
+    secure: data.secure !== false,
+    authType: ['plain', 'login', 'cram-md5'].includes(data.authType) ? data.authType : 'plain',
+    username: String(data.username || '').trim(),
+    password: String(data.password || password),
+    from: String(data.from || '').trim().toLowerCase(),
+    fromName: String(data.fromName || 'ZY MUSIC').trim().slice(0, 100),
+    replyTo: String(data.replyTo || '').trim().toLowerCase(),
+  };
+  if (!config.host || !Number.isInteger(config.port) || config.port < 1 || config.port > 65535) throw new Error('SMTP 主机或端口无效');
+  if (!validEmail(config.from) || (config.replyTo && !validEmail(config.replyTo))) throw new Error('发件邮箱或回复邮箱无效');
+  if (config.username && !config.password) throw new Error('请输入 SMTP 密码或授权码');
+  return config;
+}
+
+export async function saveSmtpConfig(env, data) {
+  const current = await smtpConfig(env).catch(() => null);
+  const config = normalizeConfig(data, current?.source === 'database' ? current.password : '');
+  const value = await encryptConfig(config, env);
+  const timestamp = new Date().toISOString();
+  await env.LURI_MUSIC_DB.prepare('INSERT INTO luri_music_settings(key,value,updated_at) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at').bind(SMTP_SETTING, value, timestamp).run();
+  return publicSmtpConfig(env);
+}
+
+async function send(env, recipient, subject, text, html) {
+  const config = await smtpConfig(env);
+  if (!config) throw new Error('邮件服务尚未配置');
+  const { WorkerMailer } = await import('worker-mailer');
+  await WorkerMailer.send({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    startTls: !config.secure,
+    credentials: config.username ? { username: config.username, password: config.password } : undefined,
+    authType: config.authType,
+    socketTimeoutMs: 15000,
+    responseTimeoutMs: 15000,
+  }, {
+    from: { email: config.from, name: config.fromName || 'ZY MUSIC' },
+    to: recipient,
+    reply: config.replyTo || undefined,
+    subject,
+    text,
+    html,
+  });
+}
+
+export async function sendVerificationEmail(env, recipient, purpose, code) {
+  const action = purpose === 'register' ? '注册账号' : '重置密码';
+  const text = `你正在进行 ZY MUSIC ${action}，验证码为：${code}。验证码 10 分钟内有效，请勿转发给他人。`;
+  const html = `<div style="font-family:Arial,'Microsoft YaHei',sans-serif;color:#24134f;line-height:1.7"><h2 style="margin:0 0 18px;color:#6d28d9">ZY MUSIC</h2><p>你正在${action}，验证码为：</p><p style="font-size:30px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#ea580c">${code}</p><p>验证码 10 分钟内有效，请勿转发给他人。如非本人操作，请忽略本邮件。</p></div>`;
+  await send(env, recipient, `ZY MUSIC ${action}验证码`, text, html);
+}
+
+export async function sendSmtpTest(env, recipient) {
+  if (!validEmail(recipient)) throw new Error('请输入有效的测试收件邮箱');
+  await send(env, recipient, 'ZY MUSIC SMTP 测试', '这是一封来自 ZY MUSIC 的 SMTP 测试邮件。收到此邮件表示配置可用。', '<h2>ZY MUSIC</h2><p>这是一封 SMTP 测试邮件。收到此邮件表示配置可用。</p>');
+}

@@ -1,0 +1,423 @@
+.admin-page button,
+.admin-login button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.admin-page > aside > button {
+  justify-content: flex-start;
+}
+.admin-page {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+.admin-page > aside {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 6px;
+  width: auto;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 28px 18px;
+  border-right: 1px solid var(--admin-line);
+  border-bottom: 0;
+  background: #fff;
+}
+.admin-page > aside > a {
+  margin: 0 8px 34px;
+  white-space: nowrap;
+}
+.admin-page > aside > button:last-child {
+  margin: 0 !important;
+  border: 0;
+}
+.admin-page > aside > button {
+  flex: none;
+  justify-content: flex-start;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 11px 13px;
+  border: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+.admin-content > section {
+  animation: admin-view-in 0.16s ease-out;
+}
+.view-heading {
+  margin: 28px 0 18px;
+}
+.view-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.view-heading span {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.13em;
+}
+.view-heading span::after {
+  margin-left: 7px;
+  color: #bbb;
+  content: "/";
+}
+.view-heading h1 {
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.view-heading p {
+  display: none;
+}
+.admin-content > header {
+  justify-content: space-between;
+}
+.admin-current-account {
+  position: relative;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  letter-spacing: 0;
+}
+.admin-current-account .admin-account-trigger {
+  overflow: hidden;
+  max-width: 220px;
+  padding: 7px 11px;
+  border: 1px solid var(--admin-line);
+  background: #fff;
+  color: #111;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-current-account .admin-account-trigger[aria-expanded="true"] {
+  border-color: #bbb;
+  background: #f7f7f7;
+}
+.admin-account-backdrop {
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.admin-account-menu {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  width: 142px;
+  overflow: hidden;
+  padding: 5px;
+  border: 1px solid var(--admin-line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 40px #0002;
+}
+.admin-current-account .admin-account-menu button {
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  font-size: 11px;
+  text-align: left;
+}
+.admin-current-account .admin-account-menu button:hover {
+  background: #f3f3f3;
+}
+.admin-current-account .admin-account-menu .admin-logout {
+  color: #a33;
+}
+.admin-inline-loading,
+.admin-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 180px;
+  color: #666;
+}
+.row-actions {
+  display: flex;
+  gap: 6px;
+}
+.row-actions button {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.admin-form button:disabled,
+.filters button:disabled,
+.pager button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.password-input {
+  position: relative;
+  display: block;
+}
+.password-input input {
+  padding-right: 62px !important;
+}
+.password-input button {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  padding: 6px 8px !important;
+  color: #666 !important;
+  font-size: 11px !important;
+}
+.password-input button:active {
+  transform: translateY(-50%) scale(0.98) !important;
+}
+.email-config-form {
+  max-width: 620px;
+}
+.config-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid #e4e4e4;
+  border-radius: 10px;
+  background: #fafafa;
+}
+.config-status span {
+  font-weight: 700;
+}
+.config-status small {
+  color: #888;
+}
+.config-status.ready span:before {
+  content: "●";
+  margin-right: 7px;
+  color: #111;
+  font-size: 9px;
+}
+.field-help {
+  margin: -12px 0 0;
+  color: #888;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.site-settings-list {
+  display: grid;
+  gap: 24px;
+  max-width: 1040px;
+}
+.site-settings-group > header > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.site-settings-group {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid #dedbd5;
+  border-radius: 18px;
+  background: #fbfaf7;
+}
+.site-settings-group > header {
+  display: grid;
+  gap: 5px;
+}
+.site-settings-group > header > span {
+  color: #69533e;
+}
+.site-settings-group > header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.site-settings-group > header p {
+  margin: 0;
+  color: #4a4038;
+  font-size: 12px;
+}
+.site-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.site-settings-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e3e3e3;
+  border-radius: 16px;
+  background: #fff;
+}
+.site-settings-card.disabled {
+  background: #f2efe9;
+  opacity: 0.62;
+}
+.site-settings-card > div {
+  display: grid;
+  gap: 7px;
+}
+.site-settings-card strong {
+  font-size: 16px;
+}
+.site-settings-card p {
+  margin: 0;
+  color: #4a4038;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.admin-switch {
+  flex: none !important;
+  justify-content: flex-start !important;
+  width: 52px;
+  padding: 4px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 999px !important;
+  background: #f4f4f4 !important;
+  color: #555 !important;
+}
+.admin-switch i {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #aaa;
+  transition: background 0.18s;
+}
+.admin-switch.active {
+  background: #111 !important;
+  color: #fff !important;
+  border-color: #111 !important;
+}
+.admin-switch.active i {
+  margin-left: auto;
+  background: #fff;
+}
+@keyframes admin-view-in {
+  from {
+    opacity: 0.3;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  .admin-page {
+    display: block;
+  }
+  .admin-login {
+    padding: 10px;
+  }
+  .admin-login form {
+    width: min(380px, 100%);
+    padding: 24px 18px;
+  }
+  .admin-login h1 {
+    font-size: 30px;
+  }
+  .admin-login input {
+    font-size: 16px;
+    line-height: 1.25;
+  }
+  .admin-content > header {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 24px;
+    padding-bottom: 12px;
+  }
+  .admin-content > header > span:first-child {
+    display: none;
+  }
+  .admin-current-account {
+    width: auto;
+    justify-content: flex-end;
+  }
+  .admin-page > aside {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    padding: 7px 10px 9px;
+    border-right: 0;
+    border-bottom: 1px solid var(--admin-line);
+  }
+  .admin-page > aside > a {
+    grid-column: 1 / -1;
+    margin: 0 2px 3px;
+    font-size: 13px;
+  }
+  .admin-page > aside > button {
+    justify-content: center;
+    width: 100%;
+    min-height: 32px;
+    padding: 6px 4px !important;
+    font-size: 11px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .admin-content {
+    padding: 12px 12px 42px;
+  }
+  .view-heading {
+    margin: 16px 0 14px;
+  }
+  .view-heading h1 {
+    font-size: 12px;
+  }
+  .view-heading p {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .admin-form {
+    gap: 18px;
+    padding: 18px;
+  }
+  .row-actions {
+    flex-wrap: wrap;
+  }
+  .site-settings-card {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+  .site-settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .site-settings-group {
+    padding: 16px;
+  }
+  .admin-switch {
+    align-self: flex-end;
+  }
+  .pager {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .admin-account-list > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .admin-account-list .row-actions button {
+    flex: 1;
+  }
+}

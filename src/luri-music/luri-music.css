@@ -1,0 +1,502 @@
+.luri-music-clone {
+  /* Concrete ink values avoid a circular reference with the scoped aliases. */
+  --lm-text-primary: #111111;
+  --lm-text-secondary: #333333;
+  --lm-text-muted: #666666;
+  --lm-text-accent: #111111;
+  --lm-text-danger: #8b2f2f;
+  --color-text: var(--lm-text-primary);
+  --color-text-muted: var(--lm-text-muted);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding-top: var(--nav-height);
+  overflow: hidden;
+}
+
+/* Text hierarchy uses ink and blue hues instead of low-contrast grays. */
+.luri-music-clone .lm-announcement-button,
+.luri-music-clone .lm-docs-button,
+.luri-music-clone .lm-account-trigger,
+.luri-music-clone .lm-account-menu button,
+.luri-music-clone .lm-modal label {
+  color: var(--lm-text-primary);
+}
+.luri-music-clone .lm-account-menu header span,
+.luri-music-clone .lm-account-menu dt {
+  color: var(--lm-text-muted);
+}
+.luri-music-clone .lm-account-menu header span {
+  font-size: 11px;
+}
+.luri-music-clone .lm-account-menu .danger {
+  color: var(--lm-text-danger);
+}
+.luri-music-clone .lm-modal .link {
+  color: var(--lm-text-accent);
+}
+.luri-music-clone input::placeholder {
+  color: var(--lm-text-muted);
+  opacity: 1;
+}
+.luri-music-clone .music-page {
+  width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  padding-top: 0.75rem !important;
+  overflow: hidden !important;
+  flex: 1 1 auto;
+}
+.luri-music-clone.is-standalone {
+  padding-top: 0;
+}
+.luri-music-clone.is-global-player {
+  display: contents;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+}
+.luri-music-clone.is-global-player > .lm-site-bar {
+  display: none;
+}
+.lm-site-bar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: min(980px, calc(100% - 4rem));
+  min-height: 48px;
+  margin: 0 auto;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-border);
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+}
+.lm-site-bar > strong {
+  display: block;
+  margin-right: auto;
+  padding: 7px 0;
+  border: 0;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  font-family: var(--font-serif);
+  white-space: nowrap;
+}
+
+.luri-music-clone :where(button, .lm-docs-button) {
+  border-radius: 10px;
+}
+.lm-announcement-button,
+.lm-docs-button,
+.lm-account-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  width: 78px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  backdrop-filter: blur(12px);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.lm-docs-button {
+  color: inherit;
+  text-decoration: none;
+}
+.lm-announcement-button,
+.lm-docs-button {
+  border: 0;
+}
+.lm-account-wrap {
+  position: relative;
+  justify-self: end;
+  width: auto;
+  min-width: 78px;
+  font-family: var(--font-ui);
+}
+.lm-account-trigger {
+  gap: 9px;
+  min-width: 78px;
+  max-width: 78px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  transition:
+    border 0.16s,
+    box-shadow 0.16s,
+    transform 0.16s;
+}
+.lm-account-trigger:hover {
+  border-color: #bbb;
+  box-shadow: 0 10px 32px #00000014;
+}
+.lm-account-trigger:active {
+  transform: scale(0.98);
+}
+.lm-account-trigger span {
+  display: grid;
+  min-width: 0;
+}
+.lm-account-trigger b {
+  overflow: hidden;
+  max-width: 100px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lm-account-trigger b {
+  font-size: 13px;
+}
+.lm-account-trigger i {
+  margin-left: auto;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-size: 11px;
+  font-style: normal;
+  white-space: nowrap;
+}
+.lm-login-trigger {
+  display: block;
+  width: auto;
+  min-width: 90px;
+  max-width: none;
+  padding-inline: 16px;
+  white-space: nowrap;
+}
+.lm-menu-backdrop {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  border: 0;
+  background: transparent;
+}
+.lm-account-menu {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  display: grid;
+  width: 310px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+  animation: lm-menu-in 0.16s ease-out;
+}
+.lm-account-menu header {
+  display: grid;
+  padding: 13px 13px 15px;
+  border-bottom: 1px solid #eee;
+}
+.lm-account-menu header b {
+  font-size: 15px;
+}
+.lm-account-menu__identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.lm-account-menu__identity i {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 650;
+}
+.lm-account-menu header span {
+  margin-top: 3px;
+  color: #777;
+  font-size: 12px;
+}
+.lm-account-menu dl {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 9px;
+  margin: 0;
+  padding: 15px 13px;
+  font-size: 12px;
+}
+.lm-account-menu dt {
+  color: #888;
+}
+.lm-account-menu dd {
+  margin: 0;
+  text-align: right;
+}
+.lm-account-menu button {
+  padding: 11px 13px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lm-account-menu button:hover {
+  background: #f5f5f5;
+}
+.lm-account-menu .danger {
+  color: #777;
+}
+.lm-modal {
+  position: fixed;
+  z-index: 500;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #0007;
+  backdrop-filter: blur(4px);
+  font-family: var(--font-ui);
+}
+.lm-modal > div {
+  position: relative;
+  box-sizing: border-box;
+  width: min(440px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+  animation: lm-modal-in 0.18s ease-out;
+}
+.lm-modal h2 {
+  margin: 0 0 24px;
+  font-size: 25px;
+  letter-spacing: -0.04em;
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+.lm-modal form {
+  display: grid;
+  gap: 14px;
+}
+.lm-modal label {
+  display: grid;
+  gap: 7px;
+  color: #333;
+  font-size: 12px;
+  font-weight: 600;
+}
+.lm-modal input,
+.lm-modal select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d8d8d8;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font: inherit;
+  transition:
+    border 0.15s,
+    box-shadow 0.15s;
+}
+.lm-modal input:focus,
+.lm-modal select:focus {
+  border-color: var(--color-text);
+  box-shadow: var(--focus-ring);
+}
+.lm-modal .primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-text);
+  color: var(--color-bg);
+  font: inherit;
+  cursor: pointer;
+}
+.lm-modal button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.lm-modal .close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: #f4f4f4;
+  font-size: 20px;
+  cursor: pointer;
+}
+.lm-modal .link {
+  border: 0;
+  background: transparent;
+  padding: 5px;
+  color: #555;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+}
+.lm-modal .link:hover {
+  text-decoration: underline;
+}
+.lm-modal .primary .ui-spinner,
+.admin-page button .ui-spinner,
+.admin-login button .ui-spinner {
+  border-color: #777;
+  border-top-color: #fff;
+}
+@keyframes lm-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lm-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  .lm-site-bar {
+    gap: 6px;
+    width: calc(100% - 2rem);
+    min-height: 44px;
+    padding: 5px 0;
+  }
+  .lm-announcement-button,
+  .lm-docs-button,
+  .lm-account-trigger {
+    width: 64px;
+    min-width: 64px;
+    max-width: 64px;
+    height: 34px;
+    padding: 0 7px;
+    font-size: 11px;
+  }
+  .lm-site-bar > strong {
+    font-size: 0.74rem;
+    letter-spacing: 0.1em;
+  }
+  .lm-account-trigger {
+    gap: 5px;
+    border-radius: 9px;
+  }
+  .lm-account-wrap {
+    width: auto;
+    min-width: 64px;
+  }
+  .lm-account-trigger span {
+    display: grid;
+    min-width: 0;
+    max-width: 58px;
+  }
+  .lm-login-trigger {
+    width: auto;
+    min-width: 82px;
+    max-width: none;
+    font-size: 11px;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  .lm-account-trigger i {
+    font-size: 10px;
+  }
+  .lm-account-menu {
+    width: min(310px, calc(100vw - 20px));
+  }
+  .lm-modal > div {
+    padding: 26px 18px;
+    border-radius: 14px;
+  }
+  .luri-music-clone .music-page {
+    padding-top: 0.35rem !important;
+  }
+}
+
+/* ZY MUSIC owns one viewport; only its playlist and lyric panes scroll. */
+.luri-music-clone .music-shell,
+.luri-music-clone .music-content,
+.luri-music-clone .music-workspace,
+.luri-music-clone .music-results,
+.luri-music-clone .music-lyrics {
+  min-height: 0;
+}
+.luri-music-clone .music-shell {
+  flex: 1 1 auto;
+}
+.luri-music-clone .music-content {
+  box-sizing: border-box;
+  padding-bottom: 0;
+}
+.luri-music-clone .music-header,
+.luri-music-clone .music-sidebar {
+  flex: 0 0 auto;
+}
+.luri-music-clone .music-search {
+  padding-block: 3px;
+}
+.luri-music-clone .music-header {
+  gap: 0.75rem;
+}
+.luri-music-clone .music-workspace {
+  margin-top: 0.75rem;
+}
+.luri-music-clone .music-list,
+.luri-music-clone .lyrics-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 760px) {
+  .luri-music-clone .music-workspace {
+    margin-top: 0 !important;
+  }
+}
+@media (min-width: 761px) {
+  .luri-music-clone .music-sidebar {
+    top: 3.6rem !important;
+  }
+  .luri-music-clone .music-results {
+    box-sizing: border-box;
+    padding-bottom: 2.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lm-account-menu,
+  .lm-modal > div {
+    animation: none;
+  }
+}

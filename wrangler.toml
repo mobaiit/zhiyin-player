@@ -1,0 +1,20 @@
+name = "zhiyin-player"
+main = "worker.js"
+compatibility_date = "2026-09-18"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+html_handling = "drop-trailing-slash"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "LURI_MUSIC_DB"
+database_name = "zhiyin-player"
+database_id = "65e1e9b1-44d9-4aff-ad35-dfa017e2bc46"
+
+[[routes]]
+pattern = "zhiyin.us.ci"
+custom_domain = true

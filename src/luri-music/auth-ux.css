@@ -1,0 +1,304 @@
+.lm-form-fields {
+  display: grid;
+  gap: 13px;
+}
+.lm-consent {
+  display: flex !important;
+  align-items: center;
+  gap: 7px !important;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.luri-music-clone .lm-consent {
+  color: var(--lm-text-secondary);
+}
+.luri-music-clone .lm-consent button,
+.luri-music-clone .lm-forgot {
+  color: var(--lm-text-accent);
+}
+.luri-music-clone .lm-legal-date {
+  color: var(--lm-text-accent);
+}
+.luri-music-clone .lm-legal p {
+  color: var(--lm-text-secondary);
+}
+.luri-music-clone .lm-legal strong {
+  color: var(--lm-text-primary);
+}
+.luri-music-clone .lm-password-input button,
+.luri-music-clone .lm-code-input button {
+  color: var(--lm-text-accent);
+}
+.lm-consent input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: #111;
+  cursor: pointer;
+}
+.lm-consent label {
+  display: inline !important;
+  gap: 0 !important;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.lm-consent button {
+  display: inline;
+  border: 0;
+  background: transparent;
+  padding: 0 2px;
+  color: #111;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.lm-legal {
+  display: grid;
+  gap: 18px;
+}
+.lm-legal-date {
+  margin: -12px 0 4px;
+  color: #999;
+  font-size: 12px;
+}
+.lm-legal section {
+  display: grid;
+  gap: 6px;
+}
+.lm-legal h3 {
+  margin: 0;
+  font-size: 13px;
+}
+.lm-legal p {
+  margin: 0;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.75;
+}
+.lm-legal strong {
+  color: #191919;
+  font-weight: 700;
+}
+.lm-legal .primary {
+  margin-top: 4px;
+}
+.lm-password-input,
+.lm-code-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.lm-password-input input,
+.lm-code-input input {
+  padding-right: 68px;
+}
+.lm-password-input button,
+.lm-code-input button {
+  position: absolute;
+  right: 6px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: #f1f1f1;
+  color: #555;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.lm-code-input input {
+  padding-right: 112px;
+}
+.lm-code-input button {
+  min-width: 100px;
+}
+.lm-forgot {
+  justify-self: end;
+  margin: -6px 0 !important;
+  font-size: 12px !important;
+}
+.lm-announcement {
+  position: fixed;
+  z-index: 900;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: #0009;
+  backdrop-filter: blur(7px);
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+.lm-announcement article {
+  box-sizing: border-box;
+  width: min(570px, 100%);
+  max-height: calc(100dvh - 36px);
+  overflow: auto;
+  padding: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg);
+}
+.lm-announcement article > span {
+  color: #888;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+.lm-announcement h2 {
+  margin: 9px 0 22px;
+  font-size: 32px;
+  letter-spacing: -0.04em;
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+.lm-announcement p {
+  margin: 0 0 14px;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.85;
+}
+.lm-announcement b,
+.lm-announcement strong {
+  color: #111;
+  font-weight: 700;
+}
+.lm-announcement-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+.lm-announcement small {
+  display: block;
+  color: #999;
+}
+.lm-announcement-actions button {
+  flex: none;
+  padding: 8px 12px;
+  border: 1px solid var(--lm-text-primary, #111111);
+  border-radius: var(--radius-sm);
+  background: var(--lm-text-primary, #111111);
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.lm-announcement-actions button:hover {
+  background: #333333;
+}
+.luri-music-clone .lm-announcement article {
+  color: var(--lm-text-primary);
+}
+.luri-music-clone .lm-announcement article > span {
+  color: var(--lm-text-accent);
+}
+.luri-music-clone .lm-announcement p {
+  color: var(--lm-text-secondary);
+}
+.luri-music-clone .lm-announcement b,
+.luri-music-clone .lm-announcement strong {
+  color: var(--lm-text-primary);
+}
+.luri-music-clone .lm-announcement small {
+  color: var(--lm-text-muted);
+}
+@media (min-width: 761px) {
+  .lm-legal-modal > div {
+    width: min(940px, calc(100vw - 64px));
+    padding: 40px 46px;
+  }
+  .lm-legal {
+    gap: 0;
+  }
+  .lm-legal-date {
+    margin-bottom: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ececec;
+  }
+  .lm-legal section {
+    grid-template-columns: 170px minmax(0, 1fr);
+    gap: 8px 28px;
+    padding: 18px 0;
+    border-bottom: 1px solid #eeeeec;
+  }
+  .lm-legal section h3 {
+    grid-column: 1;
+  }
+  .lm-legal section p,
+  .lm-legal section .lm-protocol-doc-link {
+    grid-column: 2;
+  }
+  .lm-legal h3 {
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .lm-legal p {
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .lm-legal > .primary {
+    justify-self: end;
+    min-width: 132px;
+    margin-top: 24px;
+  }
+  .lm-announcement article {
+    width: min(680px, calc(100vw - 64px));
+    padding: 40px 42px;
+  }
+  .lm-announcement p {
+    margin-bottom: 17px;
+    font-size: 15px;
+    line-height: 1.9;
+  }
+}
+@media (max-width: 600px) {
+  .lm-auth-modal > div {
+    width: min(340px, calc(100% - 24px));
+    max-height: calc(100dvh - 56px);
+    padding: 18px 14px;
+  }
+  .lm-auth-modal h2 {
+    margin-bottom: 16px;
+    font-size: 21px;
+  }
+  .lm-auth-modal form {
+    gap: 10px;
+  }
+  .lm-auth-modal .lm-form-fields {
+    gap: 9px;
+  }
+  .lm-auth-modal label {
+    gap: 5px;
+  }
+  .lm-auth-modal input {
+    padding-block: 10px;
+    font-size: 16px;
+  }
+  .lm-auth-modal .primary {
+    padding-block: 10px;
+  }
+  .lm-announcement article {
+    padding: 27px 21px;
+    border-radius: 15px;
+  }
+  .lm-announcement h2 {
+    font-size: 27px;
+  }
+  .lm-announcement-actions {
+    align-items: stretch;
+    flex-direction: column;
+    text-align: center;
+  }
+}

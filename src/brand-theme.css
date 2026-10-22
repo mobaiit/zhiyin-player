@@ -1,0 +1,265 @@
+:root {
+  color-scheme: light;
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(251, 146, 60, 0.15), transparent 26rem),
+    radial-gradient(circle at 92% 15%, rgba(124, 58, 237, 0.13), transparent 30rem),
+    #fff8f1;
+  background-attachment: fixed;
+}
+
+::selection {
+  background: #7c3aed;
+  color: #fff;
+}
+
+.luri-music-clone {
+  --lm-text-primary: #281344;
+  --lm-text-secondary: #4c3761;
+  --lm-text-muted: #6f607d;
+  --lm-text-accent: #6d28d9;
+  --lm-text-danger: #b42318;
+  background: transparent;
+}
+
+.lm-site-bar {
+  width: min(100% - 32px, 1440px);
+  margin-top: 8px;
+  padding-inline: 14px;
+  border: 1px solid rgba(124, 58, 237, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 12px 36px rgba(82, 42, 124, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.lm-site-bar > strong {
+  color: #6d28d9;
+  font-family: var(--font-ui);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.lm-docs-button,
+.lm-announcement-button,
+.lm-account-trigger {
+  border-color: #dfcff1 !important;
+  background: #fff !important;
+  color: #3e2459 !important;
+}
+
+.lm-docs-button:hover,
+.lm-announcement-button:hover,
+.lm-account-trigger:hover {
+  border-color: #a78bfa !important;
+  background: #f7f2ff !important;
+}
+
+.music-page {
+  background:
+    linear-gradient(145deg, rgba(255, 245, 235, 0.72), rgba(244, 239, 255, 0.76)),
+    transparent;
+}
+
+.music-sidebar,
+.music-results,
+.music-lyrics,
+.music-player,
+.music-search,
+.music-search-history,
+.lm-account-menu,
+.lm-modal > div {
+  border-color: rgba(124, 58, 237, 0.16) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 14px 42px rgba(78, 44, 107, 0.09) !important;
+}
+
+.music-brand,
+.music-kicker,
+.music-header h1,
+.lyrics-track h2 {
+  color: #5b21b6 !important;
+}
+
+.music-nav button.active,
+.music-chart-switch button.active,
+.music-mobile-tabs button.active,
+.music-player .play-button,
+.lm-primary,
+.admin-page .primary,
+.admin-login button {
+  border-color: #7c3aed !important;
+  background: linear-gradient(135deg, #7c3aed, #9333ea) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.22) !important;
+}
+
+.music-nav button:hover,
+.music-row:hover,
+.music-chart-switch button:hover,
+.lm-account-menu button:hover {
+  background: #f5efff !important;
+}
+
+.music-row.current {
+  background: linear-gradient(90deg, #f1e9ff, #fff3e8) !important;
+}
+
+.music-row.current::before,
+.like-button.liked,
+.music-search-status strong {
+  color: #ea580c !important;
+}
+
+.music-player {
+  border-top: 1px solid rgba(124, 58, 237, 0.2) !important;
+  background: rgba(255, 250, 246, 0.94) !important;
+  backdrop-filter: blur(20px);
+}
+
+.music-player .music-controls .music-icon-button,
+.music-player .music-controls .play-button {
+  min-width: 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-color: #decef0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: #5b21b6 !important;
+}
+
+.music-player .music-controls .play-button {
+  background: linear-gradient(135deg, #7c3aed, #9333ea) !important;
+  color: #fff !important;
+}
+
+.music-player__progress input[type="range"] {
+  background: linear-gradient(to right, #ea580c 0 var(--music-progress), #e5d9ef var(--music-progress) 100%) !important;
+}
+
+.music-quality {
+  border-color: #f5a35c !important;
+  background: #fff2e4 !important;
+  color: #9a3412 !important;
+}
+
+.admin-page,
+.admin-login {
+  --admin-black: #281344;
+  --admin-muted: #6f607d;
+  --admin-line: #e5d8f2;
+  --admin-soft: #f6f0ff;
+  background: #fbf7ff !important;
+  color: #281344 !important;
+}
+
+.admin-page > aside,
+.admin-page aside,
+.admin-content > header,
+.admin-form,
+.admin-account-list,
+.user-table,
+.smtp-test-card,
+.admin-login form {
+  border-color: #e5d8f2 !important;
+  background: #fff !important;
+}
+
+.admin-page aside a,
+.admin-login h1 {
+  color: #6d28d9 !important;
+}
+
+.admin-page aside .active {
+  background: #7c3aed !important;
+  color: #fff !important;
+}
+
+.admin-page aside button:hover,
+.admin-current-account .admin-account-menu button:hover {
+  background: #f3edff !important;
+  color: #5b21b6 !important;
+}
+
+.smtp-config-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 860px;
+}
+
+.smtp-config-form > :first-child,
+.smtp-config-form > .smtp-checkbox,
+.smtp-config-form > .field-help,
+.smtp-config-form > button {
+  grid-column: 1 / -1;
+}
+
+.smtp-checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.smtp-checkbox input {
+  width: 18px !important;
+  height: 18px;
+}
+
+.smtp-test-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 340px) auto;
+  align-items: end;
+  gap: 16px;
+  max-width: 860px;
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid;
+  border-radius: 16px;
+}
+
+.smtp-test-card p {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.smtp-test-card button {
+  min-height: 44px;
+  padding-inline: 18px;
+  background: #fff3e8 !important;
+  color: #9a3412 !important;
+}
+
+@media (max-width: 760px) {
+  .lm-site-bar {
+    width: calc(100% - 20px);
+    margin-top: 5px;
+  }
+
+  .music-player .music-controls .music-icon-button,
+  .music-player .music-controls .play-button {
+    min-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .smtp-config-form,
+  .smtp-test-card {
+    grid-template-columns: 1fr;
+  }
+
+  .smtp-test-card {
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,37 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+.wrangler/
+.wrangler-dry-run*/
+.edge-*/
+*-loaded.png
+desktop.png
+mobile.png
+admin.png
+*.local
+
+# 本地环境变量（含 token，不提交）
+.env
+.env.local
+config.dev
+config.env.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
