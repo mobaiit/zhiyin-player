@@ -1073,6 +1073,33 @@ body {
   }
 }
 
+/* Overlay the music navigation on the same artwork canvas as the bottom player. */
+.luri-music-clone.is-standalone > .lm-site-bar {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  margin-top: 0;
+  transform: translateX(-50%);
+}
+
+.luri-music-clone.is-standalone > .music-page {
+  padding-top: 64px !important;
+}
+
+@media (max-width: 760px) {
+  .luri-music-clone.is-standalone > .lm-site-bar {
+    top: 4px;
+  }
+
+  .luri-music-clone.is-standalone > .music-page {
+    padding-top: 54px !important;
+  }
+
+  .luri-music-clone.is-standalone > .music-page.mobile-view-now {
+    padding-top: 4px !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .music-artwork-backdrop {
     transition: none !important;
@@ -1752,8 +1779,13 @@ html[data-theme="light"] .lyrics-track > div:not(.lyrics-track__actions) > span 
 }
 
 @media (max-width: 760px) {
-  /* A legacy static-position rule detached the favourite badge from its icon. */
+  /* Keep the mobile action compact; legacy positioning can detach its badge layer. */
   .music-page.mobile-view-now .lyrics-track__actions .like-button {
     position: relative !important;
+  }
+
+  .music-page.mobile-view-now .lyrics-track__actions .like-button::after {
+    display: none !important;
+    content: none !important;
   }
 }
