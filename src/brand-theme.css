@@ -1358,6 +1358,14 @@ body {
 }
 
 @media (max-width: 760px) {
+  .luri-music-clone:has(.music-page.mobile-view-now) > .lm-site-bar {
+    display: none !important;
+  }
+
+  .music-page.mobile-view-now {
+    padding-top: 4px !important;
+  }
+
   .lm-site-bar {
     width: calc(100% - 24px);
     min-height: 44px;
