@@ -161,7 +161,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const [mobileView, setMobileView] = useState('playlist');
   const [activeQueue, setActiveQueue] = useState('normal');
   const [resultPage, setResultPage] = useState(0); const [hasMoreResults, setHasMoreResults] = useState(false); const [loadingMore, setLoadingMore] = useState(false);
-  const [tracks, setTracks] = useState(() => readTrackStore(STORE_QUEUE).filter((track) => track.binding)); const [likedTracks, setLikedTracks] = useState(() => favoriteInitialRef.current.items); const [randomTracks, setRandomTracks] = useState(() => readTrackStore(STORE_RANDOM_LIST).filter((track) => track.binding).slice(0, 50)); const [playbackQueue, setPlaybackQueue] = useState([]); const [currentId, setCurrentId] = useState(null); const [playing, setPlaying] = useState(false); const [playbackState, setPlaybackState] = useState('idle'); const [playbackTrackId, setPlaybackTrackId] = useState(null); const [playbackAttempt, setPlaybackAttempt] = useState(0); const [titleOverflows, setTitleOverflows] = useState(false);
+  const [tracks, setTracks] = useState(() => readTrackStore(STORE_QUEUE).filter((track) => track.binding)); const [likedTracks, setLikedTracks] = useState(() => favoriteInitialRef.current.items); const [randomTracks, setRandomTracks] = useState(() => readTrackStore(STORE_RANDOM_LIST).filter((track) => track.binding).slice(0, 50)); const [playbackQueue, setPlaybackQueue] = useState([]); const [currentId, setCurrentId] = useState(null); const [playing, setPlaying] = useState(false); const [playbackState, setPlaybackState] = useState('idle'); const [playbackTrackId, setPlaybackTrackId] = useState(null); const [playbackAttempt, setPlaybackAttempt] = useState(0); const [titleOverflows, setTitleOverflows] = useState(false); const [artworkBackground, setArtworkBackground] = useState(null);
   const [progress, setProgress] = useState(0); const [duration, setDuration] = useState(0); const [playbackMode, setPlaybackMode] = useState(readPlaybackMode);
   const [volume, setVolume] = useState(0.8); const [muted, setMuted] = useState(false);
   const [lyrics, setLyrics] = useState(''); const [translation, setTranslation] = useState(''); const [lyricsState, setLyricsState] = useState('');
@@ -191,6 +191,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const [toast, setToast] = useState(null);
   const activeTracks = activeQueue === 'favorites' ? likedTracks : tracks;
   const current = playbackQueue.find((track) => track.songId === currentId) || activeTracks.find((track) => track.songId === currentId);
+  const activeArtworkBackground = artworkBackground?.songId === currentId && ['playing', 'paused'].includes(playbackState) ? artworkBackground.url : '';
   const resolveTrackRef = useRef(current); resolveTrackRef.current = current;
   const resolveSongId = current?.songId; const resolveUrl = current?.url;
   const lyricsTrackRef = useRef(current); lyricsTrackRef.current = current;
@@ -364,7 +365,11 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       setTracks((items) => items.map(update)); setLikedTracks((items) => items.map(update)); setPlaybackQueue((items) => items.map(update));
     }).catch(() => { image.src = EMPTY_ART; });
   };
-  const artworkLoaded = () => { if (current) artworkRefreshIdsRef.current.delete(current.songId); };
+  const artworkLoaded = (event) => {
+    if (!current) return;
+    artworkRefreshIdsRef.current.delete(current.songId);
+    if (current.art && current.art !== EMPTY_ART && event.currentTarget.currentSrc) setArtworkBackground({ songId: current.songId, url: event.currentTarget.currentSrc });
+  };
   useEffect(() => { try { localStorage.setItem(STORE_QUEUE, JSON.stringify(tracks.slice(0, 50).map(({ url: _url, ...track }) => track))); } catch { /* Storage is unavailable in private browsing. */ } }, [tracks]);
   useEffect(() => { try { localStorage.setItem(STORE_RANDOM_LIST, JSON.stringify(randomTracks.slice(0, 50).map(({ url: _url, expiresAt: _expiresAt, ...track }) => track))); } catch { /* Storage is unavailable in private browsing. */ } }, [randomTracks]);
   useEffect(() => { likedTracksRef.current = likedTracks; try { localStorage.setItem(likedStoreKey, JSON.stringify(minimalFavorites(likedTracks))); } catch { /* Storage is unavailable in private browsing. */ } }, [likedTracks, likedStoreKey]);
@@ -880,6 +885,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     };
   });
   return <main className={`music-page mobile-view-${mobileView}${playing ? ' is-playing' : ''}${titleOverflows ? ' has-overflowing-title' : ''}${isSearching ? ' is-searching' : ''}${chartLoading ? ' is-chart-loading' : ''}`}><audio ref={audio} onPlay={() => { setPlaying(true); setPlaybackTrackId(currentId); setPlaybackState('playing'); }} onPause={() => { setPlaying(false); setPlaybackState((state) => state === 'loading' || state === 'resolving' ? state : 'paused'); }} onLoadStart={() => setPlaybackState('loading')} onWaiting={() => { setPlaybackState('loading'); beginMediaDeadline(currentId); }} onPlaying={() => { clearMediaDeadline(); failedPlaybackIdsRef.current.clear(); playbackRefreshModesRef.current.delete(currentId); setPlaybackState('playing'); if (randomListWriteIdRef.current === currentId && current) { rememberRandomListTrack(current); randomListWriteIdRef.current = ''; } if (randomSwitchRef.current?.targetId === currentId) randomSwitchRef.current = null; }} onError={(event) => { if (ignoreAudioErrorRef.current) { ignoreAudioErrorRef.current = false; return; } clearMediaDeadline(); const mediaError = event.currentTarget.error?.code; handlePlaybackFailure('播放地址无法加载，已尝试刷新音源', mediaError === 3 || mediaError === 4 ? 'decode' : 'url'); }} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onLoadedMetadata={handleLoadedMetadata} onEnded={() => { clearMediaDeadline(); next(true); }} /><Toast toast={toast} onClose={() => setToast(null)} />
+  <div className={`music-artwork-backdrop${activeArtworkBackground ? ' is-visible' : ''}`} style={activeArtworkBackground ? { backgroundImage: `url(${JSON.stringify(activeArtworkBackground)})` } : undefined} aria-hidden="true" />
   <section className="music-shell">
       <section className="music-content">
         <header className="music-header">

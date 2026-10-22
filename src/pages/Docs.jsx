@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import useAutoHideNavigation from '../hooks/useAutoHideNavigation';
 import './Docs.css';
 
 const manifestExample = `{
@@ -167,6 +168,7 @@ export default function Docs() {
   const [activeSection, setActiveSection] = useState('start');
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const navigationHidden = useAutoHideNavigation({ suspended: menuOpen });
   const filteredNav = nav.filter(([, label]) => !query.trim() || label.toLowerCase().includes(query.trim().toLowerCase()));
   useEffect(() => {
     const sections = nav.map(([id]) => document.getElementById(id)).filter(Boolean);
@@ -179,7 +181,7 @@ export default function Docs() {
   }, []);
   const navLink = ([id, label]) => <a className={activeSection === id ? 'active' : ''} href={`#${id}`} key={id} aria-current={activeSection === id ? 'location' : undefined} onClick={() => setMenuOpen(false)}>{label}</a>;
   return <main className="docs-page">
-    <header className="docs-hero">
+    <header className={`docs-hero auto-hide-navigation${navigationHidden ? ' is-hidden' : ''}`} data-auto-hide-navigation>
       <button className="docs-menu-button" type="button" aria-label="打开文档目录" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><span /><span /><span /></button>
       <a className="docs-brand" href="/docs"><span>ZY MUSIC</span><strong>使用与开发文档</strong></a>
       <span className="docs-version">MPP 1.0</span>

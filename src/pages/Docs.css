@@ -146,3 +146,48 @@
   .docs-page { scroll-behavior: auto; }
   .docs-sidebar { transition: none; }
 }
+
+/* Keep the compact documentation header operable at small phone widths. */
+.docs-page {
+  overflow-x: hidden;
+}
+
+.docs-content :where(p, li, span, code) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .docs-hero {
+    gap: 8px;
+    overflow: visible;
+  }
+
+  .docs-brand {
+    flex: 1 1 auto;
+    margin-right: 62px;
+  }
+
+  .docs-brand strong {
+    display: none;
+  }
+
+  .docs-hero nav {
+    position: absolute;
+    right: 13px;
+    flex: 0 0 auto;
+    margin-left: 0;
+  }
+
+  .docs-hero nav a:last-child {
+    width: 54px;
+    min-width: 54px;
+    padding: 0;
+    overflow: hidden;
+    font-size: 0;
+  }
+
+  .docs-hero nav a:last-child::after {
+    content: "播放器";
+    font-size: 12px;
+  }
+}
