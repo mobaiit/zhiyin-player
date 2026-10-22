@@ -1,7 +1,7 @@
 const PROVIDER_ERROR_MESSAGES = {
-  connection_credential_bound: '该连接凭据已绑定其他 ZY MUSIC 账号，请使用原账号或更换凭据',
+  connection_credential_bound: '该连接凭据已绑定其他知音账号，请使用原账号或更换凭据',
   invalid_connection_credential: '连接凭据无效或当前不可用，请检查后重试',
-  activation_code_used: '该连接凭据已绑定其他 ZY MUSIC 账号，请使用原账号或更换凭据',
+  activation_code_used: '该连接凭据已绑定其他知音账号，请使用原账号或更换凭据',
   invalid_activation_code: '连接凭据无效或当前不可用，请检查后重试',
   access_denied: 'Provider 拒绝了当前认证信息，请检查后重试',
   provider_access_denied: 'Provider 拒绝了当前认证信息，请检查后重试',

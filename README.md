@@ -1,6 +1,6 @@
-# ZY MUSIC
+# 知音
 
-ZY MUSIC 是一个可扩展的 Web 音乐播放器，支持通过 Music Provider Protocol 连接用户选择的内容服务。
+知音是一个可扩展的 Web 音乐播放器，支持通过 Music Provider Protocol 连接用户选择的内容服务。
 
 线上地址：https://zhiyin.us.ci
 
@@ -15,7 +15,7 @@ ZY MUSIC 是一个可扩展的 Web 音乐播放器，支持通过 Music Provider
 - Cloudflare Turnstile 人机验证
 - 可配置 SMTP 发件服务与测试邮件
 
-ZY MUSIC 仅提供播放器、账号系统和 Provider 接入能力，不托管、缓存、代理或分发音频内容。音乐数据由用户配置的第三方 Provider 提供。
+知音仅提供播放器、账号系统和 Provider 接入能力，不托管、缓存、代理或分发音频内容。音乐数据由用户配置的第三方 Provider 提供。
 
 ## 技术栈
 

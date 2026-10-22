@@ -15,7 +15,7 @@ export default {
       try {
         return await handleLuriMusic(request, env);
       } catch (error) {
-        console.error('ZY MUSIC API failed', pathname, error?.stack || error);
+        console.error('知音 API failed', pathname, error?.stack || error);
         return json({ error: `后台服务异常（${pathname.endsWith('/admin/login') ? '登录' : '请求'}未完成），请稍后重试` }, 500);
       }
     }

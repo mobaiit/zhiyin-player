@@ -446,7 +446,7 @@
   }
 }
 
-/* ZY MUSIC owns one viewport; only its playlist and lyric panes scroll. */
+/* 知音占用一个视口，仅播放列表和歌词区域独立滚动。 */
 .luri-music-clone .music-shell,
 .luri-music-clone .music-content,
 .luri-music-clone .music-workspace,

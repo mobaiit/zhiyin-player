@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "license": "CC-BY-NC-SA-4.0",
-  "description": "ZY MUSIC - a standalone extensible web music player for Cloudflare Workers",
+  "description": "知音 - a standalone extensible web music player for Cloudflare Workers",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

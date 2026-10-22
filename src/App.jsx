@@ -10,7 +10,7 @@ export default function App() {
   const isAdmin = pathname === '/admin' || new URLSearchParams(search).get('admin') === '1';
 
   useEffect(() => {
-    document.title = isAdmin ? 'ZY MUSIC ADMIN' : pathname === '/docs' ? 'ZY MUSIC 文档' : 'ZY MUSIC';
+    document.title = isAdmin ? '知音后台' : pathname === '/docs' ? '知音文档' : '知音';
   }, [isAdmin, pathname]);
 
   if (isAdmin) return <Admin />;

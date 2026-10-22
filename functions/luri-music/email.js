@@ -33,7 +33,7 @@ function environmentConfig(env) {
     username: String(env.SMTP_USERNAME || ''),
     password: String(env.SMTP_PASSWORD || ''),
     from: String(env.SMTP_FROM),
-    fromName: String(env.SMTP_FROM_NAME || 'ZY MUSIC'),
+    fromName: String(env.SMTP_FROM_NAME || '知音'),
     replyTo: String(env.SMTP_REPLY_TO || ''),
   };
 }
@@ -47,7 +47,7 @@ export async function smtpConfig(env) {
 
 export async function publicSmtpConfig(env) {
   const config = await smtpConfig(env);
-  if (!config) return { configured: false, source: 'none', host: '', port: 465, secure: true, authType: 'plain', username: '', passwordConfigured: false, from: 'no-reply@zhiyin.us.ci', fromName: 'ZY MUSIC', replyTo: '' };
+  if (!config) return { configured: false, source: 'none', host: '', port: 465, secure: true, authType: 'plain', username: '', passwordConfigured: false, from: 'no-reply@zhiyin.us.ci', fromName: '知音', replyTo: '' };
   return { configured: true, source: config.source, host: config.host, port: config.port, secure: config.secure, authType: config.authType, username: config.username, passwordConfigured: Boolean(config.password), from: config.from, fromName: config.fromName, replyTo: config.replyTo };
 }
 
@@ -60,7 +60,7 @@ function normalizeConfig(data, password = '') {
     username: String(data.username || '').trim(),
     password: String(data.password || password),
     from: String(data.from || '').trim().toLowerCase(),
-    fromName: String(data.fromName || 'ZY MUSIC').trim().slice(0, 100),
+    fromName: String(data.fromName || '知音').trim().slice(0, 100),
     replyTo: String(data.replyTo || '').trim().toLowerCase(),
   };
   if (!config.host || !Number.isInteger(config.port) || config.port < 1 || config.port > 65535) throw new Error('SMTP 主机或端口无效');
@@ -113,7 +113,7 @@ async function send(env, recipient, subject, text, html) {
       socketTimeoutMs: 15000,
       responseTimeoutMs: 15000,
     }, {
-      from: { email: config.from, name: config.fromName || 'ZY MUSIC' },
+      from: { email: config.from, name: config.fromName || '知音' },
       to: recipient,
       reply: config.replyTo || undefined,
       subject,
@@ -127,12 +127,12 @@ async function send(env, recipient, subject, text, html) {
 
 export async function sendVerificationEmail(env, recipient, purpose, code) {
   const action = purpose === 'register' ? '注册账号' : '重置密码';
-  const text = `你正在进行 ZY MUSIC ${action}，验证码为：${code}。验证码 10 分钟内有效，请勿转发给他人。`;
-  const html = `<div style="font-family:Arial,'Microsoft YaHei',sans-serif;color:#24134f;line-height:1.7"><h2 style="margin:0 0 18px;color:#6d28d9">ZY MUSIC</h2><p>你正在${action}，验证码为：</p><p style="font-size:30px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#ea580c">${code}</p><p>验证码 10 分钟内有效，请勿转发给他人。如非本人操作，请忽略本邮件。</p></div>`;
-  await send(env, recipient, `ZY MUSIC ${action}验证码`, text, html);
+  const text = `你正在进行知音${action}，验证码为：${code}。验证码 10 分钟内有效，请勿转发给他人。`;
+  const html = `<div style="font-family:Arial,'Microsoft YaHei',sans-serif;color:#24134f;line-height:1.7"><h2 style="margin:0 0 18px;color:#6d28d9">知音</h2><p>你正在${action}，验证码为：</p><p style="font-size:30px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#ea580c">${code}</p><p>验证码 10 分钟内有效，请勿转发给他人。如非本人操作，请忽略本邮件。</p></div>`;
+  await send(env, recipient, `知音${action}验证码`, text, html);
 }
 
 export async function sendSmtpTest(env, recipient) {
   if (!validEmail(recipient)) throw new Error('请输入有效的测试收件邮箱');
-  await send(env, recipient, 'ZY MUSIC SMTP 测试', '这是一封来自 ZY MUSIC 的 SMTP 测试邮件。收到此邮件表示配置可用。', '<h2>ZY MUSIC</h2><p>这是一封 SMTP 测试邮件。收到此邮件表示配置可用。</p>');
+  await send(env, recipient, '知音 SMTP 测试', '这是一封来自知音的 SMTP 测试邮件。收到此邮件表示配置可用。', '<h2>知音</h2><p>这是一封 SMTP 测试邮件。收到此邮件表示配置可用。</p>');
 }

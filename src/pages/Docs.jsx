@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import useAutoHideNavigation from '../hooks/useAutoHideNavigation';
+import ThemeToggle from '../components/ThemeToggle';
 import './Docs.css';
 
 const manifestExample = `{
@@ -183,10 +184,11 @@ export default function Docs() {
   return <main className="docs-page">
     <header className={`docs-hero auto-hide-navigation${navigationHidden ? ' is-hidden' : ''}`} data-auto-hide-navigation>
       <button className="docs-menu-button" type="button" aria-label="打开文档目录" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><span /><span /><span /></button>
-      <a className="docs-brand" href="/docs"><span>ZY MUSIC</span><strong>使用与开发文档</strong></a>
+      <a className="docs-brand" href="/docs"><span>知音</span><strong>使用与开发文档</strong></a>
       <span className="docs-version">MPP 1.0</span>
       <nav>
         <a href="https://github.com/mobaiit/zhiyin-player" target="_blank" rel="noreferrer" className="docs-github-link"><Icon id="github-icon" /></a>
+        <ThemeToggle />
         <a href="/">打开播放器</a>
       </nav>
     </header>
@@ -204,21 +206,21 @@ export default function Docs() {
       </aside>
 
       <article className="docs-content">
-        <div className="docs-title"><div className="docs-breadcrumb"><span>Documentation</span><i>/</i><b>Music Provider Protocol</b></div><p>使用指南与开发者参考</p><h1>ZY MUSIC 文档</h1><span>从连接 Provider 到实现完整协议，一份可直接查阅和落地的产品文档。</span><div className="docs-title-actions"><a href="#start">开始使用</a><a href="#protocol">阅读协议</a></div></div>
+        <div className="docs-title"><div className="docs-breadcrumb"><span>Documentation</span><i>/</i><b>Music Provider Protocol</b></div><p>使用指南与开发者参考</p><h1>知音文档</h1><span>从连接 Provider 到实现完整协议，一份可直接查阅和落地的产品文档。</span><div className="docs-title-actions"><a href="#start">开始使用</a><a href="#protocol">阅读协议</a></div></div>
 
         <div className="docs-section-label"><span>01</span><b>播放器用户指南</b></div>
 
         <section id="start">
           <h2>快速开始</h2>
-          <p>ZY MUSIC 只是音乐播放器客户端，不预置、托管或代理音乐内容。搜索结果、播放地址、歌词和封面均由用户选择的独立 Provider 提供。</p>
+          <p>知音只是音乐播放器客户端，不预置、托管或代理音乐内容。搜索结果、播放地址、歌词和封面均由用户选择的独立 Provider 提供。</p>
           <ol>
-            <li>注册并登录 ZY MUSIC。</li>
+            <li>注册并登录知音。</li>
             <li>从账户菜单打开“Provider 配置”，点击“添加 Provider”。</li>
             <li>选择官方源或第三方 Provider，填写完整 URL；需要 Header 或 Cookie 时使用高级 JSON。</li>
             <li>点击“认证并添加”。客户端公开读取发现文件，再将连接凭据和当前账号信息发送到 authenticate 端点换取短期 Token。</li>
             <li>启用 Provider，进入播放器使用其已声明的搜索、榜单、播放、歌词和封面能力。</li>
           </ol>
-          <div className="docs-note"><b>连接前检查</b><span>请确认 Provider 的运营主体、服务条款、隐私政策和内容授权范围。兼容本协议只代表接口格式正确，不代表 ZY MUSIC 对服务或内容进行审核、推荐或授权。</span></div>
+          <div className="docs-note"><b>连接前检查</b><span>请确认 Provider 的运营主体、服务条款、隐私政策和内容授权范围。兼容本协议只代表接口格式正确，不代表知音对服务或内容进行审核、推荐或授权。</span></div>
         </section>
 
         <section id="connections">
@@ -228,7 +230,7 @@ export default function Docs() {
             <article><i>01</i><h3>官方源</h3><p>由系统提供的标准 Provider 连接配置。</p><code>预置配置</code></article>
             <article><i>02</i><h3>第三方 Provider</h3><p>通过完整 URL 或高级 JSON 连接用户选择的独立服务。</p><code>url / headers / credentials</code></article>
           </div>
-          <p>编辑已有配置时会先验证新连接，失败不会覆盖原配置。删除配置会永久移除 ZY MUSIC 加密保存的连接信息。</p>
+          <p>编辑已有配置时会先验证新连接，失败不会覆盖原配置。删除配置会永久移除知音加密保存的连接信息。</p>
           <div className="docs-note"><b>配置安全</b><span>完整 URL 和 Header 可能包含敏感值。列表只显示隐藏查询参数后的地址，保存时会加密完整连接配置。</span></div>
         </section>
 
@@ -258,7 +260,7 @@ export default function Docs() {
 
         <section id="protocol">
           <h2>协议概览</h2>
-          <p>Music Provider Protocol（MPP）是 ZY MUSIC 与独立音乐 Provider 之间的 HTTPS/JSON 协议。客户端不下载或执行 Provider 提供的 JavaScript，只读取发现文件并调用声明的固定端点。</p>
+          <p>Music Provider Protocol（MPP）是知音与独立音乐 Provider 之间的 HTTPS/JSON 协议。客户端不下载或执行 Provider 提供的 JavaScript，只读取发现文件并调用声明的固定端点。</p>
           <ul>
             <li>协议标识固定为 <code>music-provider</code>，当前版本为 <code>1.0</code>。</li>
             <li>发现文件和端点必须使用 HTTPS、保持同源且不得重定向到第三方主机。</li>
@@ -305,7 +307,7 @@ export default function Docs() {
 
         <section id="authentication">
           <h2>认证与连接配置</h2>
-          <p>客户端不理解 Provider 的凭据含义，只在认证请求中按声明式配置发送 URL 参数、静态 Header、浏览器 Cookie 或其组合，并携带当前 ZY MUSIC 账号信息。认证成功后，业务请求只使用 Provider 返回的短期 Bearer Token。</p>
+          <p>客户端不理解 Provider 的凭据含义，只在认证请求中按声明式配置发送 URL 参数、静态 Header、浏览器 Cookie 或其组合，并携带当前知音账号信息。认证成功后，业务请求只使用 Provider 返回的短期 Bearer Token。</p>
           <Endpoint method="POST" path="/v1/auth/authenticate">接收客户端账号上下文，并通过 URL 参数、静态 Header 或 Cookie 验证连接凭据；成功时返回短期 Bearer Token。</Endpoint>
           <Code>{connectionExample}</Code>
           <SchemaTable title="连接配置" rows={[
@@ -412,7 +414,7 @@ export default function Docs() {
             ['OPTIONS', '仅用于 CORS 预检，不得执行端点业务逻辑。'],
             ['其他方法', '已知端点必须返回 405、Allow 响应头和 method_not_allowed 错误。'],
           ]} />
-          <p>浏览器直接访问 Provider。Provider 必须允许已登记的 ZY MUSIC Origin、实际使用的认证请求头以及 GET、POST、OPTIONS。音频和图片资源也应支持 HTTPS、跨域访问；音频地址建议支持 Range 请求。</p>
+          <p>浏览器直接访问 Provider。Provider 必须允许已登记的知音 Origin、实际使用的认证请求头以及 GET、POST、OPTIONS。音频和图片资源也应支持 HTTPS、跨域访问；音频地址建议支持 Range 请求。</p>
           <Code>{`Access-Control-Allow-Origin: https://zhiyin.us.ci
 Access-Control-Allow-Methods: GET, POST, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization, X-Provider-Key

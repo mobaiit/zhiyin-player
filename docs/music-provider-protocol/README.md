@@ -1,6 +1,6 @@
 # Music Provider Protocol 1.0
 
-Music Provider Protocol（MPP）是 ZY MUSIC 与独立音乐 Provider 之间的开放 JSON/HTTP 协议。它只规定客户端如何发现 Provider、发送请求以及解释响应，不规定 Provider 如何验证请求、管理用户或组织自身业务。
+Music Provider Protocol（MPP）是知音与独立音乐 Provider 之间的开放 JSON/HTTP 协议。它只规定客户端如何发现 Provider、发送请求以及解释响应，不规定 Provider 如何验证请求、管理用户或组织自身业务。
 
 客户端不加载远程 JavaScript，也不理解连接配置中 URL 参数、Header 或 Cookie 的业务含义。官方 Provider 与第三方 Provider 使用同一协议；区别仅在于连接配置是由系统预置还是由用户提供。
 

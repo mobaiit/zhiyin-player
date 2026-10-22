@@ -2,13 +2,13 @@
   font-size: 0 !important;
 }
 .admin-page aside a::after {
-  content: "ZY MUSIC ADMIN";
+  content: "知音后台";
   font-size: 16px;
 }
 .admin-login h1 {
   font-size: 0 !important;
 }
 .admin-login h1::after {
-  content: "ZY MUSIC ADMIN";
+  content: "知音后台";
   font-size: 36px;
 }
