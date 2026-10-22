@@ -66,6 +66,8 @@ html[data-theme="light"] {
   --zy-focus: #b82e34;
   --zy-shadow-sm: 0 12px 32px rgba(72, 45, 42, 0.1);
   --zy-shadow-lg: 0 28px 80px rgba(72, 45, 42, 0.16);
+  --zy-player-glass: rgba(255, 250, 247, 0.42);
+  --zy-player-glass-shadow: 0 18px 52px rgba(72, 45, 42, 0.16);
 }
 
 html[data-theme="light"] body {
@@ -415,6 +417,8 @@ html[data-theme="light"] .docs-code-wrap {
   --zy-focus: #ff8589;
   --zy-shadow-sm: 0 12px 32px rgba(5, 5, 8, 0.2);
   --zy-shadow-lg: 0 28px 80px rgba(5, 5, 8, 0.34);
+  --zy-player-glass: rgba(35, 36, 42, 0.34);
+  --zy-player-glass-shadow: 0 18px 52px rgba(5, 5, 8, 0.3);
 }
 
 html {
@@ -1509,17 +1513,51 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
 
 .music-search {
   border: 0 !important;
+  border-bottom: 1px solid var(--zy-border-strong) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 
 .music-search:focus-within {
   border: 0 !important;
+  border-bottom: 1px solid var(--zy-red) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .music-nav,
 .music-nav:hover,
 .music-nav.active {
   border: 0 !important;
+}
+
+.music-nav {
+  display: inline-flex !important;
+  align-items: center;
+  line-height: 1 !important;
+}
+
+.music-nav > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.music-nav.active {
+  position: relative;
+  box-shadow: none !important;
+}
+
+.music-nav.active::before {
+  position: absolute;
+  top: 25%;
+  bottom: auto;
+  left: 0;
+  width: 3px;
+  height: 50%;
+  border-radius: 999px;
+  background: var(--zy-red);
+  content: "";
 }
 
 .luri-music-clone .music-page {
@@ -1534,4 +1572,138 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
   .luri-music-clone .music-page.mobile-view-now {
     padding-top: 4px !important;
   }
+}
+
+/* The main navigation, search and transport share one glass material. */
+.lm-site-bar,
+.docs-hero,
+.admin-page > aside,
+.music-search,
+.music-player {
+  background: var(--zy-player-glass) !important;
+  box-shadow: var(--zy-player-glass-shadow) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
+.lm-site-bar,
+.docs-hero,
+.admin-page > aside,
+.music-search {
+  border-inline: 0 !important;
+  border-top: 0 !important;
+}
+
+.music-search:focus-within {
+  background: var(--zy-player-glass) !important;
+}
+
+/* Match the favourite control to the compact quality badge without shrinking its hit area. */
+.lyrics-track__actions .like-button {
+  position: relative;
+  isolation: isolate;
+  width: 2rem;
+  height: 2rem;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--zy-red-hover) !important;
+}
+
+.lyrics-track__actions .like-button::after {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: 1.55rem;
+  height: 1.05rem;
+  box-sizing: border-box;
+  border: 1px solid rgba(229, 72, 77, 0.45);
+  border-radius: 0.2rem;
+  background: rgba(229, 72, 77, 0.12);
+  content: "";
+  transform: translate(-50%, -50%);
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.lyrics-track__actions .like-button .music-icon {
+  position: relative;
+  z-index: 1;
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.lyrics-track__actions .like-button:hover::after,
+.lyrics-track__actions .like-button:focus-visible::after,
+.lyrics-track__actions .like-button.liked::after {
+  border-color: rgba(229, 72, 77, 0.72);
+  background: rgba(229, 72, 77, 0.2);
+}
+
+.lyrics-track__actions .like-button:focus-visible {
+  outline: none;
+}
+
+.lyrics-track__actions .like-button:focus-visible::after {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--zy-focus) 32%, transparent);
+}
+
+/* Toasts use the same translucent material and colour language as the player. */
+.ui-toast {
+  --ui-accent: var(--zy-red);
+  --ui-soft: var(--zy-red-soft);
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--zy-player-glass) !important;
+  color: var(--zy-text) !important;
+  box-shadow: var(--zy-player-glass-shadow) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
+.ui-toast--success {
+  --ui-accent: #58c886;
+  --ui-soft: rgba(88, 200, 134, 0.14);
+}
+
+.ui-toast--warning {
+  --ui-accent: #f0a858;
+  --ui-soft: rgba(240, 168, 88, 0.14);
+}
+
+.ui-toast--error {
+  --ui-accent: #ff7277;
+  --ui-soft: rgba(255, 114, 119, 0.14);
+}
+
+.ui-toast__icon {
+  border-radius: 8px;
+  background: var(--ui-soft);
+}
+
+.ui-toast__content b {
+  color: var(--zy-text);
+}
+
+.ui-toast__content > span,
+.ui-toast .ui-toast__close {
+  color: var(--zy-muted) !important;
+}
+
+.ui-toast .ui-toast__close:hover {
+  background: var(--zy-red-soft) !important;
+  color: var(--zy-text) !important;
+}
+
+html[data-theme="light"] .ui-toast--success {
+  --ui-accent: #238451;
+}
+
+html[data-theme="light"] .ui-toast--warning {
+  --ui-accent: #a86416;
+}
+
+html[data-theme="light"] .ui-toast--error {
+  --ui-accent: #bd343a;
 }
