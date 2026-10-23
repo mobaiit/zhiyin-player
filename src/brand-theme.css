@@ -1904,7 +1904,7 @@ html[data-theme="light"] .music-player .music-controls .play-button {
 .music-row {
   min-height: 40px !important;
   margin-block: 2px !important;
-  padding: 5px 10px !important;
+  padding: 5px 1px !important;
   border-radius: 10px !important;
 }
 
