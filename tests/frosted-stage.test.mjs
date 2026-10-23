@@ -100,8 +100,8 @@ test('transparency is controlled by artwork visibility and surface alpha, not mo
   assert.deepEqual(opacity, [0.8, 0.52]);
   const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
     .map(([, value]) => Number(value.split(',').at(-1)));
-  assert.deepEqual(surfaces, [0.22, 0.18]);
-  assert.match(built, /--zy-shared-interface-surface:#27282e38/);
+  assert.deepEqual(surfaces, [0.16, 0.18]);
+  assert.match(built, /--zy-shared-interface-surface:#27282e29/);
   assert.match(built, /--zy-shared-interface-surface:#eef0f32e/);
   // The more-specific light selector must not keep an old hardcoded tint.
   for (const selector of ['.luri-music-clone', 'html[data-theme=light] .luri-music-clone']) {
@@ -139,16 +139,40 @@ const luminance = (color) => color.reduce((sum, n, i) => {
 }, 0);
 const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
 
+const themeVars = (theme) => {
+  const vars = {};
+  const tokenRules = [...source.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .map(([, selector, body]) => ({ selector: selector.trim().replaceAll('"', ''), body }));
+  for (const selector of theme === 'light' ? [':root', 'html[data-theme=light]'] : [':root']) {
+    for (const { body } of tokenRules.filter((rule) => rule.selector === selector)) {
+      for (const [, key, value] of body.matchAll(/(--[\w-]+):([^;}]+)/g)) vars[key] = value.trim();
+    }
+  }
+  return vars;
+};
+const normalizeCover = (cover, vars) => saturate(cover, Number(vars['--zy-artwork-saturate'])).map((n) =>
+  clampChannel((n * Number(vars['--zy-artwork-contrast']) + 127.5 * (1 - Number(vars['--zy-artwork-contrast']))) * Number(vars['--zy-artwork-brightness'])));
+
+test('dark artwork is brighter and more colourful while light highlights retain tonal detail', () => {
+  const dark = themeVars('dark');
+  const previousDark = { ...dark, '--zy-artwork-saturate': '0.65', '--zy-artwork-contrast': '0.38', '--zy-artwork-brightness': '0.4' };
+  for (const level of [0, 64, 128, 192, 255]) {
+    const sample = [level, level, level];
+    assert.ok(luminance(normalizeCover(sample, dark)) > luminance(normalizeCover(sample, previousDark)), `Lift dark artwork tone ${level}`);
+  }
+  const chroma = (color) => Math.max(...color) - Math.min(...color);
+  assert.ok(chroma(normalizeCover([220, 80, 50], dark)) > chroma(normalizeCover([220, 80, 50], previousDark)) * 1.4);
+  const light = themeVars('light');
+  const highlights = [160, 192, 224, 255].map((level) => normalizeCover([level, level, level], light)[0]);
+  assert.ok(highlights.at(-1) < 240, 'Even a white cover must not turn into a clipped white background');
+  for (let i = 1; i < highlights.length; i++) assert.ok(highlights[i] > highlights[i - 1] + 4, 'Bright-cover details must stay distinct, not all clip to white');
+  const stops = [...light['--zy-shared-stage-background'].matchAll(/#[\da-f]{6}\b/gi)].map(([hex]) => rgb(hex));
+  assert.ok(stops.every((color) => Math.max(...color) <= 238), 'The default light canvas must also avoid near-white glare');
+});
+
 for (const theme of ['dark', 'light']) {
   test(`${theme}: primary and secondary text remain readable across extreme cover colours`, (t) => {
-    const vars = {};
-    const tokenRules = [...source.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-      .map(([, selector, body]) => ({ selector: selector.trim().replaceAll('"', ''), body }));
-    const readVars = (selector) => tokenRules.filter((r) => r.selector === selector).forEach(({ body }) => {
-      for (const [, key, value] of body.matchAll(/(--[\w-]+):([^;}]+)/g)) vars[key] = value.trim();
-    });
-    readVars(':root');
-    if (theme === 'light') readVars('html[data-theme=light]');
+    const vars = themeVars(theme);
     const number = (name) => Number(vars[`--zy-${name}`]);
     const stage = vars['--zy-shared-stage-background'];
     const stops = [...stage.matchAll(/#[\da-f]{6}\b/gi)].map(([hex]) => rgb(hex));
@@ -162,8 +186,7 @@ for (const theme of ['dark', 'light']) {
       let base = blend(stop, radials[1], radials[1][3] * second);
       base = blend(base, radials[0], radials[0][3] * first);
       for (const cover of covers) for (const visibility of [0, 0.5, 1]) {
-        const normalized = saturate(cover, number('artwork-saturate')).map((n) =>
-          clampChannel((n * number('artwork-contrast') + 127.5 * (1 - number('artwork-contrast'))) * number('artwork-brightness')));
+        const normalized = normalizeCover(cover, vars);
         const composite = blend(base, normalized, number('artwork-opacity') * visibility);
         const background = saturate(composite, number('shared-stage-saturate')).map((n) => clampChannel(n * number('shared-stage-brightness')));
         for (const state of ['plain', 'selected']) for (const [name, color] of foregrounds) {
