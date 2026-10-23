@@ -51,7 +51,7 @@ body {
 html[data-theme="light"] {
   color-scheme: light;
   --color-text: #18181b;
-  --color-text-muted: #4d535c;
+  --color-text-muted: #30343b;
   --zy-bg: #f1f2f4;
   --zy-bg-subtle: #e7e9ec;
   --zy-surface: #fafbfc;
@@ -61,7 +61,7 @@ html[data-theme="light"] {
   --zy-border-strong: #b7bcc4;
   --zy-text: #18181b;
   --zy-text-secondary: #292d33;
-  --zy-muted: #454b54;
+  --zy-muted: #30343b;
   --zy-red: #c73c43;
   --zy-red-hover: #a92f36;
   --zy-red-action: #b9333a;
@@ -3203,7 +3203,7 @@ html[data-theme="light"] .lm-quality-mark--hires {
 }
 
 html[data-theme="light"] :is(.admin-page, .admin-login) {
-  --admin-interface-surface: rgba(238, 240, 243, 0.26);
+  --admin-interface-surface: var(--zy-shared-interface-surface);
   --admin-interface-border: rgba(34, 38, 45, 0.09);
   --admin-interface-shadow: 0 16px 42px rgba(34, 38, 45, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
@@ -3353,13 +3353,14 @@ html[data-theme="light"] {
     radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.07), transparent 30rem),
     radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.05), transparent 34rem),
     linear-gradient(135deg, #eae8e8 0%, #e7dee1 24%, #eeeceb 49%, #e5d3d7 74%, #e8e9ec 100%);
-  --zy-shared-interface-surface: rgba(238, 240, 243, 0.18);
+  --zy-shared-interface-surface: rgba(238, 240, 243, 0.30);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
-  /* Match dark-mode artwork processing while retaining the light theme palette. */
-  --zy-artwork-contrast: 0.36;
-  --zy-artwork-brightness: 0.48;
+  /* Lift shadows without clipping highlights; preserve colour through the existing veil. */
+  --zy-artwork-saturate: 1.08;
+  --zy-artwork-contrast: 0.20;
+  --zy-artwork-brightness: 1.55;
   --zy-artwork-opacity: 0.8;
-  --zy-reading-accent: #84212a;
+  --zy-reading-accent: #641c24;
   --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
 

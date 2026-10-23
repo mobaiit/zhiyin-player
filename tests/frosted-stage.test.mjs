@@ -100,13 +100,15 @@ test('transparency is controlled by artwork visibility and surface alpha, not mo
   assert.deepEqual(opacity, [0.8, 0.8]);
   const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
     .map(([, value]) => Number(value.split(',').at(-1)));
-  assert.deepEqual(surfaces, [0.18, 0.18]);
+  assert.deepEqual(surfaces, [0.18, 0.30]);
   assert.match(built, /--zy-shared-interface-surface:#27282e2e/);
-  assert.match(built, /--zy-shared-interface-surface:#eef0f32e/);
+  assert.match(built, /--zy-shared-interface-surface:#eef0f34d/);
   const brightness = [...built.matchAll(/--zy-artwork-brightness:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(brightness, [0.48, 0.48]);
+  assert.deepEqual(brightness, [0.48, 1.55]);
   const artworkContrast = [...built.matchAll(/--zy-artwork-contrast:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(artworkContrast, [0.36, 0.36]);
+  assert.deepEqual(artworkContrast, [0.36, 0.20]);
+  const artworkSaturate = [...built.matchAll(/--zy-artwork-saturate:([^;}]+)/g)].map(([, value]) => Number(value));
+  assert.deepEqual(artworkSaturate, [0.85, 1.08]);
   // The more-specific light selector must not keep an old hardcoded tint.
   for (const selector of ['.luri-music-clone', 'html[data-theme=light] .luri-music-clone']) {
     const declarations = rules.filter((rule) => rule.selector === selector && rule.body.includes('--zy-interface-surface:'));
@@ -114,6 +116,9 @@ test('transparency is controlled by artwork visibility and surface alpha, not mo
     for (const rule of declarations) assert.match(rule.body, /--zy-interface-surface:var\(--zy-shared-interface-surface\)/);
   }
   assert.ok(rules.some(({ body }) => body.includes('--zy-shared-stage-blur:9px')));
+  for (const rule of rules.filter(({ selector, body }) => selector.includes('html[data-theme=light]') && body.includes('--admin-interface-surface:'))) {
+    assert.match(rule.body, /--admin-interface-surface:var\(--zy-shared-interface-surface\)/);
+  }
 });
 
 test('mobile admin navigation has one alignment and an opaque themed surface', () => {
@@ -174,6 +179,20 @@ test('dark artwork is brighter and more colourful while light highlights retain 
   assert.ok(stops.every((color) => Math.max(...color) <= 238), 'The default light canvas must also avoid near-white glare');
 });
 
+test('light artwork lifts shadows and retains colour without another veil or hiding the cover', () => {
+  const light = themeVars('light');
+  const dark = themeVars('dark');
+  for (const level of [0, 64, 128, 192, 255]) {
+    const sample = [level, level, level];
+    assert.ok(luminance(normalizeCover(sample, light)) > luminance(normalizeCover(sample, dark)));
+  }
+  const chroma = (color) => Math.max(...color) - Math.min(...color);
+  const sample = [220, 80, 50];
+  assert.ok(chroma(normalizeCover(sample, light)) > chroma(normalizeCover(sample, dark)) * 2);
+  assert.equal(Number(light['--zy-artwork-opacity']), 0.8);
+  assert.equal(light['--zy-shared-glass-tint'], 'rgba(255, 255, 255, 0)');
+});
+
 for (const theme of ['dark', 'light']) {
   test(`${theme}: primary and secondary text remain readable across extreme cover colours`, (t) => {
     const vars = themeVars(theme);
@@ -185,6 +204,7 @@ for (const theme of ['dark', 'light']) {
     for (const r of [0, 64, 128, 192, 255]) for (const g of [0, 64, 128, 192, 255]) for (const b of [0, 64, 128, 192, 255]) covers.push([r, g, b]);
     const foregrounds = ['text', 'text-secondary', 'muted', 'reading-accent'].map((name) => [name, rgb(vars[`--zy-${name}`])]);
     const selected = vars['--zy-row-selected-surface'].match(/[\d.]+/g).map(Number);
+    const interfaceSurface = vars['--zy-shared-interface-surface'].match(/[\d.]+/g).map(Number);
     let worst = { ratio: Infinity };
     for (const stop of stops) for (const first of [0, 1]) for (const second of [0, 1]) {
       let base = blend(stop, radials[1], radials[1][3] * second);
@@ -193,8 +213,9 @@ for (const theme of ['dark', 'light']) {
         const normalized = normalizeCover(cover, vars);
         const composite = blend(base, normalized, number('artwork-opacity') * visibility);
         const background = saturate(composite, number('shared-stage-saturate')).map((n) => clampChannel(n * number('shared-stage-brightness')));
-        for (const state of ['plain', 'selected']) for (const [name, color] of foregrounds) {
-          const surface = state === 'selected' ? blend(background, selected, selected[3]) : background;
+        for (const state of ['plain', 'selected', 'interface']) for (const [name, color] of foregrounds) {
+          const surface = state === 'selected' ? blend(background, selected, selected[3])
+            : state === 'interface' ? blend(background, interfaceSurface, interfaceSurface[3]) : background;
           const ratio = contrast(color, surface);
           if (ratio < worst.ratio) worst = { ratio, name, cover, visibility, state, background: surface };
         }
