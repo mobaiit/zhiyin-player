@@ -3653,6 +3653,23 @@ html[data-theme="light"] .docs-hero {
 .admin-page > aside nav .admin-nav-link {
   width: 100%;
   box-sizing: border-box;
+  margin: 0 !important;
+  color: var(--zy-text-secondary) !important;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-page > aside nav .admin-nav-link > :is(.admin-icon, span) {
+  flex: 0 0 auto;
+}
+
+.admin-page > aside nav .admin-nav-link .admin-icon {
+  width: 18px;
+  height: 18px;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
