@@ -282,12 +282,6 @@
     grid-column: 1/-1;
     margin: 3px 5px 8px;
   }
-  .admin-page aside button {
-    justify-content: center !important;
-    margin: 0 !important;
-    padding: 9px 3px;
-    font-size: 11px;
-  }
   .admin-content {
     padding: 20px 14px 50px;
   }

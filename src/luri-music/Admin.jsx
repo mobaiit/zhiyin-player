@@ -22,6 +22,7 @@ export default function Admin() {
   const [booting, setBooting] = useState(true); const [admin, setAdmin] = useState(null); const [page, setPage] = useState('users'); const [turnstile, setTurnstile] = useState({ enabled: false, siteKey: '' }); const [toast, setToast] = useState(null); const [accountOpen, setAccountOpen] = useState(false); const [navOpen, setNavOpen] = useState(false); const [passwordOpen, setPasswordOpen] = useState(false);
   const navRef = useRef(null);
   const navTriggerRef = useRef(null);
+  const [configError, setConfigError] = useState('');
   useOverlayFocus(navOpen, navRef, () => setNavOpen(false), navTriggerRef);
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 761px)');
@@ -36,9 +37,18 @@ export default function Admin() {
     return () => document.removeEventListener('keydown', escape);
   }, [accountOpen]);
   const notify = useCallback((title, message = '', type = 'info') => setToast({ title, message, type }), []);
-  useEffect(() => { Promise.all([api('auth/me'), api('admin/me').catch(() => ({ admin: null }))]).then(([me, session]) => { setTurnstile(me.turnstile || { enabled: false, siteKey: '' }); setAdmin(session.admin || null); }).catch((error) => notify('加载失败', error.message, 'error')).finally(() => setBooting(false)); }, [notify]);
+  const loadSession = useCallback(async () => {
+    try {
+      const [me, session] = await Promise.all([api('auth/me'), api('admin/me').catch(() => ({ admin: null }))]);
+      if (!me.turnstile || (me.turnstile.enabled && !me.turnstile.siteKey)) throw new Error('验证配置加载不完整，请重试');
+      setTurnstile(me.turnstile);
+      setAdmin(session.admin || null);
+    } catch (error) { setConfigError(error.message); }
+    finally { setBooting(false); }
+  }, []);
+  useEffect(() => { loadSession(); }, [loadSession]);
   if (booting) return <LoadingScreen label="正在加载管理后台…" />;
-  if (!admin) return <><AdminLogin turnstile={turnstile} done={setAdmin} notify={notify} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (!admin) return <><AdminLogin turnstile={turnstile} configError={configError} retryConfig={() => { setBooting(true); setConfigError(''); loadSession(); }} done={setAdmin} notify={notify} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   const logout = async () => { setAccountOpen(false); try { await api('admin/logout', { method: 'POST' }); setAdmin(null); notify('已退出登录', '', 'success'); } catch (error) { notify('退出失败', error.message, 'error'); } };
   const selectPage = (nextPage) => { setPage(nextPage); setAccountOpen(false); setNavOpen(false); };
   return <main className="admin-page">
@@ -56,12 +66,24 @@ export default function Admin() {
   </main>;
 }
 
-function AdminLogin({ turnstile, done, notify }) {
+function AdminLogin({ turnstile, configError, retryConfig, done, notify }) {
   const [username, setUsername] = useState(''); const [password, setPassword] = useState(''); const [token, setToken] = useState(''); const [reset, setReset] = useState(0); const [loading, setLoading] = useState(false);
   useEffect(() => () => document.activeElement?.blur?.(), []);
   const resetTurnstile = useCallback(() => { setToken(''); setReset((value) => value + 1); }, []);
-  const submit = async (event) => { event.preventDefault(); if (turnstile.enabled && !token) return notify('请先完成人机验证', '请完成下方的 Turnstile 验证后再尝试', 'warning'); setLoading(true); try { const data = await api('admin/login', { method: 'POST', body: JSON.stringify({ username, password, turnstileToken: token }) }); document.activeElement?.blur?.(); notify('登录成功', '', 'success'); done(data.admin); } catch (error) { notify('登录失败', error.message, 'error'); resetTurnstile(); } finally { setLoading(false); } };
-  return <main className="admin-login"><form onSubmit={submit}><div className="admin-login-brand"><h1>知音后台</h1></div><label>账号<input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" autoFocus required /></label><PasswordField label="密码" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />{turnstile.enabled && <Turnstile siteKey={turnstile.siteKey} onVerify={setToken} onExpire={resetTurnstile} resetSignal={reset} />}<button disabled={loading || (turnstile.enabled && !token)}>{loading ? <><Spinner /> 登录中…</> : '登录后台'}</button></form></main>;
+  const submit = async (event) => {
+    event.preventDefault();
+    if (configError) return notify('验证配置未加载', '请重新加载验证配置后再登录', 'warning');
+    if (turnstile.enabled && !token) return notify('请先完成人机验证', '请完成下方的 Turnstile 验证后再尝试', 'warning');
+    setLoading(true);
+    try {
+      const data = await api('admin/login', { method: 'POST', body: JSON.stringify({ username, password, turnstileToken: token }) });
+      document.activeElement?.blur?.();
+      notify('登录成功', '', 'success');
+      done(data.admin);
+    } catch (error) { notify('登录失败', error.message, 'error'); resetTurnstile(); }
+    finally { setLoading(false); }
+  };
+  return <main className="admin-login"><form onSubmit={submit}><div className="admin-login-brand"><h1>知音后台</h1></div><label>账号<input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" autoFocus required /></label><PasswordField label="密码" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />{configError ? <div className="luri-turnstile-error" role="alert"><small>验证配置未加载，暂时无法登录。</small><button type="button" onClick={retryConfig}>重新加载验证配置</button></div> : turnstile.enabled && <Turnstile siteKey={turnstile.siteKey} onVerify={setToken} onExpire={resetTurnstile} resetSignal={reset} />}<button disabled={loading || Boolean(configError) || (turnstile.enabled && !token)}>{loading ? <><Spinner /> 登录中…</> : '登录后台'}</button></form></main>;
 }
 
 function AdminOverlay({ label, onClose, drawer = false, children }) {

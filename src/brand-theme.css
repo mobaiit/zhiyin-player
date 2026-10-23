@@ -1394,8 +1394,7 @@ body {
   background: transparent !important;
 }
 
-.lm-site-bar,
-.admin-page > aside {
+.lm-site-bar {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1403,7 +1402,7 @@ body {
   backdrop-filter: none !important;
 }
 
-html[data-theme="light"] :is(.lm-site-bar, .admin-page > aside) {
+html[data-theme="light"] .lm-site-bar {
   background: transparent !important;
 }
 
@@ -1472,7 +1471,6 @@ html[data-theme="light"] :is(.lm-site-bar, .admin-page > aside) {
 
 /* The main navigation, search and transport share one glass material. */
 .lm-site-bar,
-.admin-page > aside,
 .music-player {
   background: var(--zy-player-glass) !important;
   box-shadow: var(--zy-player-glass-shadow) !important;
@@ -1480,8 +1478,7 @@ html[data-theme="light"] :is(.lm-site-bar, .admin-page > aside) {
   backdrop-filter: blur(12px) saturate(1.08) !important;
 }
 
-.lm-site-bar,
-.admin-page > aside {
+.lm-site-bar {
   border-inline: 0 !important;
   border-top: 0 !important;
 }
@@ -2081,34 +2078,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 .admin-page > aside nav {
   display: grid;
   gap: 6px;
-}
-
-.admin-page > aside nav button {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 11px;
-  min-height: 44px;
-  padding: 10px 12px !important;
-  border: 0 !important;
-  border-radius: 11px !important;
-  background: transparent !important;
-  color: var(--zy-text-secondary) !important;
-  font-size: 13px;
-  font-weight: 650;
-  text-decoration: none;
-  transition: background 160ms ease, color 160ms ease;
-}
-
-.admin-page > aside nav button:hover {
-  background: var(--zy-control-glass) !important;
-  color: var(--zy-text) !important;
-}
-
-.admin-page > aside nav button.active {
-  background: var(--zy-red-soft) !important;
-  color: var(--zy-red-hover) !important;
-  box-shadow: none !important;
 }
 
 .admin-icon {
@@ -3302,9 +3271,13 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 }
 
 .admin-page > aside nav :is(button, a) {
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  width: 100%;
+  margin: 0 !important;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: start !important;
+  text-align: left;
   gap: 11px;
   min-height: 44px;
   padding: 10px 12px !important;
@@ -3312,8 +3285,10 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   border-radius: 11px !important;
   background: transparent !important;
   color: var(--zy-text-secondary) !important;
+  font: inherit;
   font-size: 13px;
   font-weight: 650;
+  letter-spacing: 0;
   line-height: 1.3;
   text-decoration: none;
   transition: background 160ms ease, color 160ms ease;
@@ -3358,9 +3333,9 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   --zy-shared-stage-brightness: 0.98;
   --zy-shared-glass-tint: rgba(255, 255, 255, 0);
   --zy-artwork-saturate: 0.65;
-  --zy-artwork-contrast: 0.32;
-  --zy-artwork-brightness: 0.42;
-  --zy-artwork-opacity: 0.6;
+  --zy-artwork-contrast: 0.38;
+  --zy-artwork-brightness: 0.4;
+  --zy-artwork-opacity: 0.66;
   --zy-reading-accent: #ffb9bd;
   --zy-row-selected-surface: rgba(229, 72, 77, 0.1);
   --zy-shared-interface-surface: rgba(39, 40, 46, 0.3);
@@ -3374,9 +3349,9 @@ html[data-theme="light"] {
     linear-gradient(135deg, #f2f0f0 0%, #f0e6e8 24%, #f7f5f4 49%, #efdee1 74%, #f0f1f3 100%);
   --zy-shared-interface-surface: rgba(238, 240, 243, 0.31);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
-  --zy-artwork-contrast: 0.26;
-  --zy-artwork-brightness: 2.05;
-  --zy-artwork-opacity: 0.4;
+  --zy-artwork-contrast: 0.3;
+  --zy-artwork-brightness: 2.17;
+  --zy-artwork-opacity: 0.44;
   --zy-reading-accent: #95212a;
   --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
@@ -3438,28 +3413,6 @@ body,
 .admin-brand > span {
   display: inline-flex;
   align-items: center;
-}
-
-.admin-page > aside nav .admin-nav-link {
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0 !important;
-  color: var(--zy-text-secondary) !important;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: 0;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.admin-page > aside nav .admin-nav-link > :is(.admin-icon, span) {
-  flex: 0 0 auto;
-}
-
-.admin-page > aside nav .admin-nav-link .admin-icon {
-  width: 18px;
-  height: 18px;
 }
 
 

@@ -95,6 +95,18 @@ test('background normalization reuses the existing image and single frosted laye
   assert.equal((music.match(/className=\{`music-artwork-backdrop/g) || []).length, 1);
 });
 
+test('mobile admin navigation has one alignment and an opaque themed surface', () => {
+  const nav = rules.find(({ selector, body }) => selector.includes('.admin-page>aside nav :is(') && body.includes('grid-template-columns:18px minmax(0,1fr)'));
+  assert.ok(nav, 'Links and buttons must share the same icon and text columns');
+  assert.match(nav.body, /justify-content:start!important/);
+  assert.match(nav.body, /text-align:left/);
+  assert.ok(rules.some(({ body }) => body.includes('--admin-navigation-surface:var(--zy-account-dialog-surface)')));
+  assert.ok(rules.some(({ selector, body }) => selector === '.admin-page>aside' && body.includes('background:var(--admin-navigation-surface,var(--admin-interface-surface))!important')));
+  for (const rule of rules.filter(({ selector }) => selector.includes('html[data-theme=light]') && selector.includes('aside'))) {
+    assert.doesNotMatch(rule.body, /background:(?:transparent|#0000|0 0)!important/, 'Old light rules must not override the opaque mobile navigation');
+  }
+});
+
 // Model sRGB compositing and CSS colour filters against the real CSS tokens.
 // This is a contrast regression test, not a substitute for browser visual QA.
 const clampChannel = (n) => Math.max(0, Math.min(255, n));

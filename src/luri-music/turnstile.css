@@ -9,13 +9,28 @@
   width: 100%;
 }
 .luri-turnstile-wrap small {
-  color: var(--lm-text-muted, #3f6282);
-  font-size: 0.7rem;
+  color: var(--zy-muted);
+  font-size: 12px;
   text-align: center;
 }
 .admin-login .luri-turnstile-wrap {
-  justify-items: start;
+  justify-items: stretch;
 }
-.admin-login .luri-turnstile-wrap small {
-  color: #5b4636;
+.luri-turnstile-error {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.luri-turnstile-error button,
+.admin-login .luri-turnstile-error button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0 !important;
+  border-radius: 8px;
+  background: var(--zy-control-glass) !important;
+  color: var(--zy-text) !important;
+  box-shadow: none !important;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
 }
