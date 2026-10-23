@@ -26,7 +26,7 @@ export default function Admin() {
   const selectPage = (nextPage) => { setPage(nextPage); setAccountOpen(false); setNavOpen(false); };
   return <main className="admin-page">
     <aside className={navOpen ? 'is-open' : ''} aria-label="后台导航">
-      <a className="admin-brand" href="/admin">知音后台</a>
+      <a className="admin-brand" href="/admin" aria-label="知音后台首页"><img src="/zhiyin-logo.png" alt="" /><span>知音后台</span></a>
       <nav>{ADMIN_NAV.map(([value, icon, label]) => <button key={value} className={page === value ? 'active' : ''} aria-current={page === value ? 'page' : undefined} onClick={() => selectPage(value)}><AdminIcon name={icon} /><span>{label}</span></button>)}<a className="admin-nav-link" href="/docs" target="_blank" rel="noreferrer"><AdminIcon name="docs" /><span>使用文档</span></a></nav>
     </aside>
     {navOpen && <button className="admin-nav-backdrop" type="button" aria-label="关闭后台导航" onClick={() => setNavOpen(false)} />}

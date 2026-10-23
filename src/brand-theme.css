@@ -3543,3 +3543,120 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
     background: linear-gradient(180deg, color-mix(in srgb, var(--zy-bg) 72%, transparent), color-mix(in srgb, var(--zy-bg) 86%, transparent));
   }
 }
+
+/* Shared theme canvas for the player, documentation and administration. */
+.luri-music-clone,
+.docs-page,
+.admin-page,
+.admin-login {
+  --zy-shared-stage-background:
+    radial-gradient(circle at 15% 6%, rgba(214, 77, 84, 0.18), transparent 30rem),
+    radial-gradient(circle at 86% 74%, rgba(175, 55, 64, 0.14), transparent 34rem),
+    linear-gradient(135deg, #28262a 0%, #41282d 24%, #202126 49%, #482a2f 74%, #27272c 100%);
+  --zy-shared-veil-top: rgba(29, 28, 32, 0.3);
+  --zy-shared-veil-bottom: rgba(27, 27, 31, 0.5);
+  --zy-shared-stage-saturate: 1.16;
+  --zy-shared-stage-brightness: 0.9;
+}
+
+html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-login) {
+  --zy-shared-stage-background:
+    radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.14), transparent 30rem),
+    radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.1), transparent 34rem),
+    linear-gradient(135deg, #f2f0f0 0%, #efdadd 24%, #f7f5f4 49%, #ecd3d7 74%, #f0f1f3 100%);
+  --zy-shared-veil-top: rgba(247, 244, 244, 0.32);
+  --zy-shared-veil-bottom: rgba(241, 239, 240, 0.52);
+  --zy-shared-stage-saturate: 1.08;
+  --zy-shared-stage-brightness: 1.01;
+}
+
+.luri-music-clone {
+  --zy-stage-background: var(--zy-shared-stage-background);
+  --zy-stage-veil-top: var(--zy-shared-veil-top);
+  --zy-stage-veil-bottom: var(--zy-shared-veil-bottom);
+  --zy-stage-saturate: var(--zy-shared-stage-saturate);
+  --zy-stage-brightness: var(--zy-shared-stage-brightness);
+}
+
+.admin-page,
+.admin-login {
+  --admin-stage-background: var(--zy-shared-stage-background);
+  --admin-stage-veil-top: var(--zy-shared-veil-top);
+  --admin-stage-veil-bottom: var(--zy-shared-veil-bottom);
+  --admin-stage-saturate: var(--zy-shared-stage-saturate);
+  --admin-stage-brightness: var(--zy-shared-stage-brightness);
+}
+
+.luri-music-clone .music-page::before {
+  position: fixed;
+}
+
+.docs-page {
+  position: relative;
+  isolation: isolate;
+  background: var(--zy-shared-stage-background) !important;
+}
+
+.docs-page::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  content: "";
+  background: linear-gradient(180deg, var(--zy-shared-veil-top), var(--zy-shared-veil-bottom));
+  backdrop-filter: blur(20px) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
+  -webkit-backdrop-filter: blur(20px) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
+  pointer-events: none;
+}
+
+.docs-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.docs-hero {
+  background: var(--zy-interface-surface, rgba(35, 36, 42, 0.18)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] .docs-hero {
+  background: rgba(238, 240, 243, 0.24) !important;
+}
+
+.docs-page :is(
+  .docs-search input,
+  .docs-note,
+  .docs-cards article,
+  .docs-endpoint,
+  .docs-table,
+  .docs-schema,
+  .docs-retry-flow,
+  .docs-retry-flow span
+) {
+  background: color-mix(in srgb, var(--zy-surface) 34%, transparent) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.admin-brand img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.admin-brand > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-page > aside nav .admin-nav-link {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .docs-page::before {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--zy-bg) 72%, transparent), color-mix(in srgb, var(--zy-bg) 86%, transparent));
+  }
+}
