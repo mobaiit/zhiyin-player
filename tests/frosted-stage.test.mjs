@@ -87,28 +87,35 @@ test('all shared toasts omit countdown bars but retain dismiss behavior', () => 
   assert.match(feedback, /onClick=\{onClose\} aria-label="关闭通知"/);
 });
 
-test('background normalization reuses the existing image and single frosted layer', () => {
+test('original artwork and theme tone use the existing image and single frosted layer', () => {
   assert.equal((source.match(/\.luri-music-clone \.music-artwork-backdrop\s*\{/g) || []).length, 1);
   assert.doesNotMatch(source, /music-artwork-backdrop::after|--(?:zy|admin)-stage-/);
-  assert.ok(rules.some(({ selector, body }) => selector === '.luri-music-clone .music-artwork-backdrop' && body.includes('filter:saturate(var(--zy-artwork-saturate)) contrast(var(--zy-artwork-contrast)) brightness(var(--zy-artwork-brightness))!important')));
+  assert.ok(rules.some(({ selector, body }) => selector === '.luri-music-clone .music-artwork-backdrop' && body.includes('filter:none!important')));
+  assert.doesNotMatch(source, /--zy-artwork-(?:brightness|contrast|saturate|opacity)\b/);
+  const active = rules.find(({ selector }) => selector === '.luri-music-clone:has(.music-artwork-backdrop.is-visible)');
+  assert.ok(active, 'Glass tint must follow artwork availability, not playback success');
+  assert.match(active.body, /--zy-shared-glass-tint:var\(--zy-artwork-glass-tint\)/);
   const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
   assert.equal((music.match(/className=\{`music-artwork-backdrop/g) || []).length, 1);
 });
 
-test('transparency is controlled by artwork visibility and surface alpha, not more blur or layers', () => {
-  const opacity = [...built.matchAll(/--zy-artwork-opacity:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(opacity, [0.8, 0.8]);
+test('one theme-aware glass controls readability without fading or flattening the original cover', () => {
+  assert.ok(rules.some(({ selector, body }) => selector === '.luri-music-clone .music-artwork-backdrop.is-visible' && /(?:^|;)opacity:1(?:;|$)/.test(body)));
+  for (const rule of rules.filter(({ selector }) => selector === '.luri-music-clone .music-artwork-backdrop')) {
+    assert.doesNotMatch(rule.body, /transition:/, 'Artwork and glass must switch atomically to avoid unreadable intermediate tones');
+  }
   const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
     .map(([, value]) => Number(value.split(',').at(-1)));
   assert.deepEqual(surfaces, [0.18, 0.30]);
   assert.match(built, /--zy-shared-interface-surface:#27282e2e/);
   assert.match(built, /--zy-shared-interface-surface:#eef0f34d/);
-  const brightness = [...built.matchAll(/--zy-artwork-brightness:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(brightness, [0.48, 1.55]);
-  const artworkContrast = [...built.matchAll(/--zy-artwork-contrast:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(artworkContrast, [0.36, 0.20]);
-  const artworkSaturate = [...built.matchAll(/--zy-artwork-saturate:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(artworkSaturate, [0.85, 1.08]);
+  for (const rule of rules.filter(({ selector }) => ['html[data-theme=light] .lm-site-bar', 'html[data-theme=light] .music-player'].includes(selector))) {
+    assert.doesNotMatch(rule.body, /(?:^|;)background:/, 'Old higher-specificity light styles must not override the shared navigation/player surface');
+  }
+  assert.ok(rules.some(({ selector, body }) => selector.includes('.luri-music-clone>.lm-site-bar') && selector.includes('.luri-music-clone .music-player') && body.includes('background:var(--zy-interface-surface)!important')));
+  const tints = [...source.matchAll(/--zy-artwork-glass-tint:\s*rgba\(([^)]+)\)/g)]
+    .map(([, value]) => value.split(',').map(Number));
+  assert.deepEqual(tints, [[26, 27, 33, 0.76], [244, 242, 243, 0.60]]);
   // The more-specific light selector must not keep an old hardcoded tint.
   for (const selector of ['.luri-music-clone', 'html[data-theme=light] .luri-music-clone']) {
     const declarations = rules.filter((rule) => rule.selector === selector && rule.body.includes('--zy-interface-surface:'));
@@ -133,7 +140,7 @@ test('mobile admin navigation has one alignment and an opaque themed surface', (
   }
 });
 
-// Model sRGB compositing and CSS colour filters against the real CSS tokens.
+// Model sRGB compositing and the single backdrop filter against the real CSS tokens.
 // This is a contrast regression test, not a substitute for browser visual QA.
 const clampChannel = (n) => Math.max(0, Math.min(255, n));
 const rgb = (hex) => hex.slice(1).match(/../g).map((n) => parseInt(n, 16));
@@ -159,44 +166,43 @@ const themeVars = (theme) => {
   }
   return vars;
 };
-const normalizeCover = (cover, vars) => saturate(cover, Number(vars['--zy-artwork-saturate'])).map((n) =>
-  clampChannel((n * Number(vars['--zy-artwork-contrast']) + 127.5 * (1 - Number(vars['--zy-artwork-contrast']))) * Number(vars['--zy-artwork-brightness'])));
+const rgba = (value) => value.match(/[\d.]+/g).map(Number);
+const frost = (background, vars, artwork = false) => {
+  const filtered = saturate(background, Number(vars['--zy-shared-stage-saturate']))
+    .map((n) => clampChannel(n * Number(vars['--zy-shared-stage-brightness'])));
+  // CSS paints the translucent glass AFTER filtering its backdrop.
+  const tint = rgba(vars[artwork ? '--zy-artwork-glass-tint' : '--zy-shared-glass-tint']);
+  return blend(filtered, tint, tint[3]);
+};
 
-test('dark artwork is brighter and more colourful while light highlights retain tonal detail', () => {
-  const dark = themeVars('dark');
-  const previousDark = { ...dark, '--zy-artwork-saturate': '0.65', '--zy-artwork-contrast': '0.38', '--zy-artwork-brightness': '0.4' };
-  for (const level of [0, 64, 128, 192, 255]) {
-    const sample = [level, level, level];
-    assert.ok(luminance(normalizeCover(sample, dark)) > luminance(normalizeCover(sample, previousDark)), `Lift dark artwork tone ${level}`);
-  }
-  const chroma = (color) => Math.max(...color) - Math.min(...color);
-  assert.ok(chroma(normalizeCover([220, 80, 50], dark)) > chroma(normalizeCover([220, 80, 50], previousDark)) * 1.4);
+test('light glass restores colour separation and darker shadows compared with the flattened artwork', () => {
   const light = themeVars('light');
-  const highlights = [160, 192, 224, 255].map((level) => normalizeCover([level, level, level], light)[0]);
-  assert.ok(highlights.at(-1) < 240, 'Even a white cover must not turn into a clipped white background');
-  for (let i = 1; i < highlights.length; i++) assert.ok(highlights[i] > highlights[i - 1] + 3, 'Bright-cover details must stay distinct, not all clip to white');
-  const stops = [...light['--zy-shared-stage-background'].matchAll(/#[\da-f]{6}\b/gi)].map(([hex]) => rgb(hex));
-  assert.ok(stops.every((color) => Math.max(...color) <= 238), 'The default light canvas must also avoid near-white glare');
+  const base = rgb('#e5d3d7');
+  const previous = (cover) => {
+    const flattened = saturate(cover, 1.08).map((n) => (n * 0.20 + 127.5 * 0.80) * 1.55);
+    return frost(blend(base, flattened, 0.8), light);
+  };
+  const black = [0, 0, 0];
+  assert.ok(luminance(frost(black, light, true)) < luminance(previous(black)) * 0.85, 'Dark cover areas must no longer be lifted into pale grey');
+  const chroma = (color) => Math.max(...color) - Math.min(...color);
+  for (const sample of [[220, 80, 50], [30, 160, 210], [80, 180, 60]]) {
+    assert.ok(chroma(frost(sample, light, true)) > chroma(previous(sample)) * 1.4, 'Warm and cool artwork must retain more colour separation');
+  }
 });
 
-test('light artwork lifts shadows and retains colour without another veil or hiding the cover', () => {
-  const light = themeVars('light');
-  const dark = themeVars('dark');
-  for (const level of [0, 64, 128, 192, 255]) {
-    const sample = [level, level, level];
-    assert.ok(luminance(normalizeCover(sample, light)) > luminance(normalizeCover(sample, dark)));
+test('glass preserves highlight steps and a shared unmasked default canvas', () => {
+  for (const theme of ['light', 'dark']) {
+    const vars = themeVars(theme);
+    const highlights = [160, 192, 224, 255].map((level) => frost([level, level, level], vars, true)[0]);
+    assert.ok(highlights.at(-1) < 250, 'The composed glass should not become a glaring white field');
+    for (let i = 1; i < highlights.length; i++) assert.ok(highlights[i] > highlights[i - 1] + 5, 'Bright details must remain distinct');
+    assert.equal(vars['--zy-shared-glass-tint'], 'rgba(255, 255, 255, 0)', 'Routes without artwork must keep the shared default gradient');
   }
-  const chroma = (color) => Math.max(...color) - Math.min(...color);
-  const sample = [220, 80, 50];
-  assert.ok(chroma(normalizeCover(sample, light)) > chroma(normalizeCover(sample, dark)) * 2);
-  assert.equal(Number(light['--zy-artwork-opacity']), 0.8);
-  assert.equal(light['--zy-shared-glass-tint'], 'rgba(255, 255, 255, 0)');
 });
 
 for (const theme of ['dark', 'light']) {
   test(`${theme}: primary and secondary text remain readable across extreme cover colours`, (t) => {
     const vars = themeVars(theme);
-    const number = (name) => Number(vars[`--zy-${name}`]);
     const stage = vars['--zy-shared-stage-background'];
     const stops = [...stage.matchAll(/#[\da-f]{6}\b/gi)].map(([hex]) => rgb(hex));
     const radials = [...stage.matchAll(/rgba\(([^)]+)\)/g)].map(([, channels]) => channels.split(',').map(Number));
@@ -209,10 +215,8 @@ for (const theme of ['dark', 'light']) {
     for (const stop of stops) for (const first of [0, 1]) for (const second of [0, 1]) {
       let base = blend(stop, radials[1], radials[1][3] * second);
       base = blend(base, radials[0], radials[0][3] * first);
-      for (const cover of covers) for (const visibility of [0, 0.5, 1]) {
-        const normalized = normalizeCover(cover, vars);
-        const composite = blend(base, normalized, number('artwork-opacity') * visibility);
-        const background = saturate(composite, number('shared-stage-saturate')).map((n) => clampChannel(n * number('shared-stage-brightness')));
+      for (const cover of covers) for (const visibility of [0, 1]) {
+        const background = frost(visibility ? cover : base, vars, Boolean(visibility));
         for (const state of ['plain', 'selected', 'interface']) for (const [name, color] of foregrounds) {
           const surface = state === 'selected' ? blend(background, selected, selected[3])
             : state === 'interface' ? blend(background, interfaceSurface, interfaceSurface[3]) : background;

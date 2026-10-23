@@ -51,7 +51,7 @@ body {
 html[data-theme="light"] {
   color-scheme: light;
   --color-text: #18181b;
-  --color-text-muted: #30343b;
+  --color-text-muted: #24272d;
   --zy-bg: #f1f2f4;
   --zy-bg-subtle: #e7e9ec;
   --zy-surface: #fafbfc;
@@ -60,8 +60,8 @@ html[data-theme="light"] {
   --zy-border: #cdd1d7;
   --zy-border-strong: #b7bcc4;
   --zy-text: #18181b;
-  --zy-text-secondary: #292d33;
-  --zy-muted: #30343b;
+  --zy-text-secondary: #202329;
+  --zy-muted: #24272d;
   --zy-red: #c73c43;
   --zy-red-hover: #a92f36;
   --zy-red-action: #b9333a;
@@ -73,12 +73,6 @@ html[data-theme="light"] {
   --zy-control-glass: rgba(210, 214, 222, 0.42);
   --zy-player-glass-shadow: 0 14px 40px rgba(34, 38, 45, 0.1);
 }
-
-html[data-theme="light"] .lm-site-bar {
-  background: var(--zy-player-glass) !important;
-}
-
-
 
 html[data-theme="light"] .music-shell {
   background: transparent !important;
@@ -94,12 +88,6 @@ html[data-theme="light"] :is(.music-results, .music-lyrics) {
 
 html[data-theme="light"] .music-search:focus-within {
   background: transparent !important;
-}
-
-html[data-theme="light"] .music-player {
-  border-color: rgba(34, 38, 45, 0.08) !important;
-  background: var(--zy-player-glass) !important;
-  box-shadow: var(--zy-player-glass-shadow) !important;
 }
 
 html[data-theme="light"] .luri-music-clone {
@@ -1400,10 +1388,6 @@ body {
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-}
-
-html[data-theme="light"] .lm-site-bar {
-  background: transparent !important;
 }
 
 .music-search {
@@ -3060,17 +3044,20 @@ html[data-theme="light"] .luri-music-clone {
   background-position: center;
   background-size: cover;
   opacity: 0;
-  transition: opacity 380ms ease;
   pointer-events: none;
-  /* Normalize only the background copy, never the actual cover thumbnails.
-     Bounded contrast makes black/white and saturated artwork equally safe. */
-  filter: saturate(var(--zy-artwork-saturate)) contrast(var(--zy-artwork-contrast)) brightness(var(--zy-artwork-brightness)) !important;
+  /* Keep source colours intact. The existing page-wide glass handles theme tone. */
+  filter: none !important;
   transform: none;
 }
 
 
 .luri-music-clone .music-artwork-backdrop.is-visible {
-  opacity: var(--zy-artwork-opacity);
+  opacity: 1;
+}
+
+/* Switch artwork and its readable glass together, without a low-contrast fade. */
+.luri-music-clone:has(.music-artwork-backdrop.is-visible) {
+  --zy-shared-glass-tint: var(--zy-artwork-glass-tint);
 }
 
 .luri-music-clone .music-page::before {
@@ -3337,11 +3324,8 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   --zy-shared-stage-saturate: 1.1;
   --zy-shared-stage-brightness: 0.98;
   --zy-shared-glass-tint: rgba(255, 255, 255, 0);
-  /* Lift dark artwork and retain more colour without raising the text-safe ceiling. */
-  --zy-artwork-saturate: 0.85;
-  --zy-artwork-contrast: 0.36;
-  --zy-artwork-brightness: 0.48;
-  --zy-artwork-opacity: 0.8;
+  /* Used only with artwork; default gradients keep their original tone on every route. */
+  --zy-artwork-glass-tint: rgba(26, 27, 33, 0.76);
   --zy-reading-accent: #ffb9bd;
   --zy-row-selected-surface: rgba(229, 72, 77, 0.1);
   --zy-shared-interface-surface: rgba(39, 40, 46, 0.18);
@@ -3355,12 +3339,8 @@ html[data-theme="light"] {
     linear-gradient(135deg, #eae8e8 0%, #e7dee1 24%, #eeeceb 49%, #e5d3d7 74%, #e8e9ec 100%);
   --zy-shared-interface-surface: rgba(238, 240, 243, 0.30);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
-  /* Lift shadows without clipping highlights; preserve colour through the existing veil. */
-  --zy-artwork-saturate: 1.08;
-  --zy-artwork-contrast: 0.20;
-  --zy-artwork-brightness: 1.55;
-  --zy-artwork-opacity: 0.8;
-  --zy-reading-accent: #641c24;
+  --zy-artwork-glass-tint: rgba(244, 242, 243, 0.60);
+  --zy-reading-accent: #481219;
   --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
 
