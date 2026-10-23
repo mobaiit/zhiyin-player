@@ -50,16 +50,17 @@ body {
 
 html[data-theme="light"] {
   color-scheme: light;
-  --color-text: #0b0b0c;
+  --color-text: #000;
+  --color-text-muted: #4d535c;
   --zy-bg: #f1f2f4;
   --zy-bg-subtle: #e7e9ec;
   --zy-surface: #fafbfc;
   --zy-surface-raised: #e9ebef;
   --zy-border: #cdd1d7;
   --zy-border-strong: #b7bcc4;
-  --zy-text: #0b0b0c;
-  --zy-text-secondary: #3d424b;
-  --zy-muted: #626873;
+  --zy-text: #000;
+  --zy-text-secondary: #292d33;
+  --zy-muted: #4d535c;
   --zy-red: #c73c43;
   --zy-red-hover: #a92f36;
   --zy-red-action: #b9333a;
@@ -402,15 +403,17 @@ html[data-theme="light"] .docs-code-wrap {
 /* Unified black/red product theme: player, account surfaces, admin and docs. */
 :root {
   color-scheme: dark;
+  --color-text: #fff;
+  --color-text-muted: #c7c3c6;
   --zy-bg: #1c1d21;
   --zy-bg-subtle: #23242a;
   --zy-surface: #2a2b32;
   --zy-surface-raised: #35363f;
   --zy-border: #454750;
   --zy-border-strong: #585b66;
-  --zy-text: #f7f4f4;
-  --zy-text-secondary: #d2ced0;
-  --zy-muted: #aaa6ab;
+  --zy-text: #fff;
+  --zy-text-secondary: #e7e3e5;
+  --zy-muted: #c7c3c6;
   --zy-red: #f05b61;
   --zy-red-hover: #ff7378;
   --zy-red-action: #d9434a;
@@ -1970,6 +1973,27 @@ html[data-theme="light"] .music-quality {
   border-color: color-mix(in srgb, var(--music-quality-color) 58%, transparent) !important;
   background: color-mix(in srgb, var(--music-quality-color) 10%, transparent) !important;
   color: var(--music-quality-color) !important;
+}
+
+/* Reserve red playback glyphs for the current track. */
+.music-row:not(.current) .track-action:not(.track-action--error) .music-icon {
+  color: var(--zy-text-secondary) !important;
+  filter: none !important;
+}
+
+/* The transport glass follows the same centered width as the top navigation. */
+.music-player {
+  box-sizing: border-box;
+  right: auto !important;
+  left: 50% !important;
+  width: min(calc(100% - 32px), 1440px) !important;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 760px) {
+  .music-player {
+    width: calc(100% - 24px) !important;
+  }
 }
 
 /* Selected state is expressed by colour and weight only, never a left rail. */
