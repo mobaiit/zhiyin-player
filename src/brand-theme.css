@@ -93,7 +93,13 @@ html[data-theme="light"] .music-page::before {
 }
 
 html[data-theme="light"] .music-artwork-backdrop {
-  filter: blur(34px) saturate(0.72) brightness(0.94) contrast(0.86);
+  filter: none;
+}
+
+html[data-theme="light"] .music-artwork-backdrop::after {
+  background: linear-gradient(180deg, rgba(241, 242, 244, 0.42), rgba(241, 242, 244, 0.58));
+  backdrop-filter: blur(22px) saturate(0.68) brightness(0.98) contrast(0.9);
+  -webkit-backdrop-filter: blur(22px) saturate(0.68) brightness(0.98) contrast(0.9);
 }
 
 html[data-theme="light"] .music-shell {
@@ -581,18 +587,27 @@ body {
 .music-artwork-backdrop {
   position: absolute;
   z-index: -2;
-  inset: -80px;
+  inset: -48px;
   opacity: 0;
   background-position: center;
   background-size: cover;
-  filter: blur(34px) saturate(0.82) brightness(0.68) contrast(0.92);
-  transform: scale(1.1);
+  filter: none;
+  transform: scale(1.04);
   transition: opacity 380ms ease;
   pointer-events: none;
 }
 
+.music-artwork-backdrop::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(28, 29, 33, 0.32), rgba(28, 29, 33, 0.52));
+  backdrop-filter: blur(24px) saturate(0.72) brightness(0.82) contrast(0.9);
+  -webkit-backdrop-filter: blur(24px) saturate(0.72) brightness(0.82) contrast(0.9);
+}
+
 .music-artwork-backdrop.is-visible {
-  opacity: 0.76;
+  opacity: 0.82;
 }
 
 .music-shell {
