@@ -3720,3 +3720,38 @@ html[data-theme="light"] :is(.admin-header-actions > .theme-toggle, .admin-login
     background: linear-gradient(180deg, color-mix(in srgb, var(--zy-bg) 72%, transparent), color-mix(in srgb, var(--zy-bg) 86%, transparent));
   }
 }
+
+/* Full-viewport frosted layer shared by every product surface. */
+.luri-music-clone,
+.docs-page,
+.admin-page,
+.admin-login {
+  --zy-shared-stage-blur: 20px;
+  --zy-shared-stage-saturate: 1.8;
+  --zy-shared-stage-brightness: 1.05;
+  --zy-shared-glass-tint: rgba(255, 255, 255, 0.12);
+}
+
+.luri-music-clone .music-page::before,
+.docs-page::before,
+.admin-page::before,
+.admin-login::before {
+  position: fixed !important;
+  inset: 0 !important;
+  display: block !important;
+  background: var(--zy-shared-glass-tint) !important;
+  filter: none !important;
+  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) !important;
+  -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) !important;
+  transform: none !important;
+  pointer-events: none;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .luri-music-clone .music-page::before,
+  .docs-page::before,
+  .admin-page::before,
+  .admin-login::before {
+    background: rgba(255, 255, 255, 0.18) !important;
+  }
+}
