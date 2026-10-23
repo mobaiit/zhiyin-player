@@ -289,7 +289,7 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
       .forEach(([key, value]) => target.searchParams.set(key, String(value)));
   } else {
     Object.entries(params)
-      .filter(([key, value]) => key !== 'songId' && value !== undefined && value !== '')
+      .filter(([key, value]) => key !== 'songId' && value !== undefined && (value !== '' || key === 'album'))
       .forEach(([key, value]) => target.searchParams.set(key, typeof value === 'object' ? JSON.stringify(value) : String(value)));
   }
   const response = await providerFetch(target, options);
