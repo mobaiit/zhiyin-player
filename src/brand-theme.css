@@ -320,7 +320,7 @@ html[data-theme="light"] .docs-code-wrap {
   background: #fff !important;
 }
 
-.admin-page aside a,
+.admin-page .admin-brand,
 .admin-login h1 {
   color: #6d28d9 !important;
 }
@@ -817,7 +817,7 @@ body {
   box-shadow: var(--zy-shadow-sm) !important;
 }
 
-.admin-page aside a,
+.admin-page .admin-brand,
 .admin-login h1,
 .view-heading h1,
 .admin-content h1,

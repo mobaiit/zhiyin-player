@@ -27,7 +27,7 @@
   border-right: 1px solid var(--admin-line);
   background: #fff;
 }
-.admin-page aside a {
+.admin-page > aside > .admin-brand {
   margin: 0 8px 34px;
   color: #000;
   text-decoration: none;
@@ -278,7 +278,7 @@
     border-right: 0;
     border-bottom: 1px solid var(--admin-line);
   }
-  .admin-page aside a {
+  .admin-page > aside > .admin-brand {
     grid-column: 1/-1;
     margin: 3px 5px 8px;
   }
