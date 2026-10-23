@@ -200,6 +200,23 @@ test('glass preserves highlight steps and a shared unmasked default canvas', () 
   }
 });
 
+test('active light-theme lyrics and filled favourites share a slightly richer red', () => {
+  const light = themeVars('light');
+  const dark = themeVars('dark');
+  assert.equal(light['--zy-active-red'], '#52060d');
+  assert.equal(light['--zy-reading-accent'], '#481219', 'Other selected controls retain their existing colour');
+  assert.equal(dark['--zy-active-red'], undefined, 'Dark controls retain their existing colours');
+  const [red, green] = rgb(light['--zy-active-red']);
+  const [oldRed, oldGreen] = rgb(light['--zy-reading-accent']);
+  assert.ok(red - green > (oldRed - oldGreen) * 1.2);
+  for (const target of ['.lyrics-body p.active', '.like-button.liked']) {
+    assert.ok(rules.some(({ selector, body }) => selector.split(',').includes(`html[data-theme=light] ${target}`) && body.includes('color:var(--zy-active-red)!important')), target);
+  }
+  assert.ok(rules.some(({ selector, body }) => selector.split(',').includes('html[data-theme=light] .like-button:not(.liked)') && body.includes('color:var(--zy-reading-accent)!important')), 'Unfilled favourites retain their existing colour');
+  const music = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
+  assert.match(music, /\.like-button\.liked \.music-icon\s*\{[^}]*fill: currentColor;/, 'Filled hearts inherit the selected colour');
+});
+
 for (const theme of ['dark', 'light']) {
   test(`${theme}: primary and secondary text remain readable across extreme cover colours`, (t) => {
     const vars = themeVars(theme);
@@ -209,6 +226,7 @@ for (const theme of ['dark', 'light']) {
     const covers = [];
     for (const r of [0, 64, 128, 192, 255]) for (const g of [0, 64, 128, 192, 255]) for (const b of [0, 64, 128, 192, 255]) covers.push([r, g, b]);
     const foregrounds = ['text', 'text-secondary', 'muted', 'reading-accent'].map((name) => [name, rgb(vars[`--zy-${name}`])]);
+    if (vars['--zy-active-red']) foregrounds.push(['active-red', rgb(vars['--zy-active-red'])]);
     const selected = vars['--zy-row-selected-surface'].match(/[\d.]+/g).map(Number);
     const interfaceSurface = vars['--zy-shared-interface-surface'].match(/[\d.]+/g).map(Number);
     let worst = { ratio: Infinity };

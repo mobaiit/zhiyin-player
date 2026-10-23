@@ -98,8 +98,14 @@ html[data-theme="light"] :is(.music-nav.active, .music-chart-switch button.activ
   color: #7f1d23 !important;
 }
 
-html[data-theme="light"] :is(.lyrics-body p.active, .music-row.current .track-action, .like-button, .like-button.liked) {
+html[data-theme="light"] .music-row.current .track-action,
+html[data-theme="light"] .like-button:not(.liked) {
   color: var(--zy-reading-accent) !important;
+}
+
+html[data-theme="light"] .lyrics-body p.active,
+html[data-theme="light"] .like-button.liked {
+  color: var(--zy-active-red) !important;
 }
 
 html[data-theme="light"] .admin-page aside .active {
@@ -3341,6 +3347,7 @@ html[data-theme="light"] {
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
   --zy-artwork-glass-tint: rgba(244, 242, 243, 0.60);
   --zy-reading-accent: #481219;
+  --zy-active-red: #52060d;
   --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
 
