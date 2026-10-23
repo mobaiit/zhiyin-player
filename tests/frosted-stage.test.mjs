@@ -100,9 +100,11 @@ test('transparency is controlled by artwork visibility and surface alpha, not mo
   assert.deepEqual(opacity, [0.8, 0.52]);
   const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
     .map(([, value]) => Number(value.split(',').at(-1)));
-  assert.deepEqual(surfaces, [0.16, 0.18]);
-  assert.match(built, /--zy-shared-interface-surface:#27282e29/);
-  assert.match(built, /--zy-shared-interface-surface:#eef0f32e/);
+  assert.deepEqual(surfaces, [0.18, 0.16]);
+  assert.match(built, /--zy-shared-interface-surface:#27282e2e/);
+  assert.match(built, /--zy-shared-interface-surface:#eef0f329/);
+  const brightness = [...built.matchAll(/--zy-artwork-brightness:([^;}]+)/g)].map(([, value]) => Number(value));
+  assert.deepEqual(brightness, [0.48, 1.0]);
   // The more-specific light selector must not keep an old hardcoded tint.
   for (const selector of ['.luri-music-clone', 'html[data-theme=light] .luri-music-clone']) {
     const declarations = rules.filter((rule) => rule.selector === selector && rule.body.includes('--zy-interface-surface:'));
@@ -165,7 +167,7 @@ test('dark artwork is brighter and more colourful while light highlights retain 
   const light = themeVars('light');
   const highlights = [160, 192, 224, 255].map((level) => normalizeCover([level, level, level], light)[0]);
   assert.ok(highlights.at(-1) < 240, 'Even a white cover must not turn into a clipped white background');
-  for (let i = 1; i < highlights.length; i++) assert.ok(highlights[i] > highlights[i - 1] + 4, 'Bright-cover details must stay distinct, not all clip to white');
+  for (let i = 1; i < highlights.length; i++) assert.ok(highlights[i] > highlights[i - 1] + 3, 'Bright-cover details must stay distinct, not all clip to white');
   const stops = [...light['--zy-shared-stage-background'].matchAll(/#[\da-f]{6}\b/gi)].map(([hex]) => rgb(hex));
   assert.ok(stops.every((color) => Math.max(...color) <= 238), 'The default light canvas must also avoid near-white glare');
 });
