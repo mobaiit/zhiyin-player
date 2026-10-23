@@ -56,6 +56,7 @@ html[data-theme="light"] {
   --zy-bg-subtle: #e7e9ec;
   --zy-surface: #fafbfc;
   --zy-surface-raised: #e9ebef;
+  --zy-account-dialog-surface: #eef0f3;
   --zy-border: #cdd1d7;
   --zy-border-strong: #b7bcc4;
   --zy-text: #18181b;
@@ -410,6 +411,7 @@ html[data-theme="light"] .docs-code-wrap {
   --zy-bg-subtle: #23242a;
   --zy-surface: #2a2b32;
   --zy-surface-raised: #35363f;
+  --zy-account-dialog-surface: #27282e;
   --zy-border: #454750;
   --zy-border-strong: #585b66;
   --zy-text: #edeaec;
@@ -2056,7 +2058,7 @@ html[data-theme="light"] .music-quality {
   }
 }
 
-/* Account settings use the same translucent material as navigation and player. */
+/* Account settings use an opaque surface so forms stay readable over artwork. */
 .lm-provider-modal,
 .lm-quality-modal {
   background: rgba(8, 8, 11, 0.48) !important;
@@ -2067,11 +2069,11 @@ html[data-theme="light"] .music-quality {
 .lm-provider-modal > div,
 .lm-quality-modal > div {
   border-color: color-mix(in srgb, var(--zy-text) 8%, transparent) !important;
-  background: var(--zy-player-glass) !important;
+  background: var(--zy-account-dialog-surface) !important;
   color: var(--zy-text) !important;
-  box-shadow: var(--zy-player-glass-shadow) !important;
-  backdrop-filter: blur(18px) saturate(1.12) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+  box-shadow: var(--zy-shadow-lg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .lm-provider-modal :is(h2, b, dd, label),
