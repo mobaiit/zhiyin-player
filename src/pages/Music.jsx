@@ -191,7 +191,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const [toast, setToast] = useState(null);
   const activeTracks = activeQueue === 'favorites' ? likedTracks : tracks;
   const current = playbackQueue.find((track) => track.songId === currentId) || activeTracks.find((track) => track.songId === currentId);
-  const activeArtworkBackground = artworkBackground?.songId === currentId && ['playing', 'paused'].includes(playbackState) ? artworkBackground.url : '';
+  const activeArtworkBackground = artworkBackground?.songId === currentId ? artworkBackground.url : '';
   const resolveTrackRef = useRef(current); resolveTrackRef.current = current;
   const resolveSongId = current?.songId; const resolveUrl = current?.url;
   const lyricsTrackRef = useRef(current); lyricsTrackRef.current = current;
