@@ -68,7 +68,8 @@ html[data-theme="light"] {
   --zy-focus: #b9333a;
   --zy-shadow-sm: 0 12px 32px rgba(34, 38, 45, 0.1);
   --zy-shadow-lg: 0 28px 80px rgba(34, 38, 45, 0.15);
-  --zy-player-glass: rgba(250, 251, 252, 0.56);
+  --zy-player-glass: rgba(244, 246, 249, 0.3);
+  --zy-control-glass: rgba(225, 228, 234, 0.48);
   --zy-player-glass-shadow: 0 18px 52px rgba(34, 38, 45, 0.14);
 }
 
@@ -403,7 +404,7 @@ html[data-theme="light"] .docs-code-wrap {
 /* Unified black/red product theme: player, account surfaces, admin and docs. */
 :root {
   color-scheme: dark;
-  --color-text: #fff;
+  --color-text: #f5f3f4;
   --color-text-muted: #c7c3c6;
   --zy-bg: #1c1d21;
   --zy-bg-subtle: #23242a;
@@ -411,7 +412,7 @@ html[data-theme="light"] .docs-code-wrap {
   --zy-surface-raised: #35363f;
   --zy-border: #454750;
   --zy-border-strong: #585b66;
-  --zy-text: #fff;
+  --zy-text: #f5f3f4;
   --zy-text-secondary: #e7e3e5;
   --zy-muted: #c7c3c6;
   --zy-red: #f05b61;
@@ -421,7 +422,8 @@ html[data-theme="light"] .docs-code-wrap {
   --zy-focus: #ff8589;
   --zy-shadow-sm: 0 12px 32px rgba(5, 5, 8, 0.2);
   --zy-shadow-lg: 0 28px 80px rgba(5, 5, 8, 0.34);
-  --zy-player-glass: rgba(35, 36, 42, 0.22);
+  --zy-player-glass: rgba(35, 36, 42, 0.24);
+  --zy-control-glass: rgba(53, 54, 63, 0.52);
   --zy-player-glass-shadow: 0 18px 52px rgba(5, 5, 8, 0.3);
 }
 
@@ -712,7 +714,7 @@ body {
 .like-button,
 .music-player__lyrics-button {
   border-color: transparent !important;
-  background: var(--zy-surface-raised) !important;
+  background: var(--zy-control-glass) !important;
   color: var(--zy-text-secondary) !important;
 }
 
@@ -1889,7 +1891,7 @@ html[data-theme="light"] .lyrics-track__actions .music-download-button::after {
 }
 
 html[data-theme="light"] :is(.music-player .music-controls .music-icon-button, .music-player__lyrics-button) {
-  background: rgba(233, 235, 239, 0.78) !important;
+  background: var(--zy-control-glass) !important;
   color: var(--zy-text-secondary) !important;
 }
 
