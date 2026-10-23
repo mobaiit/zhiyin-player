@@ -2023,6 +2023,7 @@ html[data-theme="light"] .music-quality {
   .music-player {
     width: min(calc(100% - 32px), 1040px) !important;
     grid-template-columns: minmax(0, 1fr) auto !important;
+    padding-inline: 18px !important;
   }
 
   .music-player__progress {
@@ -2033,7 +2034,6 @@ html[data-theme="light"] .music-quality {
     display: flex !important;
     grid-column: 1 !important;
     grid-row: 2 !important;
-    justify-self: start;
   }
 
   .music-controls {
