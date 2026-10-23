@@ -61,7 +61,7 @@ html[data-theme="light"] {
   --zy-border-strong: #b7bcc4;
   --zy-text: #18181b;
   --zy-text-secondary: #292d33;
-  --zy-muted: #4d535c;
+  --zy-muted: #454b54;
   --zy-red: #c73c43;
   --zy-red-hover: #a92f36;
   --zy-red-action: #b9333a;
@@ -79,15 +79,7 @@ html[data-theme="light"] .docs-hero {
   background: var(--zy-player-glass) !important;
 }
 
-html[data-theme="light"] .music-artwork-backdrop {
-  filter: none;
-}
 
-html[data-theme="light"] .music-artwork-backdrop::after {
-  background: linear-gradient(180deg, rgba(241, 242, 244, 0.42), rgba(241, 242, 244, 0.58));
-  -webkit-backdrop-filter: blur(22px) saturate(0.68) brightness(0.98) contrast(0.9);
-  backdrop-filter: blur(22px) saturate(0.68) brightness(0.98) contrast(0.9);
-}
 
 html[data-theme="light"] .music-shell {
   background: transparent !important;
@@ -119,8 +111,8 @@ html[data-theme="light"] :is(.music-nav.active, .music-chart-switch button.activ
   color: #7f1d23 !important;
 }
 
-html[data-theme="light"] :is(.music-quality, .lyrics-body p.active, .music-row.current .track-action, .like-button, .like-button.liked) {
-  color: #9f2229 !important;
+html[data-theme="light"] :is(.lyrics-body p.active, .music-row.current .track-action, .like-button, .like-button.liked) {
+  color: var(--zy-reading-accent) !important;
 }
 
 html[data-theme="light"] .admin-page aside .active,
@@ -398,7 +390,7 @@ html[data-theme="light"] .docs-code-wrap {
   --zy-border-strong: #585b66;
   --zy-text: #edeaec;
   --zy-text-secondary: #d8d4d6;
-  --zy-muted: #c7c3c6;
+  --zy-muted: #cbc7ca;
   --zy-red: #f05b61;
   --zy-red-hover: #ff7378;
   --zy-red-action: #d9434a;
@@ -550,41 +542,9 @@ body {
   background: transparent !important;
 }
 
-.music-page::before {
-  z-index: -1;
-  opacity: 1;
-  background:
-    linear-gradient(180deg, rgba(22, 23, 27, 0.2), rgba(22, 23, 27, 0.32) 64%, rgba(22, 23, 27, 0.46)),
-    radial-gradient(circle at 18% 10%, rgba(229, 72, 77, 0.1), transparent 26rem) !important;
-  filter: none;
-  transform: none;
-}
 
-.music-artwork-backdrop {
-  position: absolute;
-  z-index: -2;
-  inset: -48px;
-  opacity: 0;
-  background-position: center;
-  background-size: cover;
-  filter: none;
-  transform: scale(1.04);
-  transition: opacity 380ms ease;
-  pointer-events: none;
-}
 
-.music-artwork-backdrop::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background: linear-gradient(180deg, rgba(28, 29, 33, 0.32), rgba(28, 29, 33, 0.52));
-  -webkit-backdrop-filter: blur(24px) saturate(0.72) brightness(0.82) contrast(0.9);
-  backdrop-filter: blur(24px) saturate(0.72) brightness(0.82) contrast(0.9);
-}
 
-.music-artwork-backdrop.is-visible {
-  opacity: 0.82;
-}
 
 .music-shell {
   border-color: transparent !important;
@@ -666,7 +626,7 @@ body {
 }
 
 .music-row.current {
-  background: linear-gradient(90deg, rgba(229, 72, 77, 0.2), rgba(229, 72, 77, 0.04)) !important;
+  background: var(--zy-row-selected-surface) !important;
   box-shadow: inset 3px 0 0 var(--zy-red) !important;
 }
 
@@ -690,7 +650,7 @@ body {
 .music-row.current .track-action,
 .like-button,
 .like-button.liked {
-  color: var(--zy-red-hover) !important;
+  color: var(--zy-reading-accent) !important;
 }
 
 .music-player {
@@ -1192,9 +1152,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .music-artwork-backdrop {
-    transition: none !important;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1853,11 +1810,7 @@ html[data-theme="light"] .ui-toast--error {
 .lyrics-track > div:not(.lyrics-track__actions) > span {
   color: var(--zy-text-secondary) !important;
   opacity: 1;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.72);
-}
-
-html[data-theme="light"] .lyrics-track > div:not(.lyrics-track__actions) > span {
-  text-shadow: 0 1px 5px rgba(255, 255, 255, 0.78);
+  text-shadow: none;
 }
 
 @media (max-width: 760px) {
@@ -1869,7 +1822,7 @@ html[data-theme="light"] .lyrics-track > div:not(.lyrics-track__actions) > span 
 
 /* Light mode keeps the same hierarchy with neutral glass and restrained red accents. */
 html[data-theme="light"] .music-row.current {
-  background: linear-gradient(90deg, rgba(199, 60, 67, 0.14), rgba(250, 251, 252, 0.16)) !important;
+  background: var(--zy-row-selected-surface) !important;
 }
 
 html[data-theme="light"] .music-row:hover {
@@ -2693,16 +2646,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   overflow: hidden;
 }
 
-.admin-login::before {
-  position: absolute;
-  inset: -20%;
-  background:
-    radial-gradient(circle at 28% 30%, color-mix(in srgb, var(--zy-red) 16%, transparent), transparent 24rem),
-    radial-gradient(circle at 72% 72%, color-mix(in srgb, var(--zy-text-secondary) 8%, transparent), transparent 28rem);
-  content: "";
-  filter: blur(18px);
-  pointer-events: none;
-}
 
 .admin-login form {
   position: relative;
@@ -3172,15 +3115,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 
 /* Music visual stack: background -> one full-page glass veil -> transparent UI. */
 .luri-music-clone {
-  --zy-stage-background:
-    radial-gradient(circle at 14% 8%, rgba(240, 91, 97, 0.1), transparent 30rem),
-    radial-gradient(circle at 86% 18%, rgba(92, 98, 112, 0.12), transparent 32rem),
-    linear-gradient(145deg, #202127, #18191d 58%, #23242a);
-  --zy-stage-veil-top: rgba(28, 29, 33, 0.28);
-  --zy-stage-veil-bottom: rgba(28, 29, 33, 0.48);
-  --zy-stage-blur: 20px;
-  --zy-stage-saturate: 1.22;
-  --zy-stage-brightness: 0.88;
   --zy-interface-surface: rgba(35, 36, 42, 0.18);
   --zy-interface-border: rgba(255, 255, 255, 0.08);
   --zy-interface-shadow: 0 18px 46px rgba(5, 5, 8, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.035);
@@ -3205,34 +3139,24 @@ html[data-theme="light"] .luri-music-clone {
   inset: -40px;
   background-position: center;
   background-size: cover;
-  filter: none !important;
+  opacity: 0;
+  transition: opacity 380ms ease;
+  pointer-events: none;
+  /* Normalize only the background copy, never the actual cover thumbnails.
+     Bounded contrast makes black/white and saturated artwork equally safe. */
+  filter: saturate(var(--zy-artwork-saturate)) contrast(var(--zy-artwork-contrast)) brightness(var(--zy-artwork-brightness)) !important;
   transform: none;
 }
 
-.luri-music-clone .music-artwork-backdrop::after {
-  display: none !important;
-  content: none !important;
-}
 
 .luri-music-clone .music-artwork-backdrop.is-visible {
-  opacity: 0.9;
+  opacity: var(--zy-artwork-opacity);
 }
 
 .luri-music-clone .music-page::before {
-  position: absolute;
   z-index: -1;
-  inset: 0;
-  display: block !important;
   content: "";
   opacity: 1;
-  background:
-    linear-gradient(180deg, var(--zy-stage-veil-top), var(--zy-stage-veil-bottom)),
-    rgba(255, 255, 255, 0.015) !important;
-  filter: none !important;
-  -webkit-backdrop-filter: blur(var(--zy-stage-blur)) saturate(var(--zy-stage-saturate)) brightness(var(--zy-stage-brightness)) contrast(0.94);
-  backdrop-filter: blur(var(--zy-stage-blur)) saturate(var(--zy-stage-saturate)) brightness(var(--zy-stage-brightness)) contrast(0.94);
-  transform: none !important;
-  pointer-events: none;
 }
 .luri-music-clone :is(
   .music-shell,
@@ -3278,11 +3202,6 @@ html[data-theme="light"] .luri-music-clone {
   backdrop-filter: blur(12px) saturate(1.04) !important;
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .luri-music-clone .music-page::before {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--zy-bg) 72%, transparent), color-mix(in srgb, var(--zy-bg) 86%, transparent)) !important;
-  }
-}
 
 html[data-theme="light"] .lm-quality-mark {
   color: #525a66 !important;
@@ -3356,20 +3275,12 @@ html[data-theme="light"] .lm-quality-mark--hires {
 /* Admin visual stack: default gradient -> one page-wide glass veil -> UI surfaces. */
 .admin-page,
 .admin-login {
-  --admin-stage-background:
-    radial-gradient(circle at 14% 8%, rgba(240, 91, 97, 0.1), transparent 30rem),
-    radial-gradient(circle at 86% 18%, rgba(92, 98, 112, 0.12), transparent 32rem),
-    linear-gradient(145deg, #202127, #18191d 58%, #23242a);
-  --admin-stage-veil-top: rgba(28, 29, 33, 0.28);
-  --admin-stage-veil-bottom: rgba(28, 29, 33, 0.48);
-  --admin-stage-saturate: 1.22;
-  --admin-stage-brightness: 0.88;
   --admin-interface-surface: rgba(35, 36, 42, 0.18);
   --admin-interface-border: rgba(255, 255, 255, 0.08);
   --admin-interface-shadow: 0 18px 46px rgba(5, 5, 8, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.035);
   position: relative;
   isolation: isolate;
-  background: var(--admin-stage-background) !important;
+  background: var(--zy-shared-stage-background) !important;
 }
 
 html[data-theme="light"] :is(.admin-page, .admin-login) {
@@ -3380,16 +3291,8 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 
 .admin-page::before,
 .admin-login::before {
-  position: fixed;
   z-index: 0;
-  inset: 0;
-  display: block;
   content: "";
-  background: linear-gradient(180deg, var(--admin-stage-veil-top), var(--admin-stage-veil-bottom));
-  filter: none;
-  -webkit-backdrop-filter: blur(20px) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
-  backdrop-filter: blur(20px) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
-  pointer-events: none;
 }
 
 .admin-page > aside,
@@ -3497,12 +3400,6 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   backdrop-filter: none !important;
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .admin-page::before,
-  .admin-login::before {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--zy-bg) 72%, transparent), color-mix(in srgb, var(--zy-bg) 86%, transparent));
-  }
-}
 
 /* One inherited canvas for every route, including login and loading screens. */
 :root {
@@ -3510,25 +3407,32 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
     radial-gradient(circle at 15% 6%, rgba(185, 92, 98, 0.1), transparent 30rem),
     radial-gradient(circle at 86% 74%, rgba(156, 78, 86, 0.08), transparent 34rem),
     linear-gradient(135deg, #45454c 0%, #51474b 24%, #40444b 49%, #56494d 74%, #45474e 100%);
-  --zy-shared-veil-top: rgba(31, 31, 35, 0.28);
-  --zy-shared-veil-bottom: rgba(30, 30, 34, 0.44);
   --zy-shared-stage-blur: 10px;
   --zy-shared-stage-saturate: 1.1;
   --zy-shared-stage-brightness: 0.98;
   --zy-shared-glass-tint: rgba(255, 255, 255, 0);
+  --zy-artwork-saturate: 0.65;
+  --zy-artwork-contrast: 0.32;
+  --zy-artwork-brightness: 0.42;
+  --zy-artwork-opacity: 0.6;
+  --zy-reading-accent: #ffb9bd;
+  --zy-row-selected-surface: rgba(229, 72, 77, 0.1);
   --zy-shared-interface-surface: rgba(39, 40, 46, 0.3);
   --zy-shared-interface-border: rgba(255, 255, 255, 0.1);
 }
 
 html[data-theme="light"] {
   --zy-shared-stage-background:
-    radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.14), transparent 30rem),
-    radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.1), transparent 34rem),
-    linear-gradient(135deg, #f2f0f0 0%, #efdadd 24%, #f7f5f4 49%, #ecd3d7 74%, #f0f1f3 100%);
-  --zy-shared-veil-top: rgba(247, 244, 244, 0.32);
-  --zy-shared-veil-bottom: rgba(241, 239, 240, 0.52);
+    radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.07), transparent 30rem),
+    radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.05), transparent 34rem),
+    linear-gradient(135deg, #f2f0f0 0%, #f0e6e8 24%, #f7f5f4 49%, #efdee1 74%, #f0f1f3 100%);
   --zy-shared-interface-surface: rgba(238, 240, 243, 0.31);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
+  --zy-artwork-contrast: 0.26;
+  --zy-artwork-brightness: 2.05;
+  --zy-artwork-opacity: 0.4;
+  --zy-reading-accent: #95212a;
+  --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
 
 html,
@@ -3552,30 +3456,16 @@ body,
 .luri-music-clone {
   isolation: isolate;
   background: var(--zy-shared-stage-background) !important;
-  --zy-stage-background: var(--zy-shared-stage-background);
-  --zy-stage-veil-top: var(--zy-shared-veil-top);
-  --zy-stage-veil-bottom: var(--zy-shared-veil-bottom);
-  --zy-stage-blur: var(--zy-shared-stage-blur);
-  --zy-stage-saturate: var(--zy-shared-stage-saturate);
-  --zy-stage-brightness: var(--zy-shared-stage-brightness);
   --zy-interface-surface: var(--zy-shared-interface-surface);
   --zy-interface-border: var(--zy-shared-interface-border);
 }
 
 .admin-page,
 .admin-login {
-  --admin-stage-background: var(--zy-shared-stage-background);
-  --admin-stage-veil-top: var(--zy-shared-veil-top);
-  --admin-stage-veil-bottom: var(--zy-shared-veil-bottom);
-  --admin-stage-saturate: var(--zy-shared-stage-saturate);
-  --admin-stage-brightness: var(--zy-shared-stage-brightness);
   --admin-interface-surface: var(--zy-shared-interface-surface);
   --admin-interface-border: var(--zy-shared-interface-border);
 }
 
-.luri-music-clone .music-page::before {
-  position: fixed;
-}
 
 .docs-page {
   position: relative;
@@ -3584,15 +3474,8 @@ body,
 }
 
 .docs-page::before {
-  position: fixed;
   z-index: 0;
-  inset: 0;
-  display: block;
   content: "";
-  background: linear-gradient(180deg, var(--zy-shared-veil-top), var(--zy-shared-veil-bottom));
-  -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
-  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
-  pointer-events: none;
 }
 
 .docs-layout {
@@ -3658,11 +3541,6 @@ html[data-theme="light"] .docs-hero {
   height: 18px;
 }
 
-.admin-page::before,
-.admin-login::before {
-  -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
-  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
-}
 
 .admin-header-actions > .theme-toggle {
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -3687,11 +3565,6 @@ html[data-theme="light"] .admin-header-actions > .theme-toggle {
   box-shadow: 0 8px 22px rgba(34, 38, 45, 0.09) !important;
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .docs-page::before {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--zy-bg) 72%, transparent), color-mix(in srgb, var(--zy-bg) 86%, transparent));
-  }
-}
 
 /* Full-viewport frosted layer shared by every product surface.
    Keep the prefixed declaration FIRST: Lightning CSS otherwise drops the

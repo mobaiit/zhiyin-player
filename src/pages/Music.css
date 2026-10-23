@@ -8,27 +8,6 @@
   font-family: var(--font-ui);
   isolation: isolate;
 }
-.music-page::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  content: "";
-  opacity: 0.45;
-  background:
-    radial-gradient(
-      ellipse 47% 30% at 4% 19%,
-      #c6c8c41f 0 35%,
-      transparent 72%
-    ),
-    radial-gradient(
-      ellipse 34% 22% at 96% 75%,
-      #8f969029 0 12%,
-      transparent 74%
-    ),
-    radial-gradient(ellipse 45% 18% at 65% 8%, #b9bcb631 0 18%, transparent 68%);
-  filter: blur(20px);
-  transform: scale(1.08);
-}
 .music-shell {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
@@ -375,9 +354,6 @@
 .music-page {
   padding-top: calc(var(--nav-height) + 3rem);
   background: var(--color-bg);
-}
-.music-page::before {
-  display: none;
 }
 .music-shell {
   display: block;

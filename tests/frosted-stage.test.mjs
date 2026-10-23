@@ -86,3 +86,65 @@ test('all shared toasts omit countdown bars but retain dismiss behavior', () => 
   assert.match(feedback, /setTimeout\(\(\) => closeRef\.current\(\), duration\)/);
   assert.match(feedback, /onClick=\{onClose\} aria-label="关闭通知"/);
 });
+
+test('background normalization reuses the existing image and single frosted layer', () => {
+  assert.equal((source.match(/\.luri-music-clone \.music-artwork-backdrop\s*\{/g) || []).length, 1);
+  assert.doesNotMatch(source, /music-artwork-backdrop::after|--(?:zy|admin)-stage-/);
+  assert.ok(rules.some(({ selector, body }) => selector === '.luri-music-clone .music-artwork-backdrop' && body.includes('filter:saturate(var(--zy-artwork-saturate)) contrast(var(--zy-artwork-contrast)) brightness(var(--zy-artwork-brightness))!important')));
+  const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
+  assert.equal((music.match(/className=\{`music-artwork-backdrop/g) || []).length, 1);
+});
+
+// Model sRGB compositing and CSS colour filters against the real CSS tokens.
+// This is a contrast regression test, not a substitute for browser visual QA.
+const clampChannel = (n) => Math.max(0, Math.min(255, n));
+const rgb = (hex) => hex.slice(1).match(/../g).map((n) => parseInt(n, 16));
+const blend = (under, over, alpha) => under.map((n, i) => n * (1 - alpha) + over[i] * alpha);
+const saturate = (color, s) => {
+  const luma = color.reduce((sum, n, i) => sum + n * [0.213, 0.715, 0.072][i], 0);
+  return color.map((n) => clampChannel(luma + (n - luma) * s));
+};
+const luminance = (color) => color.reduce((sum, n, i) => {
+  const v = n / 255;
+  return sum + (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4) * [0.2126, 0.7152, 0.0722][i];
+}, 0);
+const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
+
+for (const theme of ['dark', 'light']) {
+  test(`${theme}: primary and secondary text remain readable across extreme cover colours`, (t) => {
+    const vars = {};
+    const tokenRules = [...source.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .map(([, selector, body]) => ({ selector: selector.trim().replaceAll('"', ''), body }));
+    const readVars = (selector) => tokenRules.filter((r) => r.selector === selector).forEach(({ body }) => {
+      for (const [, key, value] of body.matchAll(/(--[\w-]+):([^;}]+)/g)) vars[key] = value.trim();
+    });
+    readVars(':root');
+    if (theme === 'light') readVars('html[data-theme=light]');
+    const number = (name) => Number(vars[`--zy-${name}`]);
+    const stage = vars['--zy-shared-stage-background'];
+    const stops = [...stage.matchAll(/#[\da-f]{6}\b/gi)].map(([hex]) => rgb(hex));
+    const radials = [...stage.matchAll(/rgba\(([^)]+)\)/g)].map(([, channels]) => channels.split(',').map(Number));
+    const covers = [];
+    for (const r of [0, 64, 128, 192, 255]) for (const g of [0, 64, 128, 192, 255]) for (const b of [0, 64, 128, 192, 255]) covers.push([r, g, b]);
+    const foregrounds = ['text', 'text-secondary', 'muted', 'reading-accent'].map((name) => [name, rgb(vars[`--zy-${name}`])]);
+    const selected = vars['--zy-row-selected-surface'].match(/[\d.]+/g).map(Number);
+    let worst = { ratio: Infinity };
+    for (const stop of stops) for (const first of [0, 1]) for (const second of [0, 1]) {
+      let base = blend(stop, radials[1], radials[1][3] * second);
+      base = blend(base, radials[0], radials[0][3] * first);
+      for (const cover of covers) for (const visibility of [0, 0.5, 1]) {
+        const normalized = saturate(cover, number('artwork-saturate')).map((n) =>
+          clampChannel((n * number('artwork-contrast') + 127.5 * (1 - number('artwork-contrast'))) * number('artwork-brightness')));
+        const composite = blend(base, normalized, number('artwork-opacity') * visibility);
+        const background = saturate(composite, number('shared-stage-saturate')).map((n) => clampChannel(n * number('shared-stage-brightness')));
+        for (const state of ['plain', 'selected']) for (const [name, color] of foregrounds) {
+          const surface = state === 'selected' ? blend(background, selected, selected[3]) : background;
+          const ratio = contrast(color, surface);
+          if (ratio < worst.ratio) worst = { ratio, name, cover, visibility, state, background: surface };
+        }
+      }
+    }
+    assert.ok(worst.ratio >= 4.5, `${theme} minimum contrast: ${JSON.stringify(worst)}`);
+    t.diagnostic(`Worst sampled contrast: ${worst.ratio.toFixed(2)}:1 (${worst.name})`);
+  });
+}
