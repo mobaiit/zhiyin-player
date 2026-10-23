@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test:styles": "npm run build && node --test tests/frosted-stage.test.mjs",
     "lint": "oxlint src functions shared worker.js vite.config.js",
     "preview": "vite preview",
     "update:singers": "node scripts/update-singers.mjs"

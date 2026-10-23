@@ -86,20 +86,14 @@ html[data-theme="light"] .docs-hero {
   background: var(--zy-player-glass) !important;
 }
 
-html[data-theme="light"] .music-page::before {
-  background:
-    linear-gradient(180deg, rgba(241, 242, 244, 0.32), rgba(241, 242, 244, 0.46) 68%, rgba(241, 242, 244, 0.58)),
-    radial-gradient(circle at 18% 10%, rgba(199, 60, 67, 0.045), transparent 26rem) !important;
-}
-
 html[data-theme="light"] .music-artwork-backdrop {
   filter: none;
 }
 
 html[data-theme="light"] .music-artwork-backdrop::after {
   background: linear-gradient(180deg, rgba(241, 242, 244, 0.42), rgba(241, 242, 244, 0.58));
-  backdrop-filter: blur(22px) saturate(0.68) brightness(0.98) contrast(0.9);
   -webkit-backdrop-filter: blur(22px) saturate(0.68) brightness(0.98) contrast(0.9);
+  backdrop-filter: blur(22px) saturate(0.68) brightness(0.98) contrast(0.9);
 }
 
 html[data-theme="light"] .music-shell {
@@ -602,8 +596,8 @@ body {
   inset: 0;
   content: "";
   background: linear-gradient(180deg, rgba(28, 29, 33, 0.32), rgba(28, 29, 33, 0.52));
-  backdrop-filter: blur(24px) saturate(0.72) brightness(0.82) contrast(0.9);
   -webkit-backdrop-filter: blur(24px) saturate(0.72) brightness(0.82) contrast(0.9);
+  backdrop-filter: blur(24px) saturate(0.72) brightness(0.82) contrast(0.9);
 }
 
 .music-artwork-backdrop.is-visible {
@@ -721,8 +715,8 @@ body {
   border-color: rgba(255, 255, 255, 0.06) !important;
   background: rgba(35, 36, 42, 0.34) !important;
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
-  backdrop-filter: blur(12px) saturate(1.08);
   -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  backdrop-filter: blur(12px) saturate(1.08);
 }
 
 .music-player .music-controls .music-icon-button,
@@ -1201,8 +1195,8 @@ body {
   .music-page.mobile-view-playlist .music-header {
     background: transparent !important;
     box-shadow: none !important;
-    backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 
   .music-page.mobile-view-playlist .music-sidebar {
@@ -1366,8 +1360,8 @@ body {
   border-radius: var(--radius-md) !important;
   background: transparent !important;
   box-shadow: none !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Keep every structural layer of the library and lyric views transparent so
@@ -1468,8 +1462,8 @@ body {
   border-radius: 20px !important;
   background: rgba(35, 36, 42, 0.34) !important;
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
-  backdrop-filter: blur(12px) saturate(1.08);
   -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  backdrop-filter: blur(12px) saturate(1.08);
   overflow: hidden;
 }
 
@@ -1645,8 +1639,8 @@ body {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
@@ -1723,8 +1717,8 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
 .music-player {
   background: var(--zy-player-glass) !important;
   box-shadow: var(--zy-player-glass-shadow) !important;
-  backdrop-filter: blur(12px) saturate(1.08) !important;
   -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
 }
 
 .lm-site-bar,
@@ -1785,8 +1779,8 @@ html[data-theme="light"] :is(.lm-site-bar, .docs-hero, .admin-page > aside) {
   background: var(--zy-player-glass) !important;
   color: var(--zy-text) !important;
   box-shadow: var(--zy-player-glass-shadow) !important;
-  backdrop-filter: blur(12px) saturate(1.08) !important;
   -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
 }
 
 .ui-toast--success {
@@ -1843,8 +1837,8 @@ html[data-theme="light"] .ui-toast--error {
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .lm-site-bar > .lm-docs-button:hover,
@@ -1860,8 +1854,8 @@ html[data-theme="light"] .ui-toast--error {
 .music-search:focus-within {
   background: transparent !important;
   box-shadow: none !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .music-search input,
@@ -2077,8 +2071,8 @@ html[data-theme="light"] .music-quality {
 .lm-provider-modal,
 .lm-quality-modal {
   background: rgba(8, 8, 11, 0.48) !important;
-  backdrop-filter: blur(8px) saturate(1.04);
   -webkit-backdrop-filter: blur(8px) saturate(1.04);
+  backdrop-filter: blur(8px) saturate(1.04);
 }
 
 .lm-provider-modal > div,
@@ -2087,8 +2081,8 @@ html[data-theme="light"] .music-quality {
   background: var(--zy-account-dialog-surface) !important;
   color: var(--zy-text) !important;
   box-shadow: var(--zy-shadow-lg) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .lm-provider-modal :is(h2, b, dd, label),
@@ -2285,8 +2279,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   border-radius: 0 !important;
   background: var(--admin-panel) !important;
   box-shadow: 16px 0 44px color-mix(in srgb, var(--zy-bg) 36%, transparent) !important;
-  backdrop-filter: blur(18px) saturate(1.08) !important;
   -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
 }
 
 .admin-brand {
@@ -2383,8 +2377,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   border: 0 !important;
   background: color-mix(in srgb, var(--zy-bg) 76%, transparent) !important;
   box-shadow: none !important;
-  backdrop-filter: blur(16px) saturate(1.06);
   -webkit-backdrop-filter: blur(16px) saturate(1.06);
+  backdrop-filter: blur(16px) saturate(1.06);
 }
 
 .admin-context {
@@ -2520,8 +2514,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   background: var(--admin-panel) !important;
   color: var(--zy-text) !important;
   box-shadow: 0 12px 36px color-mix(in srgb, var(--zy-bg) 26%, transparent) !important;
-  backdrop-filter: blur(14px) saturate(1.04);
   -webkit-backdrop-filter: blur(14px) saturate(1.04);
+  backdrop-filter: blur(14px) saturate(1.04);
 }
 
 .filters {
@@ -2692,8 +2686,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 
 .admin-modal {
   background: rgba(8, 8, 11, 0.68) !important;
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .admin-modal > section {
@@ -2736,8 +2730,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   border-radius: 20px !important;
   background: var(--admin-panel) !important;
   box-shadow: var(--zy-shadow-lg) !important;
-  backdrop-filter: blur(18px) saturate(1.08);
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  backdrop-filter: blur(18px) saturate(1.08);
 }
 
 .admin-login-brand {
@@ -3018,8 +3012,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   border-radius: 16px;
   background: var(--admin-panel);
   box-shadow: 0 12px 36px color-mix(in srgb, var(--zy-bg) 26%, transparent);
-  backdrop-filter: blur(14px) saturate(1.04);
   -webkit-backdrop-filter: blur(14px) saturate(1.04);
+  backdrop-filter: blur(14px) saturate(1.04);
 }
 
 .admin-config-list > div {
@@ -3076,8 +3070,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   border: 0 !important;
   border-radius: 0 !important;
   background: rgba(8, 8, 11, 0.64) !important;
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .admin-drawer > aside {
@@ -3095,8 +3089,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   background: var(--zy-account-dialog-surface) !important;
   color: var(--zy-text) !important;
   box-shadow: var(--zy-shadow-lg) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
   animation: admin-drawer-in 200ms ease-out;
 }
 
@@ -3211,14 +3205,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 }
 
 html[data-theme="light"] .luri-music-clone {
-  --zy-stage-background:
-    radial-gradient(circle at 14% 8%, rgba(199, 60, 67, 0.075), transparent 30rem),
-    radial-gradient(circle at 86% 18%, rgba(83, 91, 106, 0.09), transparent 32rem),
-    linear-gradient(145deg, #eef0f3, #e5e8ec 58%, #f1f2f4);
-  --zy-stage-veil-top: rgba(238, 240, 243, 0.34);
-  --zy-stage-veil-bottom: rgba(238, 240, 243, 0.56);
-  --zy-stage-saturate: 1.12;
-  --zy-stage-brightness: 1.01;
   --zy-interface-surface: rgba(238, 240, 243, 0.2);
   --zy-interface-border: rgba(34, 38, 45, 0.09);
   --zy-interface-shadow: 0 16px 42px rgba(34, 38, 45, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
@@ -3226,17 +3212,19 @@ html[data-theme="light"] .luri-music-clone {
 
 .luri-music-clone .music-page {
   position: relative;
-  isolation: isolate;
-  background: var(--zy-stage-background) !important;
+  /* Keep the canvas and veil in the outer page's stacking context. */
+  isolation: auto;
+  background: transparent !important;
 }
 
 .luri-music-clone .music-artwork-backdrop {
+  position: fixed;
   z-index: -2;
-  inset: -32px;
+  inset: -40px;
   background-position: center;
   background-size: cover;
   filter: none !important;
-  transform: scale(1.035);
+  transform: none;
 }
 
 .luri-music-clone .music-artwork-backdrop::after {
@@ -3259,8 +3247,8 @@ html[data-theme="light"] .luri-music-clone {
     linear-gradient(180deg, var(--zy-stage-veil-top), var(--zy-stage-veil-bottom)),
     rgba(255, 255, 255, 0.015) !important;
   filter: none !important;
-  backdrop-filter: blur(var(--zy-stage-blur)) saturate(var(--zy-stage-saturate)) brightness(var(--zy-stage-brightness)) contrast(0.94);
   -webkit-backdrop-filter: blur(var(--zy-stage-blur)) saturate(var(--zy-stage-saturate)) brightness(var(--zy-stage-brightness)) contrast(0.94);
+  backdrop-filter: blur(var(--zy-stage-blur)) saturate(var(--zy-stage-saturate)) brightness(var(--zy-stage-brightness)) contrast(0.94);
   transform: none !important;
   pointer-events: none;
 }
@@ -3280,8 +3268,8 @@ html[data-theme="light"] .luri-music-clone {
 ) {
   background: transparent !important;
   box-shadow: none !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .luri-music-clone > .lm-site-bar,
@@ -3289,24 +3277,24 @@ html[data-theme="light"] .luri-music-clone {
   border: 1px solid var(--zy-interface-border) !important;
   background: var(--zy-interface-surface) !important;
   box-shadow: var(--zy-interface-shadow) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .luri-music-clone .music-search,
 .luri-music-clone .music-search:focus-within {
   background: transparent !important;
   box-shadow: none !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .luri-music-clone .music-search-history {
   border: 1px solid var(--zy-interface-border) !important;
   background: color-mix(in srgb, var(--zy-surface) 92%, transparent) !important;
   box-shadow: var(--zy-shadow-lg) !important;
-  backdrop-filter: blur(12px) saturate(1.04) !important;
   -webkit-backdrop-filter: blur(12px) saturate(1.04) !important;
+  backdrop-filter: blur(12px) saturate(1.04) !important;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -3404,14 +3392,6 @@ html[data-theme="light"] .lm-quality-mark--hires {
 }
 
 html[data-theme="light"] :is(.admin-page, .admin-login) {
-  --admin-stage-background:
-    radial-gradient(circle at 14% 8%, rgba(199, 60, 67, 0.075), transparent 30rem),
-    radial-gradient(circle at 86% 18%, rgba(83, 91, 106, 0.09), transparent 32rem),
-    linear-gradient(145deg, #eef0f3, #e5e8ec 58%, #f1f2f4);
-  --admin-stage-veil-top: rgba(238, 240, 243, 0.34);
-  --admin-stage-veil-bottom: rgba(238, 240, 243, 0.56);
-  --admin-stage-saturate: 1.12;
-  --admin-stage-brightness: 1.01;
   --admin-interface-surface: rgba(238, 240, 243, 0.26);
   --admin-interface-border: rgba(34, 38, 45, 0.09);
   --admin-interface-shadow: 0 16px 42px rgba(34, 38, 45, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
@@ -3426,8 +3406,8 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   content: "";
   background: linear-gradient(180deg, var(--admin-stage-veil-top), var(--admin-stage-veil-bottom));
   filter: none;
-  backdrop-filter: blur(20px) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
   -webkit-backdrop-filter: blur(20px) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
+  backdrop-filter: blur(20px) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
   pointer-events: none;
 }
 
@@ -3454,8 +3434,8 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 .admin-inline-loading {
   background: var(--admin-interface-surface) !important;
   box-shadow: var(--admin-interface-shadow) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .admin-page > aside {
@@ -3533,8 +3513,8 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 .admin-drawer > aside,
 .admin-account-menu {
   background: var(--zy-account-dialog-surface) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -3555,9 +3535,10 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
     linear-gradient(135deg, #323136 0%, #3b3033 24%, #2a2b30 49%, #3e3134 74%, #323237 100%);
   --zy-shared-veil-top: rgba(31, 31, 35, 0.28);
   --zy-shared-veil-bottom: rgba(30, 30, 34, 0.44);
-  --zy-shared-stage-blur: 28px;
-  --zy-shared-stage-saturate: 1.08;
-  --zy-shared-stage-brightness: 0.94;
+  --zy-shared-stage-blur: 20px;
+  --zy-shared-stage-saturate: 1.8;
+  --zy-shared-stage-brightness: 1.05;
+  --zy-shared-glass-tint: rgba(255, 255, 255, 0.12);
   --zy-shared-interface-surface: rgba(39, 40, 46, 0.3);
   --zy-shared-interface-border: rgba(255, 255, 255, 0.1);
 }
@@ -3569,14 +3550,13 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
     linear-gradient(135deg, #f2f0f0 0%, #efdadd 24%, #f7f5f4 49%, #ecd3d7 74%, #f0f1f3 100%);
   --zy-shared-veil-top: rgba(247, 244, 244, 0.32);
   --zy-shared-veil-bottom: rgba(241, 239, 240, 0.52);
-  --zy-shared-stage-blur: 28px;
-  --zy-shared-stage-saturate: 1.08;
-  --zy-shared-stage-brightness: 1.01;
   --zy-shared-interface-surface: rgba(238, 240, 243, 0.31);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
 }
 
 .luri-music-clone {
+  isolation: isolate;
+  background: var(--zy-shared-stage-background) !important;
   --zy-stage-background: var(--zy-shared-stage-background);
   --zy-stage-veil-top: var(--zy-shared-veil-top);
   --zy-stage-veil-bottom: var(--zy-shared-veil-bottom);
@@ -3615,8 +3595,8 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
   display: block;
   content: "";
   background: linear-gradient(180deg, var(--zy-shared-veil-top), var(--zy-shared-veil-bottom));
-  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
   -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
+  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
   pointer-events: none;
 }
 
@@ -3627,8 +3607,8 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
 
 .docs-hero {
   background: var(--zy-shared-interface-surface) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 html[data-theme="light"] .docs-hero {
@@ -3646,8 +3626,8 @@ html[data-theme="light"] .docs-hero {
   .docs-retry-flow span
 ) {
   background: color-mix(in srgb, var(--zy-surface) 34%, transparent) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .admin-brand img {
@@ -3685,8 +3665,8 @@ html[data-theme="light"] .docs-hero {
 
 .admin-page::before,
 .admin-login::before {
-  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
   -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
+  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
 }
 
 .admin-header-actions > .theme-toggle,
@@ -3721,17 +3701,9 @@ html[data-theme="light"] :is(.admin-header-actions > .theme-toggle, .admin-login
   }
 }
 
-/* Full-viewport frosted layer shared by every product surface. */
-.luri-music-clone,
-.docs-page,
-.admin-page,
-.admin-login {
-  --zy-shared-stage-blur: 20px;
-  --zy-shared-stage-saturate: 1.8;
-  --zy-shared-stage-brightness: 1.05;
-  --zy-shared-glass-tint: rgba(255, 255, 255, 0.12);
-}
-
+/* Full-viewport frosted layer shared by every product surface.
+   Keep the prefixed declaration FIRST: Lightning CSS otherwise drops the
+   standard property when the WebKit declaration is last. */
 .luri-music-clone .music-page::before,
 .docs-page::before,
 .admin-page::before,
@@ -3741,8 +3713,8 @@ html[data-theme="light"] :is(.admin-header-actions > .theme-toggle, .admin-login
   display: block !important;
   background: var(--zy-shared-glass-tint) !important;
   filter: none !important;
-  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) !important;
   -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) !important;
+  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) !important;
   transform: none !important;
   pointer-events: none;
 }
