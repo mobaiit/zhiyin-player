@@ -1900,6 +1900,22 @@ html[data-theme="light"] .music-player .music-controls .play-button {
   color: #fff !important;
 }
 
+/* The mobile lyrics toggle must read as an actual selected control. */
+.music-player__lyrics-button.active,
+.music-player__lyrics-button[aria-pressed="true"],
+.music-player__lyrics-button.active:hover,
+.music-player__lyrics-button[aria-pressed="true"]:hover {
+  border-color: color-mix(in srgb, var(--zy-red-action) 76%, white) !important;
+  background: var(--zy-red-action) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px rgba(199, 53, 59, 0.34) !important;
+}
+
+.music-player__lyrics-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--zy-red-action) 72%, white);
+  outline-offset: 2px;
+}
+
 /* Keep library rows compact without making titles and tap targets feel cramped. */
 .music-page {
   padding-inline: clamp(8px, 1.5vw, 16px) !important;
