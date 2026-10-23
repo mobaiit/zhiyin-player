@@ -74,13 +74,6 @@ html[data-theme="light"] {
   --zy-player-glass-shadow: 0 14px 40px rgba(34, 38, 45, 0.1);
 }
 
-html[data-theme="light"] body {
-  background:
-    radial-gradient(circle at 12% 0%, rgba(199, 60, 67, 0.065), transparent 28rem),
-    radial-gradient(circle at 92% 18%, rgba(83, 91, 106, 0.07), transparent 30rem),
-    var(--zy-bg);
-}
-
 html[data-theme="light"] .lm-site-bar,
 html[data-theme="light"] .docs-hero {
   background: var(--zy-player-glass) !important;
@@ -149,17 +142,6 @@ html[data-theme="light"] .docs-code-wrap {
   align-items: center;
   gap: 8px;
   margin-left: auto;
-}
-
-.admin-login > .theme-toggle {
-  position: fixed;
-  z-index: 5;
-  top: 16px;
-  right: 16px;
-  border: 0 !important;
-  background: var(--zy-surface-raised) !important;
-  color: var(--zy-text-secondary) !important;
-  box-shadow: var(--zy-shadow-sm) !important;
 }
 
 .luri-music-clone {
@@ -3413,8 +3395,7 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 
 .admin-page > aside,
 .admin-content,
-.admin-login > form,
-.admin-login > .theme-toggle {
+.admin-login > form {
   position: relative;
   z-index: 1;
 }
@@ -3524,15 +3505,12 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   }
 }
 
-/* Shared theme canvas for the player, documentation and administration. */
-.luri-music-clone,
-.docs-page,
-.admin-page,
-.admin-login {
+/* One inherited canvas for every route, including login and loading screens. */
+:root {
   --zy-shared-stage-background:
     radial-gradient(circle at 15% 6%, rgba(185, 92, 98, 0.1), transparent 30rem),
     radial-gradient(circle at 86% 74%, rgba(156, 78, 86, 0.08), transparent 34rem),
-    linear-gradient(135deg, #323136 0%, #3b3033 24%, #2a2b30 49%, #3e3134 74%, #323237 100%);
+    linear-gradient(135deg, #45454c 0%, #51474b 24%, #40444b 49%, #56494d 74%, #45474e 100%);
   --zy-shared-veil-top: rgba(31, 31, 35, 0.28);
   --zy-shared-veil-bottom: rgba(30, 30, 34, 0.44);
   --zy-shared-stage-blur: 20px;
@@ -3543,7 +3521,7 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   --zy-shared-interface-border: rgba(255, 255, 255, 0.1);
 }
 
-html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-login) {
+html[data-theme="light"] {
   --zy-shared-stage-background:
     radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.14), transparent 30rem),
     radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.1), transparent 34rem),
@@ -3552,6 +3530,24 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
   --zy-shared-veil-bottom: rgba(241, 239, 240, 0.52);
   --zy-shared-interface-surface: rgba(238, 240, 243, 0.31);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
+}
+
+html,
+body,
+.admin-page,
+.admin-login,
+.ui-loading {
+  background: var(--zy-shared-stage-background) !important;
+}
+
+.ui-loading {
+  isolation: isolate;
+  color: var(--zy-text);
+}
+
+.ui-loading::before {
+  z-index: -1;
+  content: "";
 }
 
 .luri-music-clone {
@@ -3669,26 +3665,23 @@ html[data-theme="light"] .docs-hero {
   backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
 }
 
-.admin-header-actions > .theme-toggle,
-.admin-login > .theme-toggle {
+.admin-header-actions > .theme-toggle {
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   background: rgba(255, 255, 255, 0.09) !important;
   color: #f0ecee !important;
   box-shadow: 0 8px 24px rgba(8, 8, 11, 0.2) !important;
 }
 
-.admin-header-actions > .theme-toggle:hover,
-.admin-login > .theme-toggle:hover {
+.admin-header-actions > .theme-toggle:hover {
   background: var(--zy-red-soft) !important;
   color: #fff7f7 !important;
 }
 
-.admin-header-actions > .theme-toggle svg,
-.admin-login > .theme-toggle svg {
+.admin-header-actions > .theme-toggle svg {
   stroke-width: 2;
 }
 
-html[data-theme="light"] :is(.admin-header-actions > .theme-toggle, .admin-login > .theme-toggle) {
+html[data-theme="light"] .admin-header-actions > .theme-toggle {
   border-color: rgba(34, 38, 45, 0.12) !important;
   background: rgba(34, 38, 45, 0.07) !important;
   color: #303238 !important;
@@ -3707,7 +3700,8 @@ html[data-theme="light"] :is(.admin-header-actions > .theme-toggle, .admin-login
 .luri-music-clone .music-page::before,
 .docs-page::before,
 .admin-page::before,
-.admin-login::before {
+.admin-login::before,
+.ui-loading::before {
   position: fixed !important;
   inset: 0 !important;
   display: block !important;
@@ -3723,7 +3717,8 @@ html[data-theme="light"] :is(.admin-header-actions > .theme-toggle, .admin-login
   .luri-music-clone .music-page::before,
   .docs-page::before,
   .admin-page::before,
-  .admin-login::before {
+  .admin-login::before,
+  .ui-loading::before {
     background: rgba(255, 255, 255, 0.18) !important;
   }
 }

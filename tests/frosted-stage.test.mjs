@@ -55,3 +55,23 @@ test('transparent foreground resets also retain their standard property', () => 
     assert.match(rule.body, /(?:^|;)backdrop-filter:none!important(?:;|$)/, rule.selector);
   }
 });
+
+test('every route inherits the same global default canvas in both themes', () => {
+  const canvases = rules.filter(({ body }) => body.includes('--zy-shared-stage-background:'));
+  assert.equal(canvases.length, 2, 'Only the global dark and light palettes may define a default canvas');
+  assert.equal(canvases[0].selector, ':root');
+  assert.equal(canvases[1].selector, 'html[data-theme=light]');
+  for (const page of ['html', 'body', '.luri-music-clone', '.docs-page', '.admin-page', '.admin-login', '.ui-loading']) {
+    assert.ok(rules.some(({ selector, body }) => selector.split(',').includes(page) && body.includes('background:var(--zy-shared-stage-background)!important')), page);
+  }
+  assert.ok(rules.some(({ selector, body }) => selector.includes('.ui-loading:before') && body.includes('--zy-shared-glass-tint')), 'Loading must not flash an unrelated background');
+});
+
+test('login has no theme switch, while the authenticated admin header retains one', () => {
+  const admin = readFileSync(new URL('../src/luri-music/Admin.jsx', import.meta.url), 'utf8');
+  const login = admin.slice(admin.indexOf('function AdminLogin('), admin.indexOf('function Users('));
+  assert.doesNotMatch(login, /<ThemeToggle\b/);
+  assert.match(admin, /className="admin-header-actions"><ThemeToggle/);
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  assert.match(app, /useEffect\(syncThemeAcrossTabs, \[\]\)/, 'Theme sync must not depend on rendering a toggle button');
+});
