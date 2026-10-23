@@ -5,6 +5,7 @@ import { publicSmtpConfig, saveSmtpConfig, sendSmtpTest, sendVerificationEmail }
 
 const USER_COOKIE = 'zy_music_session';
 const ADMIN_COOKIE = 'zy_music_admin';
+const USER_SESSION_SECONDS = 2592000;
 const EMAIL_CODE_TTL = 10 * 60 * 1000;
 const EMAIL_CODE_COOLDOWN = 60 * 1000;
 const body = async (request) => request.json().catch(() => ({}));
@@ -29,7 +30,7 @@ const ADMIN_ACTIONS = new Set([
 const currentUser = async (request, env, includeFavorites = false) => {
   const value = cookie(request, USER_COOKIE);
   const favoriteFields = includeFavorites ? ',u.favorites_json,u.favorites_updated_at' : '';
-  return value && env.LURI_MUSIC_DB.prepare(`SELECT u.id,u.email,u.display_name${favoriteFields} FROM luri_music_sessions s JOIN luri_music_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>? AND u.disabled_at IS NULL`).bind(await hash(value), now()).first();
+  return value && env.LURI_MUSIC_DB.prepare(`SELECT u.id,u.email,u.display_name,s.expires_at AS session_expires_at${favoriteFields} FROM luri_music_sessions s JOIN luri_music_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>? AND u.disabled_at IS NULL`).bind(await hash(value), now()).first();
 };
 const publicUser = (user) => user && ({ id: user.id, email: user.email, name: user.display_name });
 const currentAdmin = async (request, env) => {
@@ -38,8 +39,9 @@ const currentAdmin = async (request, env) => {
 };
 const createSession = async (userId, env) => {
   const value = token();
-  await env.LURI_MUSIC_DB.prepare('INSERT INTO luri_music_sessions(id,user_id,token_hash,expires_at,created_at) VALUES(?,?,?,?,?)').bind(id(), userId, await hash(value), new Date(Date.now() + 2592e6).toISOString(), now()).run();
-  return value;
+  const expiresAt = new Date(Date.now() + USER_SESSION_SECONDS * 1000).toISOString();
+  await env.LURI_MUSIC_DB.prepare('INSERT INTO luri_music_sessions(id,user_id,token_hash,expires_at,created_at) VALUES(?,?,?,?,?)').bind(id(), userId, await hash(value), expiresAt, now()).run();
+  return { value, expiresAt };
 };
 const userPayload = async (user) => {
   if (!user) return null;
@@ -64,7 +66,7 @@ export async function handleLuriMusic(request, env) {
   if (!env.LURI_MUSIC_DB) return json({ error: '音乐服务尚未配置' }, 503);
   const pathname = new URL(request.url).pathname;
   const action = pathname.startsWith('/api/luri-music/') ? pathname.slice('/api/luri-music/'.length) : pathname.slice('/api/'.length);
-  if (action === 'auth/me') { const user = await currentUser(request, env, true); return json({ user: await userPayload(user), turnstile: { enabled: Boolean(env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY), siteKey: env.TURNSTILE_SITE_KEY || '' } }); }
+  if (action === 'auth/me') { const user = await currentUser(request, env, true); return json({ user: await userPayload(user), sessionExpiresAt: user?.session_expires_at || null, turnstile: { enabled: Boolean(env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY), siteKey: env.TURNSTILE_SITE_KEY || '' } }); }
   if (action === 'preferences' && request.method === 'PATCH') {
     const user = await currentUser(request, env); if (!user) return json({ error: '请先登录' }, 401);
     const data = await body(request); const requestedQuality = String(data.playbackQuality || '').toLowerCase();
@@ -103,8 +105,8 @@ export async function handleLuriMusic(request, env) {
     try { const timestamp = now(); await env.LURI_MUSIC_DB.prepare('INSERT INTO luri_music_users(id,email,display_name,password_hash,created_at,updated_at,last_login_at) VALUES(?,?,?,?,?,?,?)').bind(userId, mail, name, await passwordHash(data.password), timestamp, timestamp, timestamp).run(); }
     catch { return json({ error: '该邮箱已注册' }, 409); }
     await env.LURI_MUSIC_DB.prepare('DELETE FROM luri_music_email_codes WHERE id=?').bind(emailCode.id).run();
-    const value = await createSession(userId, env);
-    return json({ user: { id: userId, email: mail, name, favorites: [], favoritesUpdatedAt: null } }, 201, { 'set-cookie': sessionCookie(USER_COOKIE, value, 2592000) });
+    const session = await createSession(userId, env);
+    return json({ user: { id: userId, email: mail, name, favorites: [], favoritesUpdatedAt: null }, sessionExpiresAt: session.expiresAt }, 201, { 'set-cookie': sessionCookie(USER_COOKIE, session.value, USER_SESSION_SECONDS) });
   }
 
   if (action === 'auth/login' && request.method === 'POST') {
@@ -115,8 +117,8 @@ export async function handleLuriMusic(request, env) {
     if (!user || !await verifyPassword(data.password || '', user.password_hash)) return json({ error: '邮箱或密码错误' }, 401);
     if (user.disabled_at) return json({ error: '账号已被禁用，请联系管理员' }, 403);
     await env.LURI_MUSIC_DB.prepare('UPDATE luri_music_users SET last_login_at=?,updated_at=? WHERE id=?').bind(now(), now(), user.id).run();
-    const value = await createSession(user.id, env);
-    return json({ user: await userPayload(user) }, 200, { 'set-cookie': sessionCookie(USER_COOKIE, value, 2592000) });
+    const session = await createSession(user.id, env);
+    return json({ user: await userPayload(user), sessionExpiresAt: session.expiresAt }, 200, { 'set-cookie': sessionCookie(USER_COOKIE, session.value, USER_SESSION_SECONDS) });
   }
 
   if (action === 'auth/reset-password' && request.method === 'POST') {

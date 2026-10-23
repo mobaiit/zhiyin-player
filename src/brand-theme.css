@@ -1901,6 +1901,14 @@ html[data-theme="light"] .music-player .music-controls .play-button {
 }
 
 /* Keep library rows compact without making titles and tap targets feel cramped. */
+.music-page {
+  padding-inline: clamp(8px, 1.5vw, 16px) !important;
+}
+
+.music-shell {
+  padding-inline: 12px;
+}
+
 .music-row {
   min-height: 40px !important;
   margin-block: 2px !important;
@@ -1996,6 +2004,14 @@ html[data-theme="light"] .music-quality {
 }
 
 @media (max-width: 760px) {
+  .music-page {
+    padding-inline: 6px !important;
+  }
+
+  .music-shell {
+    padding-inline: 6px;
+  }
+
   .music-player {
     width: calc(100% - 24px) !important;
   }
