@@ -2056,6 +2056,205 @@ html[data-theme="light"] .music-quality {
   }
 }
 
+/* Account settings use the same translucent material as navigation and player. */
+.lm-provider-modal,
+.lm-quality-modal {
+  background: rgba(8, 8, 11, 0.48) !important;
+  backdrop-filter: blur(8px) saturate(1.04);
+  -webkit-backdrop-filter: blur(8px) saturate(1.04);
+}
+
+.lm-provider-modal > div,
+.lm-quality-modal > div {
+  border-color: color-mix(in srgb, var(--zy-text) 8%, transparent) !important;
+  background: var(--zy-player-glass) !important;
+  color: var(--zy-text) !important;
+  box-shadow: var(--zy-player-glass-shadow) !important;
+  backdrop-filter: blur(18px) saturate(1.12) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+}
+
+.lm-provider-modal :is(h2, b, dd, label),
+.lm-quality-modal :is(h2, b) {
+  color: var(--zy-text) !important;
+}
+
+.lm-provider-modal :is(p, small, dt, .lm-provider-table-head, .lm-provider-type, .lm-provider-footer),
+.lm-quality-modal :is(small, .lm-quality-note) {
+  color: var(--zy-text-secondary) !important;
+}
+
+.lm-provider-toolbar,
+.lm-provider-intro,
+.lm-provider-form-header,
+.lm-provider-danger-zone,
+.lm-provider-detail > .lm-provider-info dl,
+.lm-provider-info dl > div,
+.lm-provider-list,
+.lm-provider-list article {
+  border-color: color-mix(in srgb, var(--zy-text) 10%, transparent) !important;
+}
+
+.lm-provider-list,
+.lm-provider-current,
+.lm-provider-types,
+.lm-provider-detail > .lm-provider-info dl,
+.lm-provider-public-note,
+.lm-quality-options label {
+  background: var(--zy-control-glass) !important;
+}
+
+.lm-provider-list article {
+  background: transparent !important;
+}
+
+.lm-provider-list article.active,
+.lm-quality-options label.active {
+  border-color: color-mix(in srgb, var(--zy-red) 58%, transparent) !important;
+  background: var(--zy-red-soft) !important;
+  box-shadow: none !important;
+}
+
+.lm-quality-options label:hover {
+  border-color: color-mix(in srgb, var(--zy-red) 38%, var(--zy-border)) !important;
+  background: color-mix(in srgb, var(--zy-control-glass) 82%, var(--zy-red-soft)) !important;
+}
+
+.lm-provider-heading > span,
+.lm-provider-status,
+.lm-provider-form-header > span {
+  background: color-mix(in srgb, var(--zy-control-glass) 82%, transparent) !important;
+  color: var(--zy-text-secondary) !important;
+}
+
+.lm-provider-heading > span.active,
+.lm-provider-types button.active {
+  background: var(--zy-red-action) !important;
+  color: var(--zy-text) !important;
+}
+
+.lm-provider-status.active,
+.lm-provider-info em.tone-positive {
+  background: rgba(88, 200, 134, 0.14) !important;
+  color: #8be0ad !important;
+}
+
+.lm-provider-status.inactive,
+.lm-provider-info em.tone-negative {
+  background: rgba(255, 114, 119, 0.14) !important;
+  color: #ff9a9e !important;
+}
+
+.lm-provider-info em.tone-warning {
+  background: rgba(240, 168, 88, 0.14) !important;
+  color: #f5bd7f !important;
+}
+
+.lm-provider-list article button:not(.enable, .disable),
+.lm-provider-detail-actions button:not(.enable, .disable),
+.lm-provider-back,
+.lm-provider-detail-actions .lm-provider-back,
+.lm-provider-form-actions .lm-provider-back,
+.lm-provider-reconfigure,
+.lm-provider-advanced-toggle,
+.lm-provider-footer a,
+.lm-provider-danger-zone > button {
+  border-color: color-mix(in srgb, var(--zy-text) 12%, transparent) !important;
+  background: var(--zy-control-glass) !important;
+  color: var(--zy-text-secondary) !important;
+}
+
+.lm-provider-list article button:not(.enable, .disable):hover,
+.lm-provider-detail-actions button:not(.enable, .disable):hover,
+.lm-provider-back:hover,
+.lm-provider-reconfigure:hover,
+.lm-provider-advanced-toggle:hover,
+.lm-provider-footer a:hover {
+  border-color: color-mix(in srgb, var(--zy-red) 42%, transparent) !important;
+  background: var(--zy-red-soft) !important;
+  color: var(--zy-text) !important;
+}
+
+.lm-provider-form textarea {
+  border-color: color-mix(in srgb, var(--zy-text) 12%, transparent) !important;
+  background: var(--zy-control-glass) !important;
+  color: var(--zy-text) !important;
+}
+
+.lm-provider-modal :is(button, a):focus-visible,
+.lm-quality-options input:focus-visible + .lm-quality-mark {
+  outline-color: var(--zy-focus) !important;
+}
+
+.lm-quality-options i {
+  border-color: var(--zy-text-secondary) !important;
+}
+
+.lm-quality-options label.active i {
+  border-color: var(--zy-red) !important;
+  background: var(--zy-red) !important;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--zy-bg) 82%, transparent) !important;
+}
+
+.lm-quality-mark {
+  color: #b8bec8 !important;
+}
+
+.lm-quality-mark--medium {
+  color: #72a7e8 !important;
+}
+
+.lm-quality-mark--high {
+  color: #42c6ad !important;
+}
+
+.lm-quality-mark--lossless {
+  color: #5fd392 !important;
+}
+
+.lm-quality-mark--hires {
+  color: #e3ad4f !important;
+}
+
+html[data-theme="light"] .lm-provider-modal,
+html[data-theme="light"] .lm-quality-modal {
+  background: rgba(34, 38, 45, 0.28) !important;
+}
+
+html[data-theme="light"] .lm-provider-status.active,
+html[data-theme="light"] .lm-provider-info em.tone-positive {
+  color: #12753f !important;
+}
+
+html[data-theme="light"] .lm-provider-status.inactive,
+html[data-theme="light"] .lm-provider-info em.tone-negative {
+  color: #a92f36 !important;
+}
+
+html[data-theme="light"] .lm-provider-info em.tone-warning {
+  color: #875307 !important;
+}
+
+html[data-theme="light"] .lm-quality-mark {
+  color: #525a66 !important;
+}
+
+html[data-theme="light"] .lm-quality-mark--medium {
+  color: #1f5f9e !important;
+}
+
+html[data-theme="light"] .lm-quality-mark--high {
+  color: #067262 !important;
+}
+
+html[data-theme="light"] .lm-quality-mark--lossless {
+  color: #12753f !important;
+}
+
+html[data-theme="light"] .lm-quality-mark--hires {
+  color: #875307 !important;
+}
+
 /* Selected state is expressed by colour and weight only, never a left rail. */
 .music-row.current,
 .music-nav.active,
