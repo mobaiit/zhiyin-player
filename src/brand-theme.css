@@ -103,8 +103,8 @@ html[data-theme="light"] .like-button:not(.liked) {
   color: var(--zy-reading-accent) !important;
 }
 
-html[data-theme="light"] .lyrics-body p.active,
-html[data-theme="light"] .like-button.liked {
+.luri-music-clone .lyrics-body p.active,
+.luri-music-clone .like-button.liked {
   color: var(--zy-active-red) !important;
 }
 
@@ -3333,6 +3333,7 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   /* Used only with artwork; default gradients keep their original tone on every route. */
   --zy-artwork-glass-tint: rgba(26, 27, 33, 0.76);
   --zy-reading-accent: #ffb9bd;
+  --zy-active-red: #ff3b30;
   --zy-row-selected-surface: rgba(229, 72, 77, 0.1);
   --zy-shared-interface-surface: rgba(39, 40, 46, 0.18);
   --zy-shared-interface-border: rgba(255, 255, 255, 0.1);
@@ -3347,7 +3348,6 @@ html[data-theme="light"] {
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
   --zy-artwork-glass-tint: rgba(244, 242, 243, 0.60);
   --zy-reading-accent: #481219;
-  --zy-active-red: #52060d;
   --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
 

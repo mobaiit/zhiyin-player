@@ -200,18 +200,19 @@ test('glass preserves highlight steps and a shared unmasked default canvas', () 
   }
 });
 
-test('active light-theme lyrics and filled favourites share a slightly richer red', () => {
+test('active lyrics and filled favourites use the same vivid red in both themes', () => {
   const light = themeVars('light');
   const dark = themeVars('dark');
-  assert.equal(light['--zy-active-red'], '#52060d');
+  assert.equal(light['--zy-active-red'], '#ff3b30');
   assert.equal(light['--zy-reading-accent'], '#481219', 'Other selected controls retain their existing colour');
-  assert.equal(dark['--zy-active-red'], undefined, 'Dark controls retain their existing colours');
+  assert.equal(dark['--zy-active-red'], light['--zy-active-red'], 'Both themes inherit one vivid red');
   const [red, green] = rgb(light['--zy-active-red']);
   const [oldRed, oldGreen] = rgb(light['--zy-reading-accent']);
   assert.ok(red - green > (oldRed - oldGreen) * 1.2);
   for (const target of ['.lyrics-body p.active', '.like-button.liked']) {
-    assert.ok(rules.some(({ selector, body }) => selector.split(',').includes(`html[data-theme=light] ${target}`) && body.includes('color:var(--zy-active-red)!important')), target);
+    assert.ok(rules.some(({ selector, body }) => selector.split(',').includes(`.luri-music-clone ${target}`) && body.includes('color:var(--zy-active-red)!important')), target);
   }
+  assert.equal((source.match(/--zy-active-red\s*:/g) || []).length, 1, 'No light-theme override may darken the shared red');
   assert.ok(rules.some(({ selector, body }) => selector.split(',').includes('html[data-theme=light] .like-button:not(.liked)') && body.includes('color:var(--zy-reading-accent)!important')), 'Unfilled favourites retain their existing colour');
   const music = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
   assert.match(music, /\.like-button\.liked \.music-icon\s*\{[^}]*fill: currentColor;/, 'Filled hearts inherit the selected colour');
@@ -226,10 +227,14 @@ for (const theme of ['dark', 'light']) {
     const covers = [];
     for (const r of [0, 64, 128, 192, 255]) for (const g of [0, 64, 128, 192, 255]) for (const b of [0, 64, 128, 192, 255]) covers.push([r, g, b]);
     const foregrounds = ['text', 'text-secondary', 'muted', 'reading-accent'].map((name) => [name, rgb(vars[`--zy-${name}`])]);
-    if (vars['--zy-active-red']) foregrounds.push(['active-red', rgb(vars['--zy-active-red'])]);
+    // The user explicitly requested one vivid red for lyrics/icons. Keep the
+    // ordinary palette gate, but report the accent's known AA tradeoff honestly
+    // instead of silently darkening it or claiming full contrast compliance.
+    const accent = rgb(vars['--zy-active-red']);
     const selected = vars['--zy-row-selected-surface'].match(/[\d.]+/g).map(Number);
     const interfaceSurface = vars['--zy-shared-interface-surface'].match(/[\d.]+/g).map(Number);
     let worst = { ratio: Infinity };
+    let accentWorst = Infinity;
     for (const stop of stops) for (const first of [0, 1]) for (const second of [0, 1]) {
       let base = blend(stop, radials[1], radials[1][3] * second);
       base = blend(base, radials[0], radials[0][3] * first);
@@ -239,11 +244,13 @@ for (const theme of ['dark', 'light']) {
           const surface = state === 'selected' ? blend(background, selected, selected[3])
             : state === 'interface' ? blend(background, interfaceSurface, interfaceSurface[3]) : background;
           const ratio = contrast(color, surface);
+          accentWorst = Math.min(accentWorst, contrast(accent, surface));
           if (ratio < worst.ratio) worst = { ratio, name, cover, visibility, state, background: surface };
         }
       }
     }
     assert.ok(worst.ratio >= 4.5, `${theme} minimum contrast: ${JSON.stringify(worst)}`);
     t.diagnostic(`Worst sampled contrast: ${worst.ratio.toFixed(2)}:1 (${worst.name})`);
+    t.diagnostic(`Requested lyric/icon accent minimum contrast: ${accentWorst.toFixed(2)}:1 (below AA on some covers)`);
   });
 }
