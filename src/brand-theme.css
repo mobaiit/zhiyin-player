@@ -3550,13 +3550,16 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 .admin-page,
 .admin-login {
   --zy-shared-stage-background:
-    radial-gradient(circle at 15% 6%, rgba(214, 77, 84, 0.18), transparent 30rem),
-    radial-gradient(circle at 86% 74%, rgba(175, 55, 64, 0.14), transparent 34rem),
-    linear-gradient(135deg, #28262a 0%, #41282d 24%, #202126 49%, #482a2f 74%, #27272c 100%);
-  --zy-shared-veil-top: rgba(29, 28, 32, 0.3);
-  --zy-shared-veil-bottom: rgba(27, 27, 31, 0.5);
-  --zy-shared-stage-saturate: 1.16;
-  --zy-shared-stage-brightness: 0.9;
+    radial-gradient(circle at 15% 6%, rgba(185, 92, 98, 0.1), transparent 30rem),
+    radial-gradient(circle at 86% 74%, rgba(156, 78, 86, 0.08), transparent 34rem),
+    linear-gradient(135deg, #323136 0%, #3b3033 24%, #2a2b30 49%, #3e3134 74%, #323237 100%);
+  --zy-shared-veil-top: rgba(31, 31, 35, 0.28);
+  --zy-shared-veil-bottom: rgba(30, 30, 34, 0.44);
+  --zy-shared-stage-blur: 28px;
+  --zy-shared-stage-saturate: 1.08;
+  --zy-shared-stage-brightness: 0.94;
+  --zy-shared-interface-surface: rgba(39, 40, 46, 0.3);
+  --zy-shared-interface-border: rgba(255, 255, 255, 0.1);
 }
 
 html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-login) {
@@ -3566,16 +3569,22 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
     linear-gradient(135deg, #f2f0f0 0%, #efdadd 24%, #f7f5f4 49%, #ecd3d7 74%, #f0f1f3 100%);
   --zy-shared-veil-top: rgba(247, 244, 244, 0.32);
   --zy-shared-veil-bottom: rgba(241, 239, 240, 0.52);
+  --zy-shared-stage-blur: 28px;
   --zy-shared-stage-saturate: 1.08;
   --zy-shared-stage-brightness: 1.01;
+  --zy-shared-interface-surface: rgba(238, 240, 243, 0.31);
+  --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
 }
 
 .luri-music-clone {
   --zy-stage-background: var(--zy-shared-stage-background);
   --zy-stage-veil-top: var(--zy-shared-veil-top);
   --zy-stage-veil-bottom: var(--zy-shared-veil-bottom);
+  --zy-stage-blur: var(--zy-shared-stage-blur);
   --zy-stage-saturate: var(--zy-shared-stage-saturate);
   --zy-stage-brightness: var(--zy-shared-stage-brightness);
+  --zy-interface-surface: var(--zy-shared-interface-surface);
+  --zy-interface-border: var(--zy-shared-interface-border);
 }
 
 .admin-page,
@@ -3585,6 +3594,8 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
   --admin-stage-veil-bottom: var(--zy-shared-veil-bottom);
   --admin-stage-saturate: var(--zy-shared-stage-saturate);
   --admin-stage-brightness: var(--zy-shared-stage-brightness);
+  --admin-interface-surface: var(--zy-shared-interface-surface);
+  --admin-interface-border: var(--zy-shared-interface-border);
 }
 
 .luri-music-clone .music-page::before {
@@ -3604,8 +3615,8 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
   display: block;
   content: "";
   background: linear-gradient(180deg, var(--zy-shared-veil-top), var(--zy-shared-veil-bottom));
-  backdrop-filter: blur(20px) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
-  -webkit-backdrop-filter: blur(20px) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
+  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
+  -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) contrast(0.94);
   pointer-events: none;
 }
 
@@ -3615,13 +3626,13 @@ html[data-theme="light"] :is(.luri-music-clone, .docs-page, .admin-page, .admin-
 }
 
 .docs-hero {
-  background: var(--zy-interface-surface, rgba(35, 36, 42, 0.18)) !important;
+  background: var(--zy-shared-interface-surface) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 html[data-theme="light"] .docs-hero {
-  background: rgba(238, 240, 243, 0.24) !important;
+  background: var(--zy-shared-interface-surface) !important;
 }
 
 .docs-page :is(
@@ -3670,6 +3681,38 @@ html[data-theme="light"] .docs-hero {
 .admin-page > aside nav .admin-nav-link .admin-icon {
   width: 18px;
   height: 18px;
+}
+
+.admin-page::before,
+.admin-login::before {
+  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
+  -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--admin-stage-saturate)) brightness(var(--admin-stage-brightness)) contrast(0.94);
+}
+
+.admin-header-actions > .theme-toggle,
+.admin-login > .theme-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #f0ecee !important;
+  box-shadow: 0 8px 24px rgba(8, 8, 11, 0.2) !important;
+}
+
+.admin-header-actions > .theme-toggle:hover,
+.admin-login > .theme-toggle:hover {
+  background: var(--zy-red-soft) !important;
+  color: #fff7f7 !important;
+}
+
+.admin-header-actions > .theme-toggle svg,
+.admin-login > .theme-toggle svg {
+  stroke-width: 2;
+}
+
+html[data-theme="light"] :is(.admin-header-actions > .theme-toggle, .admin-login > .theme-toggle) {
+  border-color: rgba(34, 38, 45, 0.12) !important;
+  background: rgba(34, 38, 45, 0.07) !important;
+  color: #303238 !important;
+  box-shadow: 0 8px 22px rgba(34, 38, 45, 0.09) !important;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
