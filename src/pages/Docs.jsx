@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ThemeToggle from '../components/ThemeToggle';
+import useOverlayFocus from '../components/useOverlayFocus';
 import './Docs.css';
 
 const manifestExample = `{
@@ -137,15 +138,18 @@ const nav = [
 ];
 
 function Code({ children }) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState('');
+  const timer = useRef(null);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   const copy = async () => {
+    window.clearTimeout(timer.current);
     try {
       await navigator.clipboard.writeText(String(children));
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch { setCopied(false); }
+      setCopyState('已复制');
+    } catch { setCopyState('复制失败，请手动选择'); }
+    timer.current = window.setTimeout(() => setCopyState(''), 2400);
   };
-  return <div className="docs-code-wrap"><div className="docs-code-toolbar"><span>示例</span><button type="button" onClick={copy}>{copied ? '已复制' : '复制代码'}</button></div><pre className="docs-code"><code>{children}</code></pre></div>;
+  return <div className="docs-code-wrap"><div className="docs-code-toolbar"><span>代码示例</span><button type="button" onClick={copy} aria-live="polite">{copyState || '复制代码'}</button></div><pre className="docs-code" tabIndex={0} aria-label="代码示例"><code>{children}</code></pre></div>;
 }
 
 function Endpoint({ method, path, children }) {
@@ -153,7 +157,7 @@ function Endpoint({ method, path, children }) {
 }
 
 function SchemaTable({ title, rows }) {
-  return <div className="docs-schema-wrap">{title && <h4>{title}</h4>}<div className="docs-schema"><div className="docs-schema-head"><b>参数</b><b>类型</b><b>必填</b><b>说明</b></div>{rows.map(([name, type, required, description]) => <div key={`${title}:${name}:${required}`}><code>{name}</code><span>{type}</span><span>{required}</span><span>{description}</span></div>)}</div></div>;
+  return <div className="docs-schema-wrap">{title && <h4>{title}</h4>}<div className="docs-schema" role="region" aria-label={title || '参数说明'} tabIndex={0}><table><thead><tr><th scope="col">参数</th><th scope="col">类型</th><th scope="col">必填</th><th scope="col">说明</th></tr></thead><tbody>{rows.map(([name, type, required, description]) => <tr key={`${title}:${name}:${required}`}><th scope="row"><code>{name}</code></th><td>{type}</td><td>{required}</td><td>{description}</td></tr>)}</tbody></table></div></div>;
 }
 
 function SimpleTable({ rows }) {
@@ -168,6 +172,9 @@ export default function Docs() {
   const [activeSection, setActiveSection] = useState('start');
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const menuRef = useRef(null);
+  const menuButtonRef = useRef(null);
+  useOverlayFocus(menuOpen, menuRef, () => setMenuOpen(false), menuButtonRef);
   const filteredNav = nav.filter(([, label]) => !query.trim() || label.toLowerCase().includes(query.trim().toLowerCase()));
   useEffect(() => {
     const sections = nav.map(([id]) => document.getElementById(id)).filter(Boolean);
@@ -178,33 +185,41 @@ export default function Docs() {
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 761px)');
+    const closeOnDesktop = () => { if (desktop.matches) setMenuOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, []);
   const navLink = ([id, label]) => <a className={activeSection === id ? 'active' : ''} href={`#${id}`} key={id} aria-current={activeSection === id ? 'location' : undefined} onClick={() => setMenuOpen(false)}>{label}</a>;
   return <main className="docs-page">
+    <a className="docs-skip-link" href="#docs-content">跳到文档正文</a>
     <header className="docs-hero">
-      <button className="docs-menu-button" type="button" aria-label="打开文档目录" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><span /><span /><span /></button>
-      <a className="docs-brand" href="/docs"><span>知音</span><strong>使用与开发文档</strong></a>
+      <button ref={menuButtonRef} className="docs-menu-button" type="button" aria-label={menuOpen ? '关闭文档目录' : '打开文档目录'} aria-controls="docs-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><span /><span /><span /></button>
+      <a className="docs-brand" href="/docs" aria-label="知音使用文档首页"><img src="/zhiyin-logo.png" alt="" width="30" height="30" /><span>知音<strong>使用文档</strong></span></a>
       <span className="docs-version">MPP 1.0</span>
-      <nav>
-        <a href="https://github.com/mobaiit/zhiyin-player" target="_blank" rel="noreferrer" className="docs-github-link"><Icon id="github-icon" /></a>
+      <nav aria-label="文档快捷导航">
+        <a href="https://github.com/mobaiit/zhiyin-player" target="_blank" rel="noreferrer" className="docs-github-link" aria-label="GitHub 项目（新窗口）"><Icon id="github-icon" /></a>
         <ThemeToggle />
-        <a href="/">打开播放器</a>
+        <a href="/" className="docs-player-link"><span className="docs-player-desktop">打开</span>播放器<span aria-hidden="true"> ↗</span></a>
       </nav>
     </header>
 
-    {menuOpen && <button type="button" className="docs-menu-backdrop" aria-label="关闭文档目录" onClick={() => setMenuOpen(false)} />}
     <div className="docs-layout">
-      <aside className={`docs-sidebar${menuOpen ? ' open' : ''}`}>
-        <label className="docs-search"><span>搜索目录</span><input value={query} onChange={(event) => setQuery(event.target.value)} type="search" placeholder="搜索文档…" /></label>
+      {menuOpen && <button type="button" className="docs-menu-backdrop" aria-label="关闭文档目录" onClick={() => setMenuOpen(false)} />}
+      <aside ref={menuRef} id="docs-navigation" className={`docs-sidebar${menuOpen ? ' open' : ''}`} role={menuOpen ? 'dialog' : undefined} aria-modal={menuOpen || undefined} aria-label="文档目录" tabIndex={-1}>
+        <button type="button" className="docs-directory-close" onClick={() => setMenuOpen(false)}>关闭目录 <span aria-hidden="true">×</span></button>
+        <label className="docs-search"><span>搜索目录</span><input value={query} onChange={(event) => setQuery(event.target.value)} type="search" placeholder="查找章节…" /></label>
         <p>播放器用户</p>
         {filteredNav.filter((item) => item[2] === 'user').map(navLink)}
         <p className="docs-sidebar-group">Provider 开发者</p>
         {filteredNav.filter((item) => item[2] === 'developer').map(navLink)}
-        {!filteredNav.length && <span className="docs-search-empty">没有匹配章节</span>}
+        {!filteredNav.length && <div className="docs-search-empty" role="status"><span>没有匹配章节，试试其他名称。</span><button type="button" onClick={() => setQuery('')}>清除搜索</button></div>}
         <footer><span>协议版本 1.0</span><a href="mailto:support@zhiyin.us.ci">反馈问题</a></footer>
       </aside>
 
-      <article className="docs-content">
-        <div className="docs-title"><div className="docs-breadcrumb"><span>Documentation</span><i>/</i><b>Music Provider Protocol</b></div><p>使用指南与开发者参考</p><h1>知音文档</h1><span>从连接 Provider 到实现完整协议，一份可直接查阅和落地的产品文档。</span><div className="docs-title-actions"><a href="#start">开始使用</a><a href="#protocol">阅读协议</a></div></div>
+      <article className="docs-content" id="docs-content" tabIndex={-1}>
+        <div className="docs-title"><div className="docs-breadcrumb"><span>知音</span><i>/</i><b>帮助与开发文档</b></div><p>使用指南与开发者参考</p><h1>让连接更简单。</h1><span>第一次使用？从连接音乐源开始。正在开发 Provider？直接查阅协议与接口示例。</span><div className="docs-title-actions"><a href="#start">开始使用 <span aria-hidden="true">↗</span></a><a href="#protocol">开发者协议 <span aria-hidden="true">→</span></a></div></div>
 
         <div className="docs-section-label"><span>01</span><b>播放器用户指南</b></div>
 
