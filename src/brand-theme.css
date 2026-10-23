@@ -2139,6 +2139,11 @@ html[data-theme="light"] .music-quality {
   color: #8be0ad !important;
 }
 
+.lm-provider-info em.tone-neutral {
+  background: var(--zy-control-glass) !important;
+  color: var(--zy-text-secondary) !important;
+}
+
 .lm-provider-status.inactive,
 .lm-provider-info em.tone-negative {
   background: rgba(255, 114, 119, 0.14) !important;
@@ -2155,7 +2160,6 @@ html[data-theme="light"] .music-quality {
 .lm-provider-back,
 .lm-provider-detail-actions .lm-provider-back,
 .lm-provider-form-actions .lm-provider-back,
-.lm-provider-reconfigure,
 .lm-provider-advanced-toggle,
 .lm-provider-footer a,
 .lm-provider-danger-zone > button {
@@ -2167,7 +2171,6 @@ html[data-theme="light"] .music-quality {
 .lm-provider-list article button:not(.enable, .disable):hover,
 .lm-provider-detail-actions button:not(.enable, .disable):hover,
 .lm-provider-back:hover,
-.lm-provider-reconfigure:hover,
 .lm-provider-advanced-toggle:hover,
 .lm-provider-footer a:hover {
   border-color: color-mix(in srgb, var(--zy-red) 42%, transparent) !important;

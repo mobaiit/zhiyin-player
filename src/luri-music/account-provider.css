@@ -561,21 +561,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lm-provider-reconfigure {
-  justify-self: start;
-  min-height: 38px;
-  padding: 8px 11px !important;
-  border: 1px solid #d8d8d8 !important;
-  border-radius: 8px;
-  background: #fff !important;
-  color: #333 !important;
-  font: 600 11px var(--font-ui) !important;
-  cursor: pointer;
-}
-.lm-provider-reconfigure:hover {
-  border-color: #bdbdbd !important;
-  background: #f6f6f6 !important;
-}
 .lm-provider-form-actions {
   display: flex;
   align-items: center;
