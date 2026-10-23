@@ -3356,7 +3356,7 @@ html[data-theme="light"] {
   --zy-shared-interface-surface: rgba(238, 240, 243, 0.05);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
   /* Keep the whole light-cover range below white instead of clipping highlights. */
-  --zy-artwork-contrast: 0.1;
+  --zy-artwork-contrast: 0.36;
   --zy-artwork-brightness: 1.4;
   --zy-artwork-opacity: 0.52;
   --zy-reading-accent: #84212a;
