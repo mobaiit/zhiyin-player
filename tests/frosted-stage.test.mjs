@@ -104,7 +104,7 @@ test('transparency is controlled by artwork visibility and surface alpha, not mo
   assert.match(built, /--zy-shared-interface-surface:#27282e2e/);
   assert.match(built, /--zy-shared-interface-surface:#eef0f30d/);
   const brightness = [...built.matchAll(/--zy-artwork-brightness:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(brightness, [0.48, 1.0]);
+  assert.deepEqual(brightness, [0.48, 1.4]);
   // The more-specific light selector must not keep an old hardcoded tint.
   for (const selector of ['.luri-music-clone', 'html[data-theme=light] .luri-music-clone']) {
     const declarations = rules.filter((rule) => rule.selector === selector && rule.body.includes('--zy-interface-surface:'));
