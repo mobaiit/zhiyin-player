@@ -3194,6 +3194,127 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   }
 }
 
+/* Music visual stack: background -> one full-page glass veil -> transparent UI. */
+.luri-music-clone {
+  --zy-stage-background:
+    radial-gradient(circle at 14% 8%, rgba(240, 91, 97, 0.1), transparent 30rem),
+    radial-gradient(circle at 86% 18%, rgba(92, 98, 112, 0.12), transparent 32rem),
+    linear-gradient(145deg, #202127, #18191d 58%, #23242a);
+  --zy-stage-veil-top: rgba(28, 29, 33, 0.28);
+  --zy-stage-veil-bottom: rgba(28, 29, 33, 0.48);
+  --zy-stage-blur: 20px;
+  --zy-stage-saturate: 1.22;
+  --zy-stage-brightness: 0.88;
+  --zy-interface-surface: rgba(35, 36, 42, 0.18);
+  --zy-interface-border: rgba(255, 255, 255, 0.08);
+  --zy-interface-shadow: 0 18px 46px rgba(5, 5, 8, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+html[data-theme="light"] .luri-music-clone {
+  --zy-stage-background:
+    radial-gradient(circle at 14% 8%, rgba(199, 60, 67, 0.075), transparent 30rem),
+    radial-gradient(circle at 86% 18%, rgba(83, 91, 106, 0.09), transparent 32rem),
+    linear-gradient(145deg, #eef0f3, #e5e8ec 58%, #f1f2f4);
+  --zy-stage-veil-top: rgba(238, 240, 243, 0.34);
+  --zy-stage-veil-bottom: rgba(238, 240, 243, 0.56);
+  --zy-stage-saturate: 1.12;
+  --zy-stage-brightness: 1.01;
+  --zy-interface-surface: rgba(238, 240, 243, 0.2);
+  --zy-interface-border: rgba(34, 38, 45, 0.09);
+  --zy-interface-shadow: 0 16px 42px rgba(34, 38, 45, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.luri-music-clone .music-page {
+  position: relative;
+  isolation: isolate;
+  background: var(--zy-stage-background) !important;
+}
+
+.luri-music-clone .music-artwork-backdrop {
+  z-index: -2;
+  inset: -32px;
+  background-position: center;
+  background-size: cover;
+  filter: none !important;
+  transform: scale(1.035);
+}
+
+.luri-music-clone .music-artwork-backdrop::after {
+  display: none !important;
+  content: none !important;
+}
+
+.luri-music-clone .music-artwork-backdrop.is-visible {
+  opacity: 0.9;
+}
+
+.luri-music-clone .music-page::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  display: block !important;
+  content: "";
+  opacity: 1;
+  background:
+    linear-gradient(180deg, var(--zy-stage-veil-top), var(--zy-stage-veil-bottom)),
+    rgba(255, 255, 255, 0.015) !important;
+  filter: none !important;
+  backdrop-filter: blur(var(--zy-stage-blur)) saturate(var(--zy-stage-saturate)) brightness(var(--zy-stage-brightness)) contrast(0.94);
+  -webkit-backdrop-filter: blur(var(--zy-stage-blur)) saturate(var(--zy-stage-saturate)) brightness(var(--zy-stage-brightness)) contrast(0.94);
+  transform: none !important;
+  pointer-events: none;
+}
+
+.luri-music-clone :is(
+  .music-shell,
+  .music-content,
+  .music-header,
+  .music-sidebar,
+  .music-workspace,
+  .music-results,
+  .music-results > .music-list,
+  .music-lyrics,
+  .music-lyrics .lyrics-track,
+  .music-lyrics .lyrics-body,
+  .music-mobile-tabs
+) {
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.luri-music-clone > .lm-site-bar,
+.luri-music-clone .music-player {
+  border: 1px solid var(--zy-interface-border) !important;
+  background: var(--zy-interface-surface) !important;
+  box-shadow: var(--zy-interface-shadow) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.luri-music-clone .music-search,
+.luri-music-clone .music-search:focus-within {
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.luri-music-clone .music-search-history {
+  border: 1px solid var(--zy-interface-border) !important;
+  background: color-mix(in srgb, var(--zy-surface) 92%, transparent) !important;
+  box-shadow: var(--zy-shadow-lg) !important;
+  backdrop-filter: blur(12px) saturate(1.04) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.04) !important;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .luri-music-clone .music-page::before {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--zy-bg) 72%, transparent), color-mix(in srgb, var(--zy-bg) 86%, transparent)) !important;
+  }
+}
+
 html[data-theme="light"] .lm-quality-mark {
   color: #525a66 !important;
 }
