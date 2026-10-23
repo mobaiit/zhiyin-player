@@ -3333,7 +3333,7 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
     radial-gradient(circle at 15% 6%, rgba(185, 92, 98, 0.1), transparent 30rem),
     radial-gradient(circle at 86% 74%, rgba(156, 78, 86, 0.08), transparent 34rem),
     linear-gradient(135deg, #45454c 0%, #51474b 24%, #40444b 49%, #56494d 74%, #45474e 100%);
-  --zy-shared-stage-blur: 10px;
+  --zy-shared-stage-blur: 9px;
   --zy-shared-stage-saturate: 1.1;
   --zy-shared-stage-brightness: 0.98;
   --zy-shared-glass-tint: rgba(255, 255, 255, 0);

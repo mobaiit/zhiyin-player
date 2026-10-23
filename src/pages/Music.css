@@ -3016,6 +3016,10 @@ body.has-global-music-player .music-player__song {
     animation: music-player-title-pan var(--player-title-duration) linear infinite alternate;
   }
 
+  .music-player__title[data-overflow="true"] {
+    text-overflow: clip;
+  }
+
   .music-player:has(:focus-visible) .music-player__title-text,
   .music-player:active .music-player__title-text {
     animation-play-state: paused;
@@ -3035,6 +3039,10 @@ body.has-global-music-player .music-player__song {
 }
 
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .music-player__title[data-overflow="true"] {
+    text-overflow: ellipsis;
+  }
+
   .music-player__title[data-overflow="true"] .music-player__title-text {
     display: inline;
     animation: none;
@@ -3534,10 +3542,10 @@ body.has-global-music-player #root > main:not(.music-page) {
   body:not(.has-global-music-player) .music-player {
     grid-template-columns: minmax(0, 1fr) auto 36px !important;
     grid-template-rows: 12px 62px !important;
-    column-gap: 4px !important;
+    column-gap: 6px !important;
     row-gap: 0 !important;
     min-height: 92px !important;
-    padding-inline: 4px !important;
+    padding-inline: 6px !important;
     padding-top: 8px !important;
     padding-bottom: 8px !important;
   }
@@ -3548,7 +3556,7 @@ body.has-global-music-player #root > main:not(.music-page) {
     grid-row: 2;
     align-self: center;
     min-width: 0;
-    gap: 4px;
+    gap: 6px;
   }
 
   body:not(.has-global-music-player) .music-player__song img {
@@ -3630,7 +3638,7 @@ body.has-global-music-player #root > main:not(.music-page) {
 @media (max-width: 390px) {
   body:not(.has-global-music-player) .music-player {
     grid-template-columns: minmax(0, 1fr) auto 32px !important;
-    column-gap: 4px !important;
+    column-gap: 6px !important;
   }
 
   body:not(.has-global-music-player) .music-player__song img {
@@ -3809,7 +3817,7 @@ body.has-global-music-player #root > main:not(.music-page) {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 2px !important;
+    gap: 4px !important;
     width: auto !important;
     min-width: 0 !important;
   }

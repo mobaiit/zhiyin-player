@@ -54,6 +54,8 @@ test('title motion is mobile-only, pauses at both ends and respects reduced moti
   assert.match(css, /0%, 20% \{ transform: translateX\(0\); \}/);
   assert.match(css, /80%, 100% \{ transform: translateX\(var\(--player-title-offset\)\); \}/);
   assert.match(css, /@media \(max-width: 760px\) and \(prefers-reduced-motion: reduce\)[\s\S]*?animation: none;/);
+  assert.match(css, /\.music-player__title\[data-overflow="true"\]\s*\{\s*text-overflow: clip;/);
+  assert.match(css, /@media \(max-width: 760px\) and \(prefers-reduced-motion: reduce\)[\s\S]*?text-overflow: ellipsis;/);
   assert.match(css, /@media \(max-width: 760px\) and \(hover: hover\)[\s\S]*?animation-play-state: paused;/);
   assert.doesNotMatch(css, /\.music-player:focus-within \.music-player__title-text/);
 });

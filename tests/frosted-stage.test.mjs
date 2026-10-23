@@ -28,7 +28,7 @@ test('production veil retains BOTH standard and WebKit backdrop filters', () => 
 });
 
 test('light and dark share exactly the requested frosting parameters', () => {
-  for (const [name, value] of [['blur', '10px'], ['saturate', '1.1'], ['brightness', '0.98']]) {
+  for (const [name, value] of [['blur', '9px'], ['saturate', '1.1'], ['brightness', '0.98']]) {
     const declarations = [...built.matchAll(new RegExp(`--zy-shared-stage-${name}:([^;}]+)`, 'g'))];
     assert.equal(declarations.length, 1, `${name} must not be overridden by old light-theme rules`);
     if (name === 'blur') assert.equal(declarations[0][1], value);
