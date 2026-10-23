@@ -2021,8 +2021,8 @@ html[data-theme="light"] .music-quality {
 
 @media (min-width: 761px) {
   .music-player {
-    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr) !important;
-    padding-inline: 18px !important;
+    width: min(calc(100% - 32px), 1040px) !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
   }
 
   .music-player__progress {
@@ -2031,50 +2031,14 @@ html[data-theme="light"] .music-quality {
 
   .music-player__song {
     display: flex !important;
-    visibility: visible !important;
     grid-column: 1 !important;
     grid-row: 2 !important;
-    align-items: center !important;
     justify-self: start;
-    gap: 10px;
-    width: min(100%, 360px);
-    min-width: 0;
-    opacity: 1 !important;
-  }
-
-  .music-player__song img {
-    flex: 0 0 44px;
-    width: 44px !important;
-    height: 44px !important;
-    object-fit: cover;
-  }
-
-  .music-player__copy {
-    display: grid !important;
-    gap: 3px;
-    min-width: 0;
-  }
-
-  .music-player__title,
-  .music-player__copy small {
-    display: block !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .music-player__title {
-    max-width: none !important;
-    color: var(--zy-text);
-  }
-
-  .music-player__copy small {
-    color: var(--zy-text-secondary);
   }
 
   .music-controls {
     grid-column: 2 !important;
-    justify-self: center;
+    justify-self: end;
   }
 }
 
