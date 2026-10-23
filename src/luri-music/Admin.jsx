@@ -26,8 +26,8 @@ export default function Admin() {
   const selectPage = (nextPage) => { setPage(nextPage); setAccountOpen(false); setNavOpen(false); };
   return <main className="admin-page">
     <aside className={navOpen ? 'is-open' : ''} aria-label="后台导航">
-      <a className="admin-brand" href="/admin"><img src="/zhiyin-logo.png" alt="" /><span><b>知音</b><small>管理后台</small></span></a>
-      <nav>{ADMIN_NAV.map(([value, icon, label]) => <button key={value} className={page === value ? 'active' : ''} aria-current={page === value ? 'page' : undefined} onClick={() => selectPage(value)}><AdminIcon name={icon} /><span>{label}</span></button>)}</nav>
+      <a className="admin-brand" href="/admin">知音后台</a>
+      <nav>{ADMIN_NAV.map(([value, icon, label]) => <button key={value} className={page === value ? 'active' : ''} aria-current={page === value ? 'page' : undefined} onClick={() => selectPage(value)}><AdminIcon name={icon} /><span>{label}</span></button>)}<a className="admin-nav-link" href="/docs" target="_blank" rel="noreferrer"><AdminIcon name="docs" /><span>使用文档</span></a></nav>
     </aside>
     {navOpen && <button className="admin-nav-backdrop" type="button" aria-label="关闭后台导航" onClick={() => setNavOpen(false)} />}
     <section className="admin-content">
@@ -44,7 +44,7 @@ function AdminLogin({ turnstile, done, notify }) {
   useEffect(() => () => document.activeElement?.blur?.(), []);
   const resetTurnstile = useCallback(() => { setToken(''); setReset((value) => value + 1); }, []);
   const submit = async (event) => { event.preventDefault(); if (turnstile.enabled && !token) return notify('请先完成人机验证', '请完成下方的 Turnstile 验证后再尝试', 'warning'); setLoading(true); try { const data = await api('admin/login', { method: 'POST', body: JSON.stringify({ username, password, turnstileToken: token }) }); document.activeElement?.blur?.(); notify('登录成功', '', 'success'); done(data.admin); } catch (error) { notify('登录失败', error.message, 'error'); resetTurnstile(); } finally { setLoading(false); } };
-  return <main className="admin-login"><ThemeToggle /><form onSubmit={submit}><div className="admin-login-brand"><img src="/zhiyin-logo.png" alt="" /><span><b>知音</b><small>管理后台</small></span></div><p>使用管理员账号继续</p><h1>欢迎回来</h1><label>账号<input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" autoFocus required /></label><PasswordField label="密码" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />{turnstile.enabled && <Turnstile siteKey={turnstile.siteKey} onVerify={setToken} onExpire={resetTurnstile} resetSignal={reset} />}<button disabled={loading || (turnstile.enabled && !token)}>{loading ? <><Spinner /> 登录中…</> : '登录后台'}</button></form></main>;
+  return <main className="admin-login"><ThemeToggle /><form onSubmit={submit}><div className="admin-login-brand"><h1>知音后台</h1></div><label>账号<input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" autoFocus required /></label><PasswordField label="密码" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />{turnstile.enabled && <Turnstile siteKey={turnstile.siteKey} onVerify={setToken} onExpire={resetTurnstile} resetSignal={reset} />}<button disabled={loading || (turnstile.enabled && !token)}>{loading ? <><Spinner /> 登录中…</> : '登录后台'}</button></form></main>;
 }
 
 function Users({ notify }) {
@@ -110,6 +110,7 @@ function AdminIcon({ name }) {
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
     shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></>,
     mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
+    docs: <><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5Z" /><path d="M4 4.5v17M8 7h8M8 11h7" /></>,
     user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
     chevron: <path d="m8 10 4 4 4-4" />,
     lock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
