@@ -2025,7 +2025,7 @@ html[data-theme="light"] .music-quality {
     text-size-adjust: 100%;
   }
 
-  :where(
+  html body :is(
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
     select,
     textarea
