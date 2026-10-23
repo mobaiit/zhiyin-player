@@ -1816,6 +1816,11 @@ html[data-theme="light"] .music-quality {
   .music-player {
     width: calc(100% - 24px) !important;
   }
+
+  /* Reclaim mobile gutters for the title without resizing any controls. */
+  body:not(.has-global-music-player) .music-player {
+    width: calc(100% - 16px) !important;
+  }
 }
 
 /* Account settings use an opaque surface so forms stay readable over artwork. */

@@ -3005,7 +3005,39 @@ body.has-global-music-player .music-player__song {
     display: none;
   }
   .music-player__title {
-    max-width: calc(100% - 2rem);
+    /* Quality is in the controls now; don't reserve an empty badge slot. */
+    max-width: 100%;
+  }
+
+  .music-player__title[data-overflow="true"] .music-player__title-text {
+    display: inline-block;
+    overflow: visible;
+    text-overflow: clip;
+    animation: music-player-title-pan var(--player-title-duration) linear infinite alternate;
+  }
+
+  .music-player:has(:focus-visible) .music-player__title-text,
+  .music-player:active .music-player__title-text {
+    animation-play-state: paused;
+  }
+}
+
+/* Avoid sticky :hover on touch browsers after tapping transport controls. */
+@media (max-width: 760px) and (hover: hover) {
+  .music-player:hover .music-player__title-text {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes music-player-title-pan {
+  0%, 20% { transform: translateX(0); }
+  80%, 100% { transform: translateX(var(--player-title-offset)); }
+}
+
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .music-player__title[data-overflow="true"] .music-player__title-text {
+    display: inline;
+    animation: none;
   }
 }
 body.has-global-music-player .music-controls .timeline {
@@ -3502,9 +3534,10 @@ body.has-global-music-player #root > main:not(.music-page) {
   body:not(.has-global-music-player) .music-player {
     grid-template-columns: minmax(0, 1fr) auto 36px !important;
     grid-template-rows: 12px 62px !important;
-    column-gap: 8px !important;
+    column-gap: 4px !important;
     row-gap: 0 !important;
     min-height: 92px !important;
+    padding-inline: 4px !important;
     padding-top: 8px !important;
     padding-bottom: 8px !important;
   }
@@ -3515,7 +3548,7 @@ body.has-global-music-player #root > main:not(.music-page) {
     grid-row: 2;
     align-self: center;
     min-width: 0;
-    gap: 0.5rem;
+    gap: 4px;
   }
 
   body:not(.has-global-music-player) .music-player__song img {
@@ -3597,7 +3630,7 @@ body.has-global-music-player #root > main:not(.music-page) {
 @media (max-width: 390px) {
   body:not(.has-global-music-player) .music-player {
     grid-template-columns: minmax(0, 1fr) auto 32px !important;
-    column-gap: 5px !important;
+    column-gap: 4px !important;
   }
 
   body:not(.has-global-music-player) .music-player__song img {
@@ -3776,7 +3809,7 @@ body.has-global-music-player #root > main:not(.music-page) {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 0.3rem !important;
+    gap: 2px !important;
     width: auto !important;
     min-width: 0 !important;
   }
@@ -3806,7 +3839,7 @@ body.has-global-music-player #root > main:not(.music-page) {
   body:not(.has-global-music-player) .music-player .music-quality {
     display: inline-flex !important;
     margin-left: 0 !important;
-    margin-right: 0.2rem !important;
+    margin-right: 0 !important;
   }
 
   body:not(.has-global-music-player) .music-player .music-download-button {
