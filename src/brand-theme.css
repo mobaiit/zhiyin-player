@@ -654,7 +654,7 @@ body {
 }
 
 .music-nav {
-  color: var(--zy-muted) !important;
+  color: var(--zy-text) !important;
 }
 
 .music-nav.active,
@@ -662,7 +662,7 @@ body {
 .music-mobile-tabs button.active {
   border-color: rgba(229, 72, 77, 0.48) !important;
   background: linear-gradient(135deg, rgba(229, 72, 77, 0.22), rgba(97, 18, 24, 0.14)) !important;
-  color: #fff !important;
+  color: var(--zy-red-hover) !important;
   box-shadow: inset 3px 0 0 var(--zy-red) !important;
 }
 
@@ -682,9 +682,12 @@ body {
 .music-player__time,
 .music-player small,
 .lyrics-track span,
-.lyrics-body p,
 .music-global-disclaimer {
   color: var(--zy-muted) !important;
+}
+
+.lyrics-body p {
+  color: var(--zy-text) !important;
 }
 
 .lyrics-body p.active,
@@ -1915,11 +1918,11 @@ html[data-theme="light"] .music-player .music-controls .play-button {
 }
 
 html[data-theme="light"] .lyrics-body p:not(.active) {
-  color: #34373d !important;
+  color: var(--zy-text) !important;
 }
 
 html[data-theme="light"] .music-nav:not(.active) {
-  color: #25282e !important;
+  color: var(--zy-text) !important;
 }
 
 /* Quality tiers keep their own semantic colours instead of inheriting red. */
