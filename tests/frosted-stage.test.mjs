@@ -100,9 +100,9 @@ test('transparency is controlled by artwork visibility and surface alpha, not mo
   assert.deepEqual(opacity, [0.8, 0.52]);
   const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
     .map(([, value]) => Number(value.split(',').at(-1)));
-  assert.deepEqual(surfaces, [0.18, 0.10]);
+  assert.deepEqual(surfaces, [0.18, 0.05]);
   assert.match(built, /--zy-shared-interface-surface:#27282e2e/);
-  assert.match(built, /--zy-shared-interface-surface:#eef0f31a/);
+  assert.match(built, /--zy-shared-interface-surface:#eef0f30d/);
   const brightness = [...built.matchAll(/--zy-artwork-brightness:([^;}]+)/g)].map(([, value]) => Number(value));
   assert.deepEqual(brightness, [0.48, 1.0]);
   // The more-specific light selector must not keep an old hardcoded tint.
