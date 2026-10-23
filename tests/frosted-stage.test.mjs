@@ -28,12 +28,13 @@ test('production veil retains BOTH standard and WebKit backdrop filters', () => 
 });
 
 test('light and dark share exactly the requested frosting parameters', () => {
-  for (const [name, value] of [['blur', '20px'], ['saturate', '1.8'], ['brightness', '1.05']]) {
+  for (const [name, value] of [['blur', '10px'], ['saturate', '1.1'], ['brightness', '0.98']]) {
     const declarations = [...built.matchAll(new RegExp(`--zy-shared-stage-${name}:([^;}]+)`, 'g'))];
     assert.equal(declarations.length, 1, `${name} must not be overridden by old light-theme rules`);
-    assert.equal(declarations[0][1], value);
+    if (name === 'blur') assert.equal(declarations[0][1], value);
+    else assert.equal(Number(declarations[0][1]), Number(value));
   }
-  assert.match(source, /--zy-shared-glass-tint: rgba\(255, 255, 255, 0\.12\)/);
+  assert.match(source, /--zy-shared-glass-tint: rgba\(255, 255, 255, 0\)/);
   assert.doesNotMatch(source, /html\[data-theme="light"\] \.music-page::before\s*\{/);
 });
 
@@ -74,4 +75,14 @@ test('login has no theme switch, while the authenticated admin header retains on
   assert.match(admin, /className="admin-header-actions"><ThemeToggle/);
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
   assert.match(app, /useEffect\(syncThemeAcrossTabs, \[\]\)/, 'Theme sync must not depend on rendering a toggle button');
+});
+
+test('all shared toasts omit countdown bars but retain dismiss behavior', () => {
+  const feedback = readFileSync(new URL('../src/luri-music/UiFeedback.jsx', import.meta.url), 'utf8');
+  const styles = readFileSync(new URL('../src/luri-music/ui-feedback.css', import.meta.url), 'utf8');
+  for (const content of [feedback, styles, built]) {
+    assert.doesNotMatch(content, /ui-toast__progress|ui-toast-progress|--ui-toast-duration/);
+  }
+  assert.match(feedback, /setTimeout\(\(\) => closeRef\.current\(\), duration\)/);
+  assert.match(feedback, /onClick=\{onClose\} aria-label="关闭通知"/);
 });

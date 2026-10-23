@@ -34,11 +34,10 @@ export function Toast({ toast, onClose }) {
     return () => window.clearTimeout(timer);
   }, [toast, duration]);
   if (!toast) return null;
-  return createPortal(<div className={`ui-toast ui-toast--${type}`} role={type === 'error' || type === 'warning' ? 'alert' : 'status'} aria-live={type === 'error' ? 'assertive' : 'polite'} aria-atomic="true" style={{ '--ui-toast-duration': `${duration}ms` }}>
+  return createPortal(<div className={`ui-toast ui-toast--${type}`} role={type === 'error' || type === 'warning' ? 'alert' : 'status'} aria-live={type === 'error' ? 'assertive' : 'polite'} aria-atomic="true">
     <span className="ui-toast__icon"><FeedbackIcon type={type} /></span>
     <span className="ui-toast__content"><b>{toast.title}</b>{toast.message && <span>{toast.message}</span>}</span>
     <button className="ui-toast__close" type="button" onClick={onClose} aria-label="关闭通知"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 6 8 8m0-8-8 8" /></svg></button>
-    <i className="ui-toast__progress" aria-hidden="true" />
   </div>, document.body);
 }
 

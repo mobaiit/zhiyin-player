@@ -145,16 +145,6 @@
   stroke-width: 1.7;
   stroke-linecap: round;
 }
-.ui-toast__progress {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--ui-accent);
-  transform-origin: left;
-  animation: ui-toast-progress var(--ui-toast-duration) linear forwards;
-}
 .ui-confirm-backdrop {
   position: fixed;
   z-index: 1600;
@@ -254,11 +244,6 @@
     transform: translateX(-50%);
   }
 }
-@keyframes ui-toast-progress {
-  to {
-    transform: scaleX(0);
-  }
-}
 @keyframes ui-fade-in {
   from {
     opacity: 0;
@@ -295,7 +280,6 @@
 @media (prefers-reduced-motion: reduce) {
   .ui-spinner,
   .ui-toast,
-  .ui-toast__progress,
   .ui-confirm-backdrop,
   .ui-confirm {
     animation: none;
