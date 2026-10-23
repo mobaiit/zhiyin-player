@@ -97,14 +97,14 @@ test('background normalization reuses the existing image and single frosted laye
 
 test('transparency is controlled by artwork visibility and surface alpha, not more blur or layers', () => {
   const opacity = [...built.matchAll(/--zy-artwork-opacity:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(opacity, [0.8, 0.52]);
+  assert.deepEqual(opacity, [0.8, 0.8]);
   const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
     .map(([, value]) => Number(value.split(',').at(-1)));
-  assert.deepEqual(surfaces, [0.18, 0.05]);
+  assert.deepEqual(surfaces, [0.18, 0.18]);
   assert.match(built, /--zy-shared-interface-surface:#27282e2e/);
-  assert.match(built, /--zy-shared-interface-surface:#eef0f30d/);
+  assert.match(built, /--zy-shared-interface-surface:#eef0f32e/);
   const brightness = [...built.matchAll(/--zy-artwork-brightness:([^;}]+)/g)].map(([, value]) => Number(value));
-  assert.deepEqual(brightness, [0.48, 1.4]);
+  assert.deepEqual(brightness, [0.48, 0.48]);
   const artworkContrast = [...built.matchAll(/--zy-artwork-contrast:([^;}]+)/g)].map(([, value]) => Number(value));
   assert.deepEqual(artworkContrast, [0.36, 0.36]);
   // The more-specific light selector must not keep an old hardcoded tint.
