@@ -3009,10 +3009,19 @@ body.has-global-music-player .music-player__song {
     max-width: 100%;
   }
 
-  .music-player__title[data-overflow="true"] .music-player__title-text {
+  /* Keep the measured text at its natural width in BOTH animation states.
+     Legacy .music-player__song span { max-width: 100% } otherwise creates
+     an overflow -> animate -> shrink -> stop -> overflow feedback loop. */
+  .music-player__title .music-player__title-text {
     display: inline-block;
+    width: max-content;
+    max-width: none;
     overflow: visible;
     text-overflow: clip;
+    vertical-align: top;
+  }
+
+  .music-player__title[data-overflow="true"] .music-player__title-text {
     animation: music-player-title-pan var(--player-title-duration) linear infinite alternate;
   }
 
@@ -3044,7 +3053,6 @@ body.has-global-music-player .music-player__song {
   }
 
   .music-player__title[data-overflow="true"] .music-player__title-text {
-    display: inline;
     animation: none;
   }
 }

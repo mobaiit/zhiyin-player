@@ -95,6 +95,23 @@ test('background normalization reuses the existing image and single frosted laye
   assert.equal((music.match(/className=\{`music-artwork-backdrop/g) || []).length, 1);
 });
 
+test('transparency is controlled by artwork visibility and surface alpha, not more blur or layers', () => {
+  const opacity = [...built.matchAll(/--zy-artwork-opacity:([^;}]+)/g)].map(([, value]) => Number(value));
+  assert.deepEqual(opacity, [0.8, 0.52]);
+  const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
+    .map(([, value]) => Number(value.split(',').at(-1)));
+  assert.deepEqual(surfaces, [0.22, 0.18]);
+  assert.match(built, /--zy-shared-interface-surface:#27282e38/);
+  assert.match(built, /--zy-shared-interface-surface:#eef0f32e/);
+  // The more-specific light selector must not keep an old hardcoded tint.
+  for (const selector of ['.luri-music-clone', 'html[data-theme=light] .luri-music-clone']) {
+    const declarations = rules.filter((rule) => rule.selector === selector && rule.body.includes('--zy-interface-surface:'));
+    assert.ok(declarations.length > 0, selector);
+    for (const rule of declarations) assert.match(rule.body, /--zy-interface-surface:var\(--zy-shared-interface-surface\)/);
+  }
+  assert.ok(rules.some(({ body }) => body.includes('--zy-shared-stage-blur:9px')));
+});
+
 test('mobile admin navigation has one alignment and an opaque themed surface', () => {
   const nav = rules.find(({ selector, body }) => selector.includes('.admin-page>aside nav :is(') && body.includes('grid-template-columns:18px minmax(0,1fr)'));
   assert.ok(nav, 'Links and buttons must share the same icon and text columns');

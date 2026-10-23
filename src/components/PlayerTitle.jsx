@@ -3,10 +3,16 @@ import { useEffect, useRef } from 'react';
 // Observe real text overflow, including font loading and viewport/view changes.
 export function observePlayerTitle(title, text, { ResizeObserver, fonts, eventTarget }) {
   let disposed = false;
+  let previousDistance;
+  let previousMoving;
   const measure = () => {
     if (disposed) return;
-    const distance = Math.max(0, Math.ceil(text.getBoundingClientRect().width - title.clientWidth));
+    // Layout width is independent of animated transforms and inline boxes.
+    const distance = Math.max(0, text.scrollWidth - title.clientWidth);
     const moving = title.clientWidth > 0 && distance > 1;
+    if (distance === previousDistance && moving === previousMoving) return;
+    previousDistance = distance;
+    previousMoving = moving;
     title.dataset.overflow = String(moving);
     title.style.setProperty('--player-title-offset', `${-distance}px`);
     title.style.setProperty('--player-title-duration', `${Math.max(6, distance / (24 * 0.6) + 3)}s`);

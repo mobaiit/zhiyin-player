@@ -3035,13 +3035,13 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 
 /* Music visual stack: background -> one full-page glass veil -> transparent UI. */
 .luri-music-clone {
-  --zy-interface-surface: rgba(35, 36, 42, 0.18);
+  --zy-interface-surface: var(--zy-shared-interface-surface);
   --zy-interface-border: rgba(255, 255, 255, 0.08);
   --zy-interface-shadow: 0 18px 46px rgba(5, 5, 8, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
 html[data-theme="light"] .luri-music-clone {
-  --zy-interface-surface: rgba(238, 240, 243, 0.2);
+  --zy-interface-surface: var(--zy-shared-interface-surface);
   --zy-interface-border: rgba(34, 38, 45, 0.09);
   --zy-interface-shadow: 0 16px 42px rgba(34, 38, 45, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
@@ -3340,10 +3340,10 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   --zy-artwork-saturate: 0.65;
   --zy-artwork-contrast: 0.38;
   --zy-artwork-brightness: 0.4;
-  --zy-artwork-opacity: 0.66;
+  --zy-artwork-opacity: 0.8;
   --zy-reading-accent: #ffb9bd;
   --zy-row-selected-surface: rgba(229, 72, 77, 0.1);
-  --zy-shared-interface-surface: rgba(39, 40, 46, 0.3);
+  --zy-shared-interface-surface: rgba(39, 40, 46, 0.22);
   --zy-shared-interface-border: rgba(255, 255, 255, 0.1);
 }
 
@@ -3352,11 +3352,11 @@ html[data-theme="light"] {
     radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.07), transparent 30rem),
     radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.05), transparent 34rem),
     linear-gradient(135deg, #f2f0f0 0%, #f0e6e8 24%, #f7f5f4 49%, #efdee1 74%, #f0f1f3 100%);
-  --zy-shared-interface-surface: rgba(238, 240, 243, 0.31);
+  --zy-shared-interface-surface: rgba(238, 240, 243, 0.18);
   --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
   --zy-artwork-contrast: 0.3;
   --zy-artwork-brightness: 2.17;
-  --zy-artwork-opacity: 0.44;
+  --zy-artwork-opacity: 0.52;
   --zy-reading-accent: #95212a;
   --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
