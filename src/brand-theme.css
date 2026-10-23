@@ -2017,8 +2017,14 @@ html[data-theme="light"] .music-quality {
   content: none !important;
 }
 
-/* iOS Safari zooms the viewport when a focused form control is below 16px. */
-@media (max-width: 760px) {
+/* Keep every text-entry control at Safari's 16px focus threshold on phones,
+   including landscape devices whose CSS viewport can exceed 760px. */
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   :where(
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
     select,
