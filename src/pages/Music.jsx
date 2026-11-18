@@ -139,7 +139,11 @@ function MusicIcon({ name }) {
 // load, so browsers never show a broken-image icon. A new URL is always tried again.
 function Artwork({ src, onError, className = '', ...props }) {
   const [failed, setFailed] = useState('');
-  const url = src && src !== EMPTY_ART && src !== failed ? src : EMPTY_ART;
+  const url = usableArt(src) && src !== failed ? src : EMPTY_ART;
+  // An unusable URL (for example a bare path) counts as a failed load, without requesting it.
+  const invalid = Boolean(src) && src !== EMPTY_ART && !usableArt(src);
+  const onErrorRef = useRef(onError); onErrorRef.current = onError;
+  useEffect(() => { if (invalid) onErrorRef.current?.(); }, [invalid, src]);
   return <img {...props} className={`music-artwork${className ? ` ${className}` : ''}`} src={url} alt="" onError={(event) => { if (url === EMPTY_ART) return; setFailed(url); onError?.(event); }} />;
 }
 
@@ -1062,7 +1066,8 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
 
   const isChartView = listView === 'netease' || listView === 'qq';
   const visibleTracks = listView === 'search' ? results : listView === 'likes' ? likedTracks : listView === 'random' ? randomTracks : listView === 'playlist' ? selectedPlaylist?.tracks || [] : listView === 'history' ? library.history : listView === 'local' ? localTracks : isChartView ? chartData.tracks : tracks;
-  const rowArt = (track) => usableArt(artOverrides[track?.songId]) || artworkFor(track);
+  // Rows pass an unusable URL through so Artwork can report it as failed.
+  const rowArt = (track) => usableArt(artOverrides[track?.songId]) || artworkFor(track) || String(track?.art || track?.binding?.art || '');
   useEffect(() => {
     // Leaving a list drops its queued cover requests; those songs may be retried later.
     const state = rowArtworkRef.current;
