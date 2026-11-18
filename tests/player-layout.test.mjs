@@ -89,7 +89,7 @@ test('phone cover view previews the playing and next lyric lines', () => {
   assert.match(player, /\.music-app-now__controls \.music-app-now__like--controls,\n\.music-app-now__lyric-preview \{ display: none; \}/, 'Desktop already shows the full lyrics');
 });
 
-test('favourites store artwork and only the playing song may ask the Provider for it', () => {
+test('favourites store artwork; the Provider is asked only for the playing song or a failed cover', () => {
   assert.match(music, /const minimalFavorites = [^\n]*art: storableArt\(artworkFor\(track\)\)/, 'Stored and synced favourites keep the artwork URL');
   const storable = music.match(/const storableArt = (\(value\) => [^;]+);/)?.[1];
   assert.ok(storable, 'storableArt must exist');
@@ -98,11 +98,17 @@ test('favourites store artwork and only the playing song may ask the Provider fo
   for (const value of ['data:image/png;base64,AAAA', 'blob:https://zhiyin.us.ci/1', '', undefined]) assert.equal(storableArt(value), '', String(value));
   assert.match(music, /const artworkFor = \(track\) => \{[\s\S]*?songCache\(\)\[track\.songId\]\?\.art[\s\S]*?track\.binding\?\.art/);
   assert.doesNotMatch(music, /prefetch/i, 'Lists never fetch artwork in bulk');
-  assert.match(music, /<Artwork src=\{rowArt\(track\)\} loading="lazy" \/>/, 'Broken list artwork falls back without a request');
+  assert.match(music, /<Artwork src=\{rowArt\(track\)\} loading="lazy" onError=\{\(\) => requestRowArtwork\(track\)\} \/>/, 'Only a list cover that failed to load may ask the Provider');
+  assert.match(music, /function requestRowArtwork\(track\) \{[\s\S]*?state\.tried\.has\(track\.songId\)\) return;[\s\S]*?state\.tried\.add\(track\.songId\)/, 'Each song is requested at most once per session');
+  assert.match(music, /while \(state\.active < 2 && state\.queue\.length\)/, 'At most two list cover requests run at once');
+  assert.match(music, /for \(const \{ track \} of state\.queue\) state\.tried\.delete\(track\.songId\);\s*state\.queue = \[\];\s*\}, \[listView, routePath\]\);/, 'Leaving a list drops its queued requests');
+  const usable = new Function(`const EMPTY_ART = 'data:image/svg+xml,empty'; return ${music.match(/const usableArt = (\(value\) => \{[^\n]*\});/)[1]}`)();
+  assert.equal(usable('120/s3s94/93/1.jpg'), '', 'Bare paths are never requested from this site');
+  assert.equal(usable('https://img1.kuwo.cn/a.jpg'), 'https://img1.kuwo.cn/a.jpg');
   assert.deepEqual(music.match(/<img (?:\{\.\.\.props\}|src="[^"]*")/g), ['<img {...props}', '<img src="/zhiyin-logo.png"'], 'Every cover renders through Artwork; only the logo is a plain image');
   assert.match(music, /function Artwork\([\s\S]*?const url = src && src !== EMPTY_ART && src !== failed \? src : EMPTY_ART;[\s\S]*?setFailed\(url\); onError\?\.\(event\);/, 'Missing or broken covers fall back to the default artwork');
   assert.match(music, /function applyArtwork\(song, url, binding\) \{[\s\S]*?setLikedTracks\(next\);[\s\S]*?markFavoritesDirty\(\);/, 'Fetched artwork is written back to favourites');
-  assert.equal((music.match(/musicRequest\('artwork'/g) || []).length, 2, 'Only the current song requests artwork: when missing or when it fails to load');
+  assert.equal((music.match(/musicRequest\('artwork'/g) || []).length, 3, 'Artwork is requested only for the playing song (missing or failed) and for a list cover that failed');
 });
 
 test('library sub-pages offer a way back to 音乐库 on phones', () => {
