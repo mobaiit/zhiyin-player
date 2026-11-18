@@ -137,15 +137,28 @@ function MusicIcon({ name }) {
 
 // Every cover falls back to the default artwork when its URL is missing or fails to
 // load, so browsers never show a broken-image icon. A new URL is always tried again.
-function Artwork({ src, onError, className = '', ...props }) {
+// With onUnavailable, a missing or unusable URL is reported once the cover scrolls
+// near the viewport, so a long list only asks for covers the user can see.
+function Artwork({ src, onError, onUnavailable, className = '', ...props }) {
   const [failed, setFailed] = useState('');
+  const imageRef = useRef(null);
   const url = usableArt(src) && src !== failed ? src : EMPTY_ART;
-  // An unusable URL (for example a bare path) counts as a failed load, without requesting it.
-  const invalid = Boolean(src) && src !== EMPTY_ART && !usableArt(src);
-  const onErrorRef = useRef(onError);
-  useEffect(() => { onErrorRef.current = onError; });
-  useEffect(() => { if (invalid) onErrorRef.current?.(); }, [invalid, src]);
-  return <img {...props} className={`music-artwork${className ? ` ${className}` : ''}`} src={url} alt="" onError={(event) => { if (url === EMPTY_ART) return; setFailed(url); onError?.(event); }} />;
+  const unavailable = !usableArt(src);
+  const onUnavailableRef = useRef(onUnavailable);
+  useEffect(() => { onUnavailableRef.current = onUnavailable; });
+  const watching = Boolean(onUnavailable) && unavailable;
+  useEffect(() => {
+    const image = imageRef.current;
+    if (!watching || !image) return undefined;
+    if (typeof IntersectionObserver === 'undefined') { onUnavailableRef.current?.(); return undefined; }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      observer.disconnect(); onUnavailableRef.current?.();
+    }, { rootMargin: '200px 0px' });
+    observer.observe(image);
+    return () => observer.disconnect();
+  }, [watching, src]);
+  return <img {...props} ref={imageRef} className={`music-artwork${className ? ` ${className}` : ''}`} src={url} alt="" onError={(event) => { if (url === EMPTY_ART) return; setFailed(url); onError?.(event); }} />;
 }
 
 const QUALITY_META = {
@@ -469,8 +482,9 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     likedTracksRef.current = next; setLikedTracks(next);
     if (storableArt(url)) markFavoritesDirty();
   }
-  // A list cover that fails to load asks the Provider once per song per session,
-  // two at a time. Queued requests are dropped when the list changes.
+  // A list cover that is missing, unusable or fails to load asks the Provider once
+  // per song per session, two at a time, and only after it scrolls into view.
+  // Queued requests are dropped when the list changes.
   function requestRowArtwork(track) {
     const state = rowArtworkRef.current;
     if (!track?.binding || track.sourceType === 'local') return;
@@ -1067,8 +1081,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
 
   const isChartView = listView === 'netease' || listView === 'qq';
   const visibleTracks = listView === 'search' ? results : listView === 'likes' ? likedTracks : listView === 'random' ? randomTracks : listView === 'playlist' ? selectedPlaylist?.tracks || [] : listView === 'history' ? library.history : listView === 'local' ? localTracks : isChartView ? chartData.tracks : tracks;
-  // Rows pass an unusable URL through so Artwork can report it as failed.
-  const rowArt = (track) => usableArt(artOverrides[track?.songId]) || artworkFor(track) || String(track?.art || track?.binding?.art || '');
+  const rowArt = (track) => usableArt(artOverrides[track?.songId]) || artworkFor(track);
   useEffect(() => {
     // Leaving a list drops its queued cover requests; those songs may be retried later.
     const state = rowArtworkRef.current;
@@ -1148,7 +1161,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     {visibleTracks.map((track, index) => { const state = rowPlaybackState(track.songId); const isCurrent = track.songId === currentId; const busy = isCurrent && isPlaybackBusy; return <div ref={isCurrent ? currentRowRef : null} key={`${track.songId}:${index}`} className={`music-app-track${isCurrent ? ' is-current' : ''}`}>
       <button className="music-app-track__main" type="button" onClick={() => handleTrackAction(track)} disabled={busy} aria-label={`${track.title}，${state === 'playing' ? '暂停' : '播放'}`}>
         <span className="music-app-track__index">{state === 'loading' || state === 'resolving' ? <span className="music-spinner" /> : state === 'playing' ? <MusicIcon name="pause" /> : String(isChartView ? track.rank || index + 1 : index + 1).padStart(2, '0')}</span>
-        <Artwork src={rowArt(track)} loading="lazy" onError={() => requestRowArtwork(track)} /><span className="music-app-track__copy"><span className="music-app-track__title"><b>{track.title}</b>{isCurrent && <QualityBadge track={current} fallbackQuality={playbackQuality} />}</span><span className="music-app-track__meta"><small>{track.artist}{track.album ? ` · ${track.album}` : ''}</small></span></span>
+        <Artwork src={rowArt(track)} loading="lazy" onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><span className="music-app-track__copy"><span className="music-app-track__title"><b>{track.title}</b>{isCurrent && <QualityBadge track={current} fallbackQuality={playbackQuality} />}</span><span className="music-app-track__meta"><small>{track.artist}{track.album ? ` · ${track.album}` : ''}</small></span></span>
         {track.playedAt && <time>{new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(track.playedAt))}</time>}
       </button>
       <div className="music-app-track__actions">
@@ -1174,7 +1187,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       </header>
       <section className="music-app-body">
         <div className="music-app-page">
-          {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <Artwork src={rowArt(track)} key={`${track?.songId || 'empty'}:${index}`} onError={() => requestRowArtwork(track)} />)}{!randomTracks.length && !current && <Artwork src="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3><p>每次点击都会从曲库中随机挑选一首歌开始播放。</p><ul>{randomTracks.slice(0, 3).map((track) => <li key={track.songId}><b>{track.title}</b><span>{track.artist}</span></li>)}</ul><div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div></section><div className="music-app-home-section-title"><div><h3>最近发现</h3><p>随机播放成功的歌曲会保留在这里</p></div></div><div className="music-app-home-cards">{randomTracks.slice(0, 8).map((track) => <button type="button" key={track.songId} onClick={() => handleTrackAction(track)}><Artwork src={rowArt(track)} onError={() => requestRowArtwork(track)} /><b>{track.title}</b><span>{track.artist}</span></button>)}{!randomTracks.length && <div className="music-app-empty"><strong>还没有发现记录</strong><span>点击“随机播放”开始探索。</span></div>}</div></section>}
+          {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <Artwork src={rowArt(track)} key={`${track?.songId || 'empty'}:${index}`} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} />)}{!randomTracks.length && !current && <Artwork src="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3><p>每次点击都会从曲库中随机挑选一首歌开始播放。</p><ul>{randomTracks.slice(0, 3).map((track) => <li key={track.songId}><b>{track.title}</b><span>{track.artist}</span></li>)}</ul><div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div></section><div className="music-app-home-section-title"><div><h3>最近发现</h3><p>随机播放成功的歌曲会保留在这里</p></div></div><div className="music-app-home-cards">{randomTracks.slice(0, 8).map((track) => <button type="button" key={track.songId} onClick={() => handleTrackAction(track)}><Artwork src={rowArt(track)} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><b>{track.title}</b><span>{track.artist}</span></button>)}{!randomTracks.length && <div className="music-app-empty"><strong>还没有发现记录</strong><span>点击“随机播放”开始探索。</span></div>}</div></section>}
           {isChartView && <div className="music-app-toolbar"><div className="music-app-segment"><button className={chartPlatform === 'netease' ? 'active' : ''} type="button" onClick={openNetease}>网易</button><button className={chartPlatform === 'qq' ? 'active' : ''} type="button" onClick={openQQ}>QQ</button></div><div className="music-app-segment">{CHART_TYPES.map((chart) => <button className={chartType === chart.value ? 'active' : ''} type="button" onClick={() => selectChartType(chart.value)} key={chart.value}>{chart.label}</button>)}</div><button className="music-app-quiet" type="button" onClick={() => loadChart(chartPlatform, chartType, true)} disabled={chartLoading}>刷新</button></div>}
           {listView === 'playlists' && <><div className="music-app-toolbar"><button className="music-app-primary" type="button" onClick={() => createPlaylist()}>新建歌单</button><button className="music-app-quiet" type="button" onClick={() => importRef.current?.click()}>导入</button><span className="music-app-sync">{syncState === 'synced' ? '已同步' : syncState === 'syncing' ? '同步中' : syncState === 'pending' ? '等待同步' : '仅本机'}</span></div><div className="music-app-playlists"><article className="music-app-playlist-pinned"><button type="button" onClick={() => navigate('/favorites')}><span><MusicIcon name="heart" /></span><b>我的喜欢</b><small>{likedTracks.length} 首歌曲</small></button></article>{library.playlists.map((playlist) => <article key={playlist.id}><button type="button" onClick={() => navigate(`/playlists/${encodeURIComponent(playlist.id)}`)}><span><MusicIcon name="playlist" /></span><b>{playlist.name}</b><small>{playlist.tracks.length} 首歌曲</small></button><div><button type="button" onClick={() => renamePlaylist(playlist)}>重命名</button><button type="button" onClick={() => deletePlaylist(playlist)}>删除</button></div></article>)}{!library.playlists.length && <div className="music-app-empty"><strong>创建你的第一张歌单</strong><span>歌单会随账户在多端同步，音频文件本身不会上传。</span></div>}</div></>}
           {['likes', 'history', 'local'].includes(listView) && <div className="music-app-toolbar music-app-library-back"><button className="music-app-quiet music-app-back-button" type="button" onClick={() => navigate('/playlists')}><MusicIcon name="back" /><span>返回音乐库</span></button></div>}
