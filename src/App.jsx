@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react';
 import LuriMusic from './luri-music/LuriMusic';
 import { syncThemeAcrossTabs } from './components/theme';
-import './luri-music/page-titles.css';
 import './brand-theme.css';
+// Bottom player and full-screen player. Loaded last: it is the single layout authority.
+import './styles/player.css';
 
 const Admin = lazy(() => import('./luri-music/Admin'));
 const Docs = lazy(() => import('./pages/Docs'));

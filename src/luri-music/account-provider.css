@@ -147,31 +147,6 @@
   padding: 9px 13px;
   font-size: 11px;
 }
-.lm-provider-intro {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: start;
-  justify-items: start;
-  gap: 7px 16px;
-  margin: -3px 0 0;
-  padding: 2px 0 14px;
-  border-bottom: 1px solid #e8e8e8;
-  color: #707070;
-  font-size: 12px;
-  line-height: 1.7;
-}
-.lm-provider-intro > div {
-  display: grid;
-  gap: 2px;
-}
-.lm-provider-intro b {
-  color: #222;
-  font-size: 12px;
-}
-.lm-provider-intro p {
-  margin: 0;
-}
-.lm-provider-intro a,
 .lm-protocol-doc-link {
   display: inline-flex;
   align-items: center;
@@ -182,7 +157,6 @@
   text-decoration-color: #bbb;
   text-underline-offset: 3px;
 }
-.lm-provider-intro a:hover,
 .lm-protocol-doc-link:hover {
   text-decoration-color: #111;
 }
@@ -227,22 +201,6 @@
   display: grid;
   min-width: 0;
   gap: 2px;
-}
-.lm-provider-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.lm-provider-heading > span {
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: #ececec;
-  color: #666;
-  font-size: 9px;
-}
-.lm-provider-heading > span.active {
-  background: #111;
-  color: #fff;
 }
 .lm-provider-list article small {
   overflow: hidden;
@@ -344,10 +302,6 @@
   width: auto;
   margin-top: 8px;
   padding: 9px 14px;
-}
-.lm-provider-add {
-  justify-self: start;
-  margin: 0;
 }
 .lm-provider-footer {
   display: flex;
@@ -543,24 +497,6 @@
 .lm-provider-form-error:focus {
   box-shadow: 0 0 0 3px #b52d2d14;
 }
-.lm-provider-current {
-  display: grid;
-  gap: 4px;
-  padding: 11px 12px;
-  border-radius: 9px;
-  background: #f5f5f3;
-}
-.lm-provider-current span,
-.lm-provider-current small {
-  color: #777;
-  font-size: 10px;
-}
-.lm-provider-current b {
-  overflow: hidden;
-  font: 11px/1.5 var(--font-mono);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .lm-provider-form-actions {
   display: flex;
   align-items: center;
@@ -615,16 +551,6 @@
 .lm-provider-advanced-toggle:hover {
   border-color: #bdbdbd !important;
   background: #f6f6f6 !important;
-}
-.lm-account-menu > .lm-provider-info {
-  margin: 0;
-  padding: 6px 2px;
-}
-.lm-account-menu > .lm-provider-info dl {
-  grid-template-columns: 1fr;
-  gap: 0;
-  padding: 0;
-  font-size: inherit;
 }
 .lm-provider-types legend {
   position: absolute;
@@ -686,25 +612,13 @@
   outline: 2px solid #111;
   outline-offset: 2px;
 }
-.lm-provider-public-note {
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #f4f4f2;
-  color: #555 !important;
-  font-size: 11px !important;
-}
 .luri-music-clone .lm-password-input button {
   color: var(--lm-text-accent) !important;
 }
-.luri-music-clone .lm-provider-intro {
-  color: var(--lm-text-secondary);
-}
-.luri-music-clone .lm-provider-intro a,
 .luri-music-clone .lm-protocol-doc-link {
   color: var(--lm-text-accent);
   text-decoration-color: #6aa3c8;
 }
-.luri-music-clone .lm-provider-intro small,
 .luri-music-clone .lm-provider-list article small {
   color: var(--lm-text-muted);
   font-size: 11px;
@@ -736,9 +650,6 @@
 }
 .luri-music-clone .lm-provider-types button.active small {
   color: #dbeafe;
-}
-.luri-music-clone .lm-provider-public-note {
-  color: var(--lm-text-secondary) !important;
 }
 .lm-quality-modal > div {
   width: min(520px, calc(100vw - 32px));
@@ -845,54 +756,6 @@
   font-size: 10px;
   line-height: 1.6;
 }
-.user-cleanup {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
-  padding: 16px;
-  border: 1px solid var(--admin-line);
-  border-radius: 14px;
-  background: #fff;
-}
-.user-cleanup > div {
-  display: grid;
-  margin-right: auto;
-}
-.user-cleanup small {
-  margin-top: 3px;
-  color: #888;
-  font-size: 11px;
-}
-.user-cleanup label {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  border: 1px solid #ddd;
-  border-radius: 9px;
-}
-.user-cleanup input {
-  width: 64px;
-  padding: 9px;
-  border: 0;
-  outline: 0;
-  font: inherit;
-}
-.user-cleanup label span {
-  padding-right: 10px;
-  color: #777;
-  font-size: 12px;
-  white-space: nowrap;
-}
-.user-cleanup button {
-  border: 1px solid var(--admin-line);
-  background: #fff;
-  font-size: 12px;
-}
-.user-cleanup button.danger {
-  background: #111;
-  color: #fff;
-}
 .user-table {
   overflow-x: auto;
   border: 1px solid var(--admin-line);
@@ -931,15 +794,6 @@
 .user-identity small {
   margin-top: 3px;
   color: #888;
-}
-.admin-account-layout {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.75fr) minmax(360px, 1.25fr);
-  gap: 16px;
-  align-items: start;
-}
-.admin-account-layout h3 {
-  margin: 0;
 }
 .admin-account-list {
   overflow: hidden;
@@ -983,16 +837,6 @@
   .admin-modal h2 {
     font-size: 23px;
   }
-  .user-cleanup {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .user-cleanup > div {
-    margin-right: 0;
-  }
-  .admin-account-layout {
-    grid-template-columns: 1fr;
-  }
   .lm-provider-table-head {
     display: none;
   }
@@ -1030,7 +874,6 @@
     flex-direction: column;
     gap: 4px;
   }
-  .lm-provider-intro { grid-template-columns: 1fr; }
   .lm-provider-form-header { align-items: flex-start; }
   .lm-provider-types {
     justify-self: stretch;

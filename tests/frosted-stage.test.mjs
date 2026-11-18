@@ -13,20 +13,18 @@ const built = readFileSync(new URL(entryCss, assets), 'utf8');
 const rules = [...built.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
   .map(([, selector, body]) => ({ selector, body }));
 
-test('production veil retains BOTH standard and WebKit backdrop filters', () => {
-  const veil = rules.find(({ selector, body }) =>
-    selector.includes('.luri-music-clone .music-page:before') &&
-    selector.includes('.docs-page:before') &&
-    selector.includes('.admin-page:before') &&
-    selector.includes('.admin-login:before') &&
-    body.includes('--zy-shared-glass-tint'));
-  assert.ok(veil, 'All product surfaces must share the frosted veil');
+test('every product surface shares one transparent, unblurred page layer', () => {
+  const layer = rules.find(({ selector }) => ['.luri-music-clone .music-page:before', '.docs-page:before', '.admin-page:before', '.admin-login:before', '.ui-loading:before']
+    .every((part) => selector.includes(part)));
+  assert.ok(layer, 'All product surfaces must share the same page layer');
+  // The former page-wide blur made every route soft and expensive.
   for (const property of ['backdrop-filter', '-webkit-backdrop-filter']) {
-    assert.ok(veil.body.includes(`${property}:blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness))!important`));
+    assert.match(layer.body, new RegExp(`(?:^|;)${property}:none!important`));
   }
-  assert.match(veil.body, /position:fixed!important/);
-  assert.match(veil.body, /inset:0!important/);
-  assert.match(veil.body, /pointer-events:none/);
+  assert.match(layer.body, /background:(?:transparent|#0000|0 0)!important/);
+  assert.match(layer.body, /position:fixed!important/);
+  assert.match(layer.body, /inset:0!important/);
+  assert.match(layer.body, /pointer-events:none/);
 });
 
 test('light and dark share exactly the requested frosting parameters', () => {
@@ -67,7 +65,7 @@ test('every route inherits the same global default canvas in both themes', () =>
   for (const page of ['html', 'body', '.luri-music-clone', '.docs-page', '.admin-page', '.admin-login', '.ui-loading']) {
     assert.ok(rules.some(({ selector, body }) => selector.split(',').includes(page) && body.includes('background:var(--zy-shared-stage-background)!important')), page);
   }
-  assert.ok(rules.some(({ selector, body }) => selector.includes('.ui-loading:before') && body.includes('--zy-shared-glass-tint')), 'Loading must not flash an unrelated background');
+  assert.ok(rules.some(({ selector, body }) => selector.includes('.ui-loading:before') && /background:(?:transparent|#0000|0 0)!important/.test(body)), 'Loading must not flash an unrelated background');
 });
 
 test('login has no theme switch, while the authenticated admin header retains one', () => {
@@ -198,13 +196,15 @@ test('active lyrics and filled favourites use the same vivid red in both themes'
   const [red, green] = rgb(light['--zy-active-red']);
   const [oldRed, oldGreen] = rgb(light['--zy-reading-accent']);
   assert.ok(red - green > (oldRed - oldGreen) * 1.2);
-  for (const target of ['.lyrics-body p.active', '.like-button.liked']) {
-    assert.ok(rules.some(({ selector, body }) => selector.split(',').includes(`.luri-music-clone ${target}`) && body.includes('color:var(--zy-active-red)!important')), target);
-  }
   assert.equal((source.match(/--zy-active-red\s*:/g) || []).length, 1, 'No light-theme override may darken the shared red');
-  assert.ok(rules.some(({ selector, body }) => selector.split(',').includes('html[data-theme=light] .like-button:not(.liked)') && body.includes('color:var(--zy-reading-accent)!important')), 'Unfilled favourites retain their existing colour');
-  const music = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
-  assert.match(music, /\.like-button\.liked \.music-icon\s*\{[^}]*fill: currentColor;/, 'Filled hearts inherit the selected colour');
+  // The full-screen player owns lyrics and the favourite action.
+  const player = readFileSync(new URL('../src/styles/player.css', import.meta.url), 'utf8');
+  assert.match(player, /\.music-app-now \{[^}]*--now-lyric-active: var\(--zy-active-red\);/);
+  assert.match(player, /\.music-app-now \{[^}]*--now-liked: var\(--zy-active-red\);/);
+  assert.equal((player.match(/--now-(?:lyric-active|liked)\s*:/g) || []).length, 2, 'No theme or style may override the shared red');
+  assert.match(player, /\.music-app-now \.lyrics-body p\.active \{[^}]*color: var\(--now-lyric-active\);/);
+  assert.match(player, /\.music-app-now__actions button\.liked \{ color: var\(--now-liked\); \}/);
+  assert.match(player, /\.music-app-now__actions button\.liked \.music-icon \{ fill: currentColor; \}/, 'Filled hearts inherit the selected colour');
 });
 
 for (const theme of ['dark', 'light']) {

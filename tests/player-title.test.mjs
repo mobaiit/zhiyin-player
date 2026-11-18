@@ -59,15 +59,16 @@ test('title scroll measures overflow, responds to resize/fonts and cleans up on 
 });
 
 test('title motion is mobile-only, pauses at both ends and respects reduced motion', () => {
-  const css = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../src/styles/player.css', import.meta.url), 'utf8');
+  const phone = css.slice(css.indexOf('/* Mini player above the phone navigation. */'), css.indexOf('/* ===== Full-screen player ====='));
   assert.match(css, /0%, 20% \{ transform: translateX\(0\); \}/);
   assert.match(css, /80%, 100% \{ transform: translateX\(var\(--player-title-offset\)\); \}/);
-  assert.match(css, /@media \(max-width: 760px\) and \(prefers-reduced-motion: reduce\)[\s\S]*?animation: none;/);
-  assert.match(css, /\.music-player__title\[data-overflow="true"\]\s*\{\s*text-overflow: clip;/);
-  assert.match(css, /@media \(max-width: 760px\) and \(prefers-reduced-motion: reduce\)[\s\S]*?text-overflow: ellipsis;/);
-  assert.match(css, /@media \(max-width: 760px\) and \(hover: hover\)[\s\S]*?animation-play-state: paused;/);
+  assert.match(phone, /@media \(max-width: 700px\) \{[\s\S]*\.music-player__title\[data-overflow="true"\] \.music-player__title-text \{\s*animation: music-player-title-pan/, 'Only phones animate titles');
+  assert.match(phone, /\.music-player__title\[data-overflow="true"\] \{ text-overflow: clip; \}/);
+  assert.match(phone, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?animation: none;/);
+  assert.match(phone, /@media \(max-width: 700px\) and \(hover: hover\) \{[\s\S]*?animation-play-state: paused;/);
   assert.doesNotMatch(css, /\.music-player:focus-within \.music-player__title-text/);
-  assert.match(css, /\.music-player__title \.music-player__title-text\s*\{[^}]*display: inline-block;[^}]*width: max-content;[^}]*max-width: none;/);
+  assert.match(phone, /\.music-player__title \.music-player__title-text \{[^}]*display: inline-block;[^}]*width: max-content;[^}]*max-width: none;/);
   const stateRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
     .filter(([, selector]) => selector.includes('.music-player__title[data-overflow="true"] .music-player__title-text'));
   for (const [, , body] of stateRules) assert.doesNotMatch(body, /(?:^|;)\s*(?:display|width|max-width):/, 'Neither animated nor reduced-motion state may change measured geometry');
@@ -75,7 +76,7 @@ test('title motion is mobile-only, pauses at both ends and respects reduced moti
   const built = readdirSync(assets).filter((name) => name.endsWith('.css'))
     .map((name) => readFileSync(new URL(name, assets), 'utf8')).join('');
   const naturalWidthRule = [...built.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-    .find(([, selector, body]) => selector === '.music-player__title .music-player__title-text' && body.includes('width:max-content'));
+    .find(([, selector, body]) => selector === '.music-app-player .music-player__title .music-player__title-text' && body.includes('width:max-content'));
   assert.ok(naturalWidthRule, 'Production CSS must preserve natural width before AND during animation');
   assert.match(naturalWidthRule[2], /max-width:none/);
 });

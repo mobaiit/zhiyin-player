@@ -302,7 +302,4 @@
   .filters button {
     margin-left: 0;
   }
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
 }

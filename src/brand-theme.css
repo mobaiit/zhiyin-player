@@ -1,20 +1,3 @@
-:root {
-  color-scheme: light;
-}
-
-body {
-  background:
-    radial-gradient(circle at 8% 8%, rgba(251, 146, 60, 0.15), transparent 26rem),
-    radial-gradient(circle at 92% 15%, rgba(124, 58, 237, 0.13), transparent 30rem),
-    #fff8f1;
-  background-attachment: fixed;
-}
-
-::selection {
-  background: #7c3aed;
-  color: #fff;
-}
-
 .theme-toggle {
   display: inline-flex;
   align-items: center;
@@ -23,10 +6,7 @@ body {
   min-width: 38px;
   min-height: 38px;
   padding: 0;
-  border: 0;
   border-radius: 10px;
-  background: var(--zy-surface-raised);
-  color: var(--zy-text-secondary);
   font: 650 12px/1 var(--font-ui);
   cursor: pointer;
   box-shadow: var(--shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.2));
@@ -49,7 +29,6 @@ body {
 }
 
 html[data-theme="light"] {
-  color-scheme: light;
   --color-text: #18181b;
   --color-text-muted: #24272d;
   --zy-bg: #f1f2f4;
@@ -74,38 +53,15 @@ html[data-theme="light"] {
   --zy-player-glass-shadow: 0 14px 40px rgba(34, 38, 45, 0.1);
 }
 
-html[data-theme="light"] .music-shell {
-  background: transparent !important;
-}
-
 html[data-theme="light"] .music-search-history {
   background: rgba(250, 251, 252, 0.82) !important;
 }
 
-html[data-theme="light"] :is(.music-results, .music-lyrics) {
-  background: transparent !important;
-}
-
-html[data-theme="light"] .music-search:focus-within {
-  background: transparent !important;
-}
-
 html[data-theme="light"] .luri-music-clone {
   --lm-text-danger: #9f2229;
-}
-
-html[data-theme="light"] :is(.music-nav.active, .music-chart-switch button.active, .music-mobile-tabs button.active) {
-  color: #7f1d23 !important;
-}
-
-html[data-theme="light"] .music-row.current .track-action,
-html[data-theme="light"] .like-button:not(.liked) {
-  color: var(--zy-reading-accent) !important;
-}
-
-.luri-music-clone .lyrics-body p.active,
-.luri-music-clone .like-button.liked {
-  color: var(--zy-active-red) !important;
+  --zy-interface-surface: var(--zy-shared-interface-surface);
+  --zy-interface-border: rgba(34, 38, 45, 0.09);
+  --zy-interface-shadow: 0 16px 42px rgba(34, 38, 45, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 html[data-theme="light"] .admin-page aside .active {
@@ -116,87 +72,19 @@ html[data-theme="light"] .lm-modal {
   background: rgba(40, 28, 28, 0.38) !important;
 }
 
-
 .admin-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
   margin-left: auto;
 }
 
-.luri-music-clone {
-  --lm-text-primary: #281344;
-  --lm-text-secondary: #4c3761;
-  --lm-text-muted: #6f607d;
-  --lm-text-accent: #6d28d9;
-  --lm-text-danger: #b42318;
-  background: transparent;
-}
-
-.lm-site-bar {
-  width: min(100% - 32px, 1440px);
-  margin-top: 8px;
-  padding-inline: 14px;
-  border: 1px solid rgba(124, 58, 237, 0.16);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 12px 36px rgba(82, 42, 124, 0.08);
-  backdrop-filter: blur(18px);
-}
-
-.lm-site-bar > strong {
-  color: #6d28d9;
-  font-family: var(--font-ui);
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-
-.lm-docs-button,
-.lm-announcement-button,
-.lm-account-trigger {
-  border-color: #dfcff1 !important;
-  background: #fff !important;
-  color: #3e2459 !important;
-}
-
-.lm-docs-button:hover,
-.lm-announcement-button:hover,
-.lm-account-trigger:hover {
-  border-color: #a78bfa !important;
-  background: #f7f2ff !important;
-}
-
-.music-page {
-  background:
-    linear-gradient(145deg, rgba(255, 245, 235, 0.72), rgba(244, 239, 255, 0.76)),
-    transparent;
-}
-
-.music-sidebar,
-.music-results,
-.music-lyrics,
-.music-player,
-.music-search,
 .music-search-history,
-.lm-account-menu,
 .lm-modal > div {
   border-color: rgba(124, 58, 237, 0.16) !important;
   background: rgba(255, 255, 255, 0.9) !important;
   box-shadow: 0 14px 42px rgba(78, 44, 107, 0.09) !important;
 }
 
-.music-brand,
-.music-kicker,
-.music-header h1,
-.lyrics-track h2 {
-  color: #5b21b6 !important;
-}
-
-.music-nav button.active,
-.music-chart-switch button.active,
-.music-mobile-tabs button.active,
-.music-player .play-button,
-.lm-primary,
 .admin-page .primary,
 .admin-login button {
   border-color: #7c3aed !important;
@@ -205,63 +93,9 @@ html[data-theme="light"] .lm-modal {
   box-shadow: 0 10px 24px rgba(124, 58, 237, 0.22) !important;
 }
 
-.music-nav button:hover,
-.music-row:hover,
-.music-chart-switch button:hover,
-.lm-account-menu button:hover {
-  background: #f5efff !important;
-}
-
-.music-row.current {
-  background: linear-gradient(90deg, #f1e9ff, #fff3e8) !important;
-}
-
-.music-row.current::before,
-.like-button.liked,
-.music-search-status strong {
-  color: #ea580c !important;
-}
-
-.music-player {
-  border-top: 1px solid rgba(124, 58, 237, 0.2) !important;
-  background: rgba(255, 250, 246, 0.94) !important;
-  backdrop-filter: blur(20px);
-}
-
-.music-player .music-controls .music-icon-button,
-.music-player .music-controls .play-button {
-  min-width: 44px !important;
-  width: 44px !important;
-  height: 44px !important;
-  border-color: #decef0 !important;
-  border-radius: 12px !important;
-  background: #fff !important;
-  color: #5b21b6 !important;
-}
-
-.music-player .music-controls .play-button {
-  background: linear-gradient(135deg, #7c3aed, #9333ea) !important;
-  color: #fff !important;
-}
-
-.music-player__progress input[type="range"] {
-  background: linear-gradient(to right, #ea580c 0 var(--music-progress), #e5d9ef var(--music-progress) 100%) !important;
-}
-
 .music-quality {
   border-color: #f5a35c !important;
   background: #fff2e4 !important;
-  color: #9a3412 !important;
-}
-
-.admin-page,
-.admin-login {
-  --admin-black: #281344;
-  --admin-muted: #6f607d;
-  --admin-line: #e5d8f2;
-  --admin-soft: #f6f0ff;
-  background: #fbf7ff !important;
-  color: #281344 !important;
 }
 
 .admin-page > aside,
@@ -270,7 +104,6 @@ html[data-theme="light"] .lm-modal {
 .admin-form,
 .admin-account-list,
 .user-table,
-.smtp-test-card,
 .admin-login form {
   border-color: #e5d8f2 !important;
   background: #fff !important;
@@ -281,11 +114,6 @@ html[data-theme="light"] .lm-modal {
   color: #6d28d9 !important;
 }
 
-.admin-page aside .active {
-  background: #7c3aed !important;
-  color: #fff !important;
-}
-
 .admin-page aside button:hover,
 .admin-current-account .admin-account-menu button:hover {
   background: #f3edff !important;
@@ -294,7 +122,6 @@ html[data-theme="light"] .lm-modal {
 
 .smtp-config-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   max-width: 860px;
 }
@@ -317,50 +144,10 @@ html[data-theme="light"] .lm-modal {
   height: 18px;
 }
 
-.smtp-test-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 340px) auto;
-  align-items: end;
-  gap: 16px;
-  max-width: 860px;
-  margin-top: 20px;
-  padding: 22px;
-  border: 1px solid;
-  border-radius: 16px;
-}
-
-.smtp-test-card p {
-  margin-top: 4px;
-  font-size: 13px;
-}
-
-.smtp-test-card button {
-  min-height: 44px;
-  padding-inline: 18px;
-  background: #fff3e8 !important;
-  color: #9a3412 !important;
-}
-
 @media (max-width: 760px) {
-  .lm-site-bar {
-    width: calc(100% - 20px);
-    margin-top: 5px;
-  }
 
-  .music-player .music-controls .music-icon-button,
-  .music-player .music-controls .play-button {
-    min-width: 40px !important;
-    width: 40px !important;
-    height: 40px !important;
-  }
-
-  .smtp-config-form,
-  .smtp-test-card {
+  .smtp-config-form {
     grid-template-columns: 1fr;
-  }
-
-  .smtp-test-card {
-    align-items: stretch;
   }
 }
 
@@ -389,6 +176,14 @@ html[data-theme="light"] .lm-modal {
   --zy-player-glass: rgba(35, 36, 42, 0.24);
   --zy-control-glass: rgba(53, 54, 63, 0.52);
   --zy-player-glass-shadow: 0 18px 52px rgba(5, 5, 8, 0.3);
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-sm: var(--zy-shadow-sm);
+  --shadow-lg: var(--zy-shadow-lg);
+  --transition: 160ms ease;
 }
 
 html {
@@ -415,71 +210,6 @@ body {
   color: #fff;
 }
 
-.luri-music-clone {
-  --lm-text-primary: var(--zy-text);
-  --lm-text-secondary: var(--zy-text-secondary);
-  --lm-text-muted: var(--zy-muted);
-  --lm-text-accent: var(--zy-red-hover);
-  --lm-text-danger: #ff7377;
-  background: transparent;
-}
-
-.lm-site-bar {
-  border-color: transparent !important;
-  background: rgba(35, 36, 42, 0.86) !important;
-  box-shadow: var(--zy-shadow-sm) !important;
-  backdrop-filter: blur(18px) saturate(1.08);
-}
-
-.lm-site-bar > strong {
-  color: var(--zy-red) !important;
-}
-
-.lm-brand {
-  display: flex !important;
-  align-items: center;
-  gap: 9px;
-}
-
-.lm-brand-mark {
-  box-sizing: border-box;
-  width: 28px;
-  height: 38px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.24));
-}
-
-.lm-docs-button,
-.lm-announcement-button,
-.lm-account-trigger {
-  border-color: transparent !important;
-  background: var(--zy-surface) !important;
-  color: var(--zy-text-secondary) !important;
-}
-
-.lm-docs-button:hover,
-.lm-announcement-button:hover,
-.lm-account-trigger:hover,
-.lm-account-trigger[aria-expanded="true"] {
-  border-color: rgba(229, 72, 77, 0.62) !important;
-  background: var(--zy-red-soft) !important;
-  color: var(--zy-text) !important;
-}
-
-.lm-account-loading {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  cursor: wait !important;
-  opacity: 0.78 !important;
-}
-
-.lm-account-loading .ui-spinner {
-  width: 14px;
-  height: 14px;
-}
-
-.lm-account-menu,
 .lm-modal > div,
 .lm-announcement article {
   border-color: var(--zy-border) !important;
@@ -488,13 +218,10 @@ body {
   box-shadow: var(--zy-shadow-lg) !important;
 }
 
-.lm-account-menu header,
-.lm-account-menu dl,
 .lm-announcement-actions {
   border-color: var(--zy-border) !important;
 }
 
-.lm-account-menu button,
 .lm-modal input,
 .lm-modal select,
 .lm-modal textarea {
@@ -503,14 +230,12 @@ body {
   color: var(--zy-text) !important;
 }
 
-.lm-account-menu button:hover,
 .lm-modal .link:hover {
   background: var(--zy-red-soft) !important;
   color: var(--zy-text) !important;
 }
 
 .lm-modal .primary,
-.lm-primary,
 .lm-announcement-actions button {
   border-color: var(--zy-red-action) !important;
   background: var(--zy-red-action) !important;
@@ -530,21 +255,6 @@ body {
   background: transparent !important;
 }
 
-
-
-
-
-.music-shell {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.music-sidebar,
-.music-results,
-.music-lyrics,
-.music-player,
-.music-search,
 .music-search-history {
   border-color: transparent !important;
   background: rgba(42, 43, 50, 0.78) !important;
@@ -552,175 +262,28 @@ body {
   box-shadow: var(--zy-shadow-sm) !important;
 }
 
-.music-brand,
-.music-kicker,
-.music-header h1,
-.lyrics-track h2 {
-  color: var(--zy-text) !important;
-}
-
-.music-brand,
-.music-kicker {
-  color: var(--zy-red) !important;
-}
-
-.music-search:focus-within {
-  border-color: rgba(229, 72, 77, 0.7) !important;
-  background: rgba(42, 43, 50, 0.92) !important;
-  box-shadow: 0 0 0 4px rgba(229, 72, 77, 0.14) !important;
-}
-
-.music-search input,
-.music-search button,
-.music-random-button {
-  color: var(--zy-text) !important;
-}
-
-.music-search input::placeholder {
-  color: var(--zy-muted) !important;
-}
-
-.music-search-history__head,
-.music-list-head,
-.lyrics-track {
+.music-search-history__head {
   border-color: var(--zy-border) !important;
 }
 
 .music-search-history__item:hover,
-.music-search-history__item.active,
-.music-nav:hover,
-.music-chart-switch button:hover,
-.music-row:hover {
+.music-search-history__item.active {
   border-color: rgba(229, 72, 77, 0.2) !important;
   background: var(--zy-red-soft) !important;
   color: var(--zy-text) !important;
 }
 
-.music-nav {
-  color: var(--zy-text) !important;
-}
-
-.music-nav.active,
-.music-chart-switch button.active,
-.music-mobile-tabs button.active {
-  border-color: rgba(229, 72, 77, 0.48) !important;
-  background: linear-gradient(135deg, rgba(229, 72, 77, 0.22), rgba(97, 18, 24, 0.14)) !important;
-  color: var(--zy-red-hover) !important;
-  box-shadow: inset 3px 0 0 var(--zy-red) !important;
-}
-
-.music-row {
-  color: var(--zy-text) !important;
-}
-
-.music-row.current {
-  background: var(--zy-row-selected-surface) !important;
-  box-shadow: inset 3px 0 0 var(--zy-red) !important;
-}
-
-.track-index,
-.track-artist,
-.track-action,
-.music-search-status,
-.music-player__time,
-.music-player small,
-.lyrics-track span,
-.music-global-disclaimer {
-  color: var(--zy-muted) !important;
-}
-
-.lyrics-body p {
-  color: var(--zy-text) !important;
-}
-
-.lyrics-body p.active,
-.lyrics-body p:hover,
-.music-row.current .track-action,
-.like-button,
-.like-button.liked {
-  color: var(--zy-reading-accent) !important;
-}
-
-.music-player {
-  border-color: rgba(255, 255, 255, 0.06) !important;
-  background: rgba(35, 36, 42, 0.34) !important;
-  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(1.08);
-  backdrop-filter: blur(12px) saturate(1.08);
-}
-
-.music-player .music-controls .music-icon-button,
-.music-player .music-controls .play-button,
-.music-download-button,
-.like-button,
-.music-player__lyrics-button {
-  border-color: transparent !important;
-  background: var(--zy-control-glass) !important;
-  color: var(--zy-text-secondary) !important;
-}
-
-.music-player .music-controls .music-icon-button:hover,
-.music-download-button:hover,
-.like-button:hover,
-.music-player__lyrics-button:hover {
-  border-color: rgba(229, 72, 77, 0.55) !important;
-  background: var(--zy-red-soft) !important;
-  color: #fff !important;
-}
-
-.music-player .music-controls .play-button {
-  border-color: var(--zy-red-action) !important;
-  background: var(--zy-red-action) !important;
-  color: #fff !important;
-  box-shadow: 0 8px 20px rgba(199, 53, 59, 0.32) !important;
-}
-
-.music-player__progress input[type="range"] {
-  background: linear-gradient(to right, var(--zy-red) 0 var(--music-progress), var(--zy-border) var(--music-progress) 100%) !important;
-  accent-color: var(--zy-red);
-}
-
-.music-player__progress input[type="range"]::-webkit-slider-thumb,
-.music-volume input[type="range"]::-webkit-slider-thumb {
-  background: var(--zy-red) !important;
-}
-
 .music-quality {
   border-color: rgba(229, 72, 77, 0.45) !important;
   background: rgba(229, 72, 77, 0.12) !important;
-  color: #ff8d91 !important;
-}
-
-.music-list::-webkit-scrollbar-thumb,
-.lyrics-body::-webkit-scrollbar-thumb {
-  background: var(--zy-border-strong) !important;
-}
-
-.music-empty strong {
-  color: var(--zy-text) !important;
-}
-
-.music-empty span {
-  color: var(--zy-muted) !important;
 }
 
 .music-page :where(button, a, input):focus-visible,
-.music-player :where(button, a, input):focus-visible,
-.lm-site-bar :where(button, a):focus-visible,
 .lm-modal :where(button, a, input, select, textarea):focus-visible {
   outline-color: var(--zy-focus) !important;
 }
 
 /* Admin surfaces share the same semantic tokens without reducing information density. */
-.admin-page,
-.admin-login {
-  --admin-black: var(--zy-text);
-  --admin-muted: var(--zy-muted);
-  --admin-line: var(--zy-border);
-  --admin-soft: var(--zy-bg-subtle);
-  background: var(--zy-bg) !important;
-  color: var(--zy-text) !important;
-}
 
 .admin-page > aside,
 .admin-page aside,
@@ -730,9 +293,7 @@ body {
 .admin-account-list,
 .admin-account-menu,
 .user-table,
-.smtp-test-card,
 .admin-login form,
-.config-status,
 .admin-empty,
 .admin-inline-loading {
   border-color: var(--zy-border) !important;
@@ -758,8 +319,7 @@ body {
 .admin-content > header,
 .admin-empty,
 .admin-inline-loading,
-.field-help,
-.smtp-test-card p {
+.field-help {
   color: var(--zy-muted) !important;
 }
 
@@ -790,8 +350,7 @@ body {
 .admin-current-account .admin-account-trigger,
 .admin-current-account .admin-account-menu button,
 .pager button,
-.row-actions button,
-.smtp-test-card button {
+.row-actions button {
   border-color: var(--zy-border) !important;
   background: transparent !important;
   color: var(--zy-text-secondary) !important;
@@ -814,21 +373,15 @@ body {
 
 .admin-page .primary,
 .admin-login button,
-.filters button,
-.config-status.ready,
-.admin-switch.active {
+.filters button {
   border-color: var(--zy-red-action) !important;
   background: var(--zy-red-action) !important;
   color: #fff !important;
   box-shadow: 0 8px 20px rgba(199, 53, 59, 0.24) !important;
 }
 
-.tag,
-.config-status,
-.admin-switch {
+.tag {
   border-color: var(--zy-border) !important;
-  background: var(--zy-surface-raised) !important;
-  color: var(--zy-text-secondary) !important;
 }
 
 .user-table > div,
@@ -849,8 +402,6 @@ body {
 .filters,
 .admin-account-list,
 .user-table,
-.smtp-test-card,
-.config-status,
 .admin-empty,
 .admin-inline-loading {
   border-color: transparent !important;
@@ -858,22 +409,12 @@ body {
 }
 
 /* Overlay the music navigation on the same artwork canvas as the bottom player. */
-.luri-music-clone.is-standalone > .lm-site-bar {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  margin-top: 0;
-  transform: translateX(-50%);
-}
 
 .luri-music-clone.is-standalone > .music-page {
   padding-top: 64px !important;
 }
 
 @media (max-width: 760px) {
-  .luri-music-clone.is-standalone > .lm-site-bar {
-    top: 4px;
-  }
 
   .luri-music-clone.is-standalone > .music-page {
     padding-top: 54px !important;
@@ -885,96 +426,6 @@ body {
 }
 
 /* Compact the library transition from filters to rows. */
-.music-list-head:not(.music-list-head--charts) {
-  height: 7px !important;
-  min-height: 7px !important;
-  padding: 0 !important;
-}
-
-.music-row {
-  position: relative;
-}
-
-.music-row.current {
-  box-shadow: none !important;
-}
-
-.music-row.current::before {
-  position: absolute;
-  top: 25%;
-  bottom: auto;
-  left: 0;
-  width: 3px;
-  height: 50%;
-  border-radius: 999px;
-  background: var(--zy-red);
-  content: "";
-}
-
-@media (min-width: 761px) {
-  /* Download, quality and favourite actions share one compact badge language. */
-  .lyrics-track__actions .music-download-button {
-    position: relative;
-    isolation: isolate;
-    width: 2rem;
-    height: 2rem;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: var(--zy-red-hover) !important;
-  }
-
-  .lyrics-track__actions .music-download-button::after {
-    position: absolute;
-    z-index: 0;
-    top: 50%;
-    left: 50%;
-    width: 1.55rem;
-    height: 1.05rem;
-    box-sizing: border-box;
-    border: 1px solid rgba(229, 72, 77, 0.45);
-    border-radius: 0.2rem;
-    background: rgba(229, 72, 77, 0.12);
-    content: "";
-    transform: translate(-50%, -50%);
-    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
-  }
-
-  .lyrics-track__actions .music-download-button .music-icon {
-    position: relative;
-    z-index: 1;
-    width: 0.7rem;
-    height: 0.7rem;
-  }
-
-  .lyrics-track__actions .music-download-button:hover::after,
-  .lyrics-track__actions .music-download-button:focus-visible::after {
-    border-color: rgba(229, 72, 77, 0.72);
-    background: rgba(229, 72, 77, 0.2);
-  }
-}
-
-@media (max-width: 760px) {
-  .music-page.mobile-view-playlist .music-header {
-    background: transparent !important;
-    box-shadow: none !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-
-  .music-page.mobile-view-playlist .music-sidebar {
-    padding-bottom: 1px !important;
-  }
-
-  .music-list-head:not(.music-list-head--charts) {
-    height: 2px !important;
-    min-height: 2px !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -986,16 +437,6 @@ body {
 }
 
 /* Refined surface, spacing and radius system for the player experience. */
-:root {
-  --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
-  --shadow-sm: var(--zy-shadow-sm);
-  --shadow-lg: var(--zy-shadow-lg);
-  --transition: 160ms ease;
-}
 
 .music-visually-hidden {
   position: absolute !important;
@@ -1007,74 +448,6 @@ body {
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
-}
-
-.lm-site-bar {
-  min-height: 48px;
-  margin-top: 8px;
-  padding: 5px 8px 5px 14px;
-  border-radius: var(--radius-md);
-}
-
-.lm-announcement-button,
-.lm-docs-button,
-.lm-account-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  text-align: center;
-  line-height: 1.2;
-  border-radius: 10px !important;
-  box-shadow: var(--shadow-xs);
-  transition: color var(--transition), border-color var(--transition), background var(--transition), box-shadow var(--transition), transform var(--transition);
-}
-
-.music-page {
-  padding-inline: clamp(16px, 3vw, 32px) !important;
-}
-
-.music-shell {
-  box-sizing: border-box;
-  width: min(100%, 1040px);
-  max-width: 1040px;
-  padding: 24px;
-  border: 1px solid transparent !important;
-  border-radius: var(--radius-lg);
-  background: transparent !important;
-  box-shadow: none;
-  backdrop-filter: none;
-}
-
-.music-search {
-  box-sizing: border-box;
-  min-height: 46px;
-  padding: 5px 6px 5px 16px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: var(--radius-md) !important;
-  background: rgba(35, 36, 42, 0.34) !important;
-  box-shadow: var(--shadow-xs) !important;
-  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
-}
-
-.music-search:focus-within {
-  border-color: rgba(229, 72, 77, 0.7) !important;
-  background: rgba(35, 36, 42, 0.5) !important;
-  box-shadow: 0 0 0 4px rgba(229, 72, 77, 0.14) !important;
-}
-
-.music-search input {
-  min-width: 0;
-  padding-block: 6px;
-  font-size: 0.875rem !important;
-}
-
-.music-search .music-icon-button,
-.music-search-clear,
-.music-random-button {
-  min-width: 36px;
-  min-height: 36px;
-  border-radius: 10px !important;
 }
 
 .music-search-history {
@@ -1094,221 +467,17 @@ body {
   border-radius: var(--radius-xs) !important;
 }
 
-.music-nav {
-  min-height: 40px;
-  padding: 8px 12px !important;
-  border: 1px solid transparent !important;
-  border-radius: 10px !important;
-  font-size: 0.75rem !important;
-  transition: color var(--transition), border-color var(--transition), background var(--transition), transform var(--transition);
-}
-
-.music-nav:hover {
-  border-color: rgba(229, 72, 77, 0.2) !important;
-  background: var(--zy-red-soft) !important;
-}
-
-.music-nav.active {
-  border-color: rgba(229, 72, 77, 0.48) !important;
-  background: linear-gradient(135deg, rgba(229, 72, 77, 0.22), rgba(97, 18, 24, 0.14)) !important;
-  color: #fff !important;
-  font-weight: 650;
-}
-
-.music-results,
-.music-lyrics {
-  border: 1px solid transparent !important;
-  border-radius: var(--radius-md) !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
 /* Keep every structural layer of the library and lyric views transparent so
    the active artwork backdrop remains visible across desktop and mobile. */
-.music-results > .music-list,
-.music-list-head,
-.music-list-head small,
-.music-lyrics .lyrics-track,
-.music-lyrics .lyrics-body {
-  background: transparent !important;
-}
-
-.music-sidebar {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.music-results {
-  padding: 8px !important;
-}
-
-.music-list-head {
-  min-height: 36px !important;
-  padding: 8px 10px !important;
-  border-bottom-color: var(--zy-border) !important;
-  color: var(--zy-text-secondary);
-}
-
-.music-row {
-  min-height: 60px;
-  margin: 2px 0;
-  padding: 10px 12px !important;
-  border: 0 !important;
-  border-radius: 12px !important;
-  transition: color var(--transition), background var(--transition), box-shadow var(--transition), transform var(--transition);
-}
-
-.music-row:hover {
-  background: var(--zy-red-soft) !important;
-  box-shadow: inset 0 0 0 1px rgba(229, 72, 77, 0.12);
-}
-
-.music-row:active {
-  transform: scale(0.995);
-}
-
-.music-row.current {
-  box-shadow: inset 3px 0 0 var(--zy-red);
-}
-
-.music-row .track-action:not(.track-action--error) .music-icon {
-  color: var(--zy-red-hover) !important;
-  filter: drop-shadow(0 0 5px rgba(240, 91, 97, 0.22));
-}
-
-.track-title b {
-  font-weight: 650;
-}
-
-.track-artist {
-  margin-top: 3px;
-  line-height: 1.35;
-}
-
-.music-lyrics {
-  padding: 18px !important;
-}
-
-.lyrics-track {
-  gap: 12px !important;
-  padding-bottom: 16px !important;
-  border-bottom: 1px solid var(--zy-border);
-}
-
-.lyrics-track img,
-.music-player__song img {
-  border-radius: 10px;
-  box-shadow: var(--shadow-xs);
-}
-
-.lyrics-body {
-  margin-top: 8px;
-  padding-inline: 8px !important;
-}
-
-.lyrics-body p {
-  margin-block: 14px !important;
-  line-height: 1.65 !important;
-}
-
-.music-player {
-  right: clamp(10px, 2vw, 24px) !important;
-  bottom: 12px !important;
-  left: clamp(10px, 2vw, 24px) !important;
-  width: auto !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  border-radius: 20px !important;
-  background: rgba(35, 36, 42, 0.34) !important;
-  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.38) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(1.08);
-  backdrop-filter: blur(12px) saturate(1.08);
-  overflow: hidden;
-}
-
-.music-player .music-controls .music-icon-button,
-.music-player .music-controls .play-button,
-.music-download-button,
-.like-button,
-.music-player__lyrics-button {
-  border-color: transparent !important;
-  border-radius: 10px !important;
-  transition: color var(--transition), border-color var(--transition), background var(--transition), box-shadow var(--transition), transform var(--transition);
-}
-
-.music-player .music-controls .play-button {
-  box-shadow: 0 8px 18px rgba(199, 53, 59, 0.32) !important;
-}
-
-@media (min-width: 761px) {
-  .music-content {
-    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr) !important;
-    column-gap: 20px !important;
-  }
-
-  .music-sidebar {
-    margin: 14px 0 !important;
-    transform: none !important;
-  }
-
-  .music-results {
-    margin-top: 2px;
-  }
-
-  .music-lyrics {
-    padding-left: 18px !important;
-  }
-}
 
 @media (max-width: 760px) {
-  .luri-music-clone:has(.music-page.mobile-view-now) > .lm-site-bar {
-    display: none !important;
-  }
 
   .music-page.mobile-view-now {
     padding-top: 4px !important;
   }
 
-  .lm-site-bar {
-    width: calc(100% - 24px);
-    min-height: 44px;
-    margin-top: 4px;
-    padding: 4px 6px 4px 10px;
-    border-radius: 14px;
-  }
-
   .music-page {
     padding-inline: 12px !important;
-  }
-
-  .music-shell {
-    padding: 12px;
-    border-radius: 18px;
-  }
-
-  .music-header {
-    padding-bottom: 6px !important;
-  }
-
-  .music-search {
-    min-height: 44px;
-    border-radius: 14px !important;
-  }
-
-  .music-sidebar {
-    gap: 4px !important;
-    min-height: 30px !important;
-    margin: 0 !important;
-    padding: 0 0 2px !important;
-  }
-
-  .music-nav {
-    min-height: 30px;
-    padding: 2px 7px !important;
-    font-size: 0.68rem !important;
-    line-height: 1.1 !important;
   }
 
   .theme-toggle {
@@ -1317,68 +486,6 @@ body {
     min-height: 34px;
     padding: 0;
   }
-
-  .lm-site-bar {
-    gap: 4px;
-  }
-
-  .lm-announcement-button,
-  .lm-docs-button,
-  .lm-account-trigger {
-    width: 56px;
-    min-width: 56px;
-    max-width: 56px;
-    min-height: 34px;
-    height: 34px;
-    padding-inline: 6px;
-    font-size: 10.5px;
-  }
-
-  .lm-account-loading > span {
-    display: none;
-  }
-
-  .lm-brand {
-    gap: 6px;
-  }
-
-  .lm-brand-mark {
-    width: 24px;
-    height: 32px;
-  }
-
-  .music-results,
-  .music-lyrics {
-    border-radius: 14px !important;
-  }
-
-  .music-results {
-    padding: 2px 6px 6px !important;
-  }
-
-  .music-workspace {
-    margin-top: 0 !important;
-  }
-
-  .music-list-head:not(.music-list-head--charts) {
-    display: none !important;
-  }
-
-  .music-list {
-    margin-top: 0 !important;
-  }
-
-  .music-row {
-    min-height: 58px;
-    padding: 9px 10px !important;
-  }
-
-  .music-player {
-    right: 8px !important;
-    bottom: 8px !important;
-    left: 8px !important;
-    border-radius: 16px !important;
-  }
 }
 
 /* Navigation and primary browsing controls sit directly on the artwork layer. */
@@ -1386,63 +493,6 @@ body {
 .admin-login,
 .docs-page {
   background: transparent !important;
-}
-
-.lm-site-bar {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-.music-search {
-  border: 0 !important;
-  border-bottom: 1px solid var(--zy-border-strong) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.music-search:focus-within {
-  border: 0 !important;
-  border-bottom: 1px solid var(--zy-red) !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.music-nav,
-.music-nav:hover,
-.music-nav.active {
-  border: 0 !important;
-}
-
-.music-nav {
-  display: inline-flex !important;
-  align-items: center;
-  line-height: 1 !important;
-}
-
-.music-nav > span {
-  display: inline-flex;
-  align-items: center;
-}
-
-.music-nav.active {
-  position: relative;
-  box-shadow: none !important;
-}
-
-.music-nav.active::before {
-  position: absolute;
-  top: 25%;
-  bottom: auto;
-  left: 0;
-  width: 3px;
-  height: 50%;
-  border-radius: 999px;
-  background: var(--zy-red);
-  content: "";
 }
 
 .luri-music-clone .music-page {
@@ -1457,62 +507,6 @@ body {
   .luri-music-clone .music-page.mobile-view-now {
     padding-top: 4px !important;
   }
-}
-
-/* The main navigation, search and transport share one glass material. */
-.lm-site-bar,
-.music-player {
-  background: var(--zy-player-glass) !important;
-  box-shadow: var(--zy-player-glass-shadow) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
-  backdrop-filter: blur(12px) saturate(1.08) !important;
-}
-
-.lm-site-bar {
-  border-inline: 0 !important;
-  border-top: 0 !important;
-}
-
-/* Match the favourite control to the compact quality badge without shrinking its hit area. */
-.lyrics-track__actions .like-button {
-  width: 2rem;
-  height: 2rem;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--zy-red-hover) !important;
-}
-
-.lyrics-track__actions .like-button::after {
-  display: none !important;
-  content: none !important;
-}
-
-.lyrics-track__actions .like-button .music-icon {
-  width: 0.7rem;
-  height: 0.7rem;
-  box-sizing: content-box;
-  padding: 0.12rem 0.32rem;
-  border: 1px solid rgba(229, 72, 77, 0.45);
-  border-radius: 0.2rem;
-  background: rgba(229, 72, 77, 0.12);
-  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
-}
-
-.lyrics-track__actions .like-button:hover .music-icon,
-.lyrics-track__actions .like-button:focus-visible .music-icon,
-.lyrics-track__actions .like-button.liked .music-icon {
-  border-color: rgba(229, 72, 77, 0.72);
-  background: rgba(229, 72, 77, 0.2);
-}
-
-.lyrics-track__actions .like-button:focus-visible {
-  outline: none;
-}
-
-.lyrics-track__actions .like-button:focus-visible .music-icon {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--zy-focus) 32%, transparent);
 }
 
 /* Toasts use the same translucent material and colour language as the player. */
@@ -1574,133 +568,16 @@ html[data-theme="light"] .ui-toast--error {
   --ui-accent: #bd343a;
 }
 
-/* Keep navigation and search to one glass layer; child controls must not stack dark cards. */
-.lm-site-bar > .lm-docs-button,
-.lm-site-bar > .lm-announcement-button,
-.lm-site-bar > .theme-toggle,
-.lm-site-bar > .lm-account-wrap > .lm-account-trigger {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-.lm-site-bar > .lm-docs-button:hover,
-.lm-site-bar > .lm-announcement-button:hover,
-.lm-site-bar > .theme-toggle:hover,
-.lm-site-bar > .lm-account-wrap > .lm-account-trigger:hover,
-.lm-site-bar > .lm-account-wrap > .lm-account-trigger[aria-expanded="true"] {
-  background: var(--zy-red-soft) !important;
-  color: var(--zy-text) !important;
-}
-
-.music-search,
-.music-search:focus-within {
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-.music-search input,
-.music-search button,
-.music-search .music-icon-button,
-.music-search .music-search-clear,
-.music-search .music-random-button {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-/* Metadata remains legible over both the light and dark regions of artwork. */
-.lyrics-track > div:not(.lyrics-track__actions) > span {
-  color: var(--zy-text-secondary) !important;
-  opacity: 1;
-  text-shadow: none;
-}
-
-@media (max-width: 760px) {
-  /* Keep the badge layer attached to the mobile favourite control. */
-  .music-page.mobile-view-now .lyrics-track__actions .like-button {
-    position: relative !important;
-  }
-}
-
 /* Light mode keeps the same hierarchy with neutral glass and restrained red accents. */
-html[data-theme="light"] .music-row.current {
-  background: var(--zy-row-selected-surface) !important;
-}
 
-html[data-theme="light"] .music-row:hover {
-  background: rgba(199, 60, 67, 0.08) !important;
-}
-
-html[data-theme="light"] .music-quality,
-html[data-theme="light"] .lyrics-track__actions .like-button .music-icon,
-html[data-theme="light"] .lyrics-track__actions .music-download-button::after {
+html[data-theme="light"] .music-quality {
   border-color: rgba(199, 60, 67, 0.5) !important;
   background: rgba(199, 60, 67, 0.1) !important;
-}
-
-html[data-theme="light"] :is(.music-player .music-controls .music-icon-button, .music-player__lyrics-button) {
-  background: var(--zy-control-glass) !important;
-  color: var(--zy-text-secondary) !important;
-}
-
-html[data-theme="light"] .music-player .music-controls .play-button {
-  background: var(--zy-red-action) !important;
-  color: #fff !important;
-}
-
-/* The mobile lyrics toggle must read as an actual selected control. */
-.music-player__lyrics-button.active,
-.music-player__lyrics-button[aria-pressed="true"],
-.music-player__lyrics-button.active:hover,
-.music-player__lyrics-button[aria-pressed="true"]:hover {
-  border-color: color-mix(in srgb, var(--zy-red-action) 76%, white) !important;
-  background: var(--zy-red-action) !important;
-  color: #fff !important;
-  box-shadow: 0 6px 16px rgba(199, 53, 59, 0.34) !important;
-}
-
-.music-player__lyrics-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--zy-red-action) 72%, white);
-  outline-offset: 2px;
 }
 
 /* Keep library rows compact without making titles and tap targets feel cramped. */
 .music-page {
   padding-inline: clamp(8px, 1.5vw, 16px) !important;
-}
-
-.music-shell {
-  padding-inline: 12px;
-}
-
-.music-row {
-  min-height: 40px !important;
-  margin-block: 2px !important;
-  padding: 5px 1px !important;
-  border-radius: 10px !important;
-}
-
-.music-row .track-artist {
-  margin-top: 0;
-  line-height: 1.15;
-}
-
-/* The library shares the search column and should align to its full width. */
-.music-results {
-  padding-right: 0 !important;
-  padding-left: 0 !important;
-}
-
-html[data-theme="light"] .lyrics-body p:not(.active) {
-  color: var(--zy-text) !important;
-}
-
-html[data-theme="light"] .music-nav:not(.active) {
-  color: var(--zy-text) !important;
 }
 
 /* Quality tiers keep their own semantic colours instead of inheriting red. */
@@ -1756,60 +633,11 @@ html[data-theme="light"] .music-quality {
   color: var(--music-quality-color) !important;
 }
 
-/* Reserve red playback glyphs for the current track. */
-.music-row:not(.current) .track-action:not(.track-action--error) .music-icon {
-  color: var(--zy-text-secondary) !important;
-  filter: none !important;
-}
-
 /* The transport glass follows the same centered width as the top navigation. */
-.music-player {
-  box-sizing: border-box;
-  right: auto !important;
-  left: 50% !important;
-  width: min(calc(100% - 32px), 1440px) !important;
-  transform: translateX(-50%);
-}
-
-@media (min-width: 761px) {
-  .music-player {
-    width: min(calc(100% - 32px), 1040px) !important;
-    grid-template-columns: minmax(0, 1fr) auto !important;
-    padding-inline: 18px !important;
-  }
-
-  .music-player__progress {
-    grid-column: 1 / -1 !important;
-  }
-
-  .music-player__song {
-    display: flex !important;
-    grid-column: 1 !important;
-    grid-row: 2 !important;
-  }
-
-  .music-controls {
-    grid-column: 2 !important;
-    justify-self: end;
-  }
-}
 
 @media (max-width: 760px) {
   .music-page {
     padding-inline: 6px !important;
-  }
-
-  .music-shell {
-    padding-inline: 6px;
-  }
-
-  .music-player {
-    width: calc(100% - 24px) !important;
-  }
-
-  /* Reclaim mobile gutters for the title without resizing any controls. */
-  body:not(.has-global-music-player) .music-player {
-    width: calc(100% - 16px) !important;
   }
 }
 
@@ -1842,7 +670,6 @@ html[data-theme="light"] .music-quality {
 }
 
 .lm-provider-toolbar,
-.lm-provider-intro,
 .lm-provider-form-header,
 .lm-provider-danger-zone,
 .lm-provider-detail > .lm-provider-info dl,
@@ -1853,10 +680,8 @@ html[data-theme="light"] .music-quality {
 }
 
 .lm-provider-list,
-.lm-provider-current,
 .lm-provider-types,
 .lm-provider-detail > .lm-provider-info dl,
-.lm-provider-public-note,
 .lm-quality-options label {
   background: var(--zy-control-glass) !important;
 }
@@ -1877,14 +702,12 @@ html[data-theme="light"] .music-quality {
   background: color-mix(in srgb, var(--zy-control-glass) 82%, var(--zy-red-soft)) !important;
 }
 
-.lm-provider-heading > span,
 .lm-provider-status,
 .lm-provider-form-header > span {
   background: color-mix(in srgb, var(--zy-control-glass) 82%, transparent) !important;
   color: var(--zy-text-secondary) !important;
 }
 
-.lm-provider-heading > span.active,
 .lm-provider-types button.active {
   background: var(--zy-red-action) !important;
   color: var(--zy-text) !important;
@@ -1998,14 +821,14 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 /* Admin console: conventional dashboard structure with the player's visual language. */
 .admin-page,
 .admin-login {
+  --admin-black: var(--zy-text);
+  --admin-muted: var(--zy-muted);
+  --admin-line: var(--zy-border);
+  --admin-soft: var(--zy-bg-subtle);
   --admin-panel: color-mix(in srgb, var(--zy-surface) 88%, transparent);
   --admin-panel-solid: var(--zy-surface);
   --admin-control: color-mix(in srgb, var(--zy-surface-raised) 76%, transparent);
   min-height: 100dvh;
-  background:
-    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--zy-red) 8%, transparent), transparent 28rem),
-    radial-gradient(circle at 94% 12%, color-mix(in srgb, var(--zy-text-secondary) 6%, transparent), transparent 32rem),
-    var(--zy-bg) !important;
   color: var(--zy-text) !important;
 }
 
@@ -2020,7 +843,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 
 .admin-page > aside {
   position: sticky !important;
-  z-index: 220;
   top: 0;
   display: flex !important;
   height: 100dvh !important;
@@ -2028,7 +850,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   border: 0 !important;
   border-right: 1px solid color-mix(in srgb, var(--zy-text) 7%, transparent) !important;
   border-radius: 0 !important;
-  background: var(--admin-panel) !important;
   box-shadow: 16px 0 44px color-mix(in srgb, var(--zy-bg) 36%, transparent) !important;
   -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
   backdrop-filter: blur(18px) saturate(1.08) !important;
@@ -2038,7 +859,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 6px 26px !important;
   color: var(--zy-text) !important;
   letter-spacing: 0 !important;
 }
@@ -2093,11 +913,9 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 .admin-content > header {
   position: sticky;
   z-index: 180;
-  top: 0;
   display: flex !important;
   min-height: 68px;
   padding: 0 !important;
-  border: 0 !important;
   background: color-mix(in srgb, var(--zy-bg) 76%, transparent) !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: blur(16px) saturate(1.06);
@@ -2231,11 +1049,8 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 
 .admin-form,
 .filters,
-.user-cleanup,
 .user-table,
 .admin-account-list,
-.smtp-test-card,
-.config-status,
 .admin-empty,
 .admin-inline-loading {
   border: 1px solid color-mix(in srgb, var(--zy-text) 7%, transparent) !important;
@@ -2326,37 +1141,13 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   margin-left: 0 !important;
 }
 
-.user-cleanup {
-  gap: 12px !important;
-  padding: 15px 16px !important;
-}
-
-.user-cleanup b {
-  color: var(--zy-text);
-}
-
-.user-cleanup small,
-.user-cleanup label span,
 .user-identity small,
 .admin-account-list small {
   color: var(--zy-muted) !important;
 }
 
-.user-cleanup label {
-  min-height: 40px;
-  border-color: transparent !important;
-  border-radius: 10px !important;
-  background: var(--admin-control);
-}
-
-.user-cleanup input {
-  background: transparent !important;
-}
-
-.user-cleanup button,
 .row-actions button,
-.pager button,
-.smtp-test-card button {
+.pager button {
   min-height: 38px;
   border: 0 !important;
   border-radius: 9px !important;
@@ -2364,15 +1155,12 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   color: var(--zy-text-secondary) !important;
 }
 
-.user-cleanup button:hover,
 .row-actions button:hover,
-.pager button:hover,
-.smtp-test-card button:hover {
+.pager button:hover {
   background: var(--zy-control-glass) !important;
   color: var(--zy-text) !important;
 }
 
-.user-cleanup button.danger,
 .row-actions .confirm-delete {
   background: var(--zy-red-action) !important;
   color: #fff !important;
@@ -2464,11 +1252,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   background: var(--admin-control) !important;
 }
 
-.admin-account-layout {
-  grid-template-columns: minmax(290px, 0.8fr) minmax(400px, 1.2fr) !important;
-  gap: 18px !important;
-}
-
 .admin-account-list > div {
   padding: 18px 20px;
   border-color: color-mix(in srgb, var(--zy-text) 7%, transparent) !important;
@@ -2480,31 +1263,12 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   line-height: 1.65;
 }
 
-.email-config-form {
-  max-width: 880px !important;
-}
-
 .smtp-config-form {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .smtp-config-form :is(.config-status, .field-help, .primary, .smtp-checkbox) {
   grid-column: 1 / -1;
-}
-
-.config-status {
-  box-shadow: none !important;
-}
-
-.config-status.ready {
-  border-color: color-mix(in srgb, #58c886 35%, transparent) !important;
-  background: color-mix(in srgb, #58c886 11%, var(--admin-control)) !important;
-  color: var(--zy-text) !important;
-}
-
-.smtp-test-card {
-  max-width: 880px;
-  margin-top: 18px;
 }
 
 .admin-modal {
@@ -2552,7 +1316,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   overflow: hidden;
 }
 
-
 .admin-login form {
   position: relative;
   width: min(420px, 100%) !important;
@@ -2569,7 +1332,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 4px;
 }
 
 .admin-login h1 {
@@ -2579,12 +1341,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 
 .admin-login p {
   color: var(--zy-muted) !important;
-}
-
-@media (max-width: 900px) {
-  .admin-account-layout {
-    grid-template-columns: 1fr !important;
-  }
 }
 
 @media (max-width: 760px) {
@@ -2663,15 +1419,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 
   .admin-filter-actions button {
     flex: 1;
-  }
-
-  .user-cleanup {
-    align-items: stretch !important;
-    flex-direction: column !important;
-  }
-
-  .user-cleanup > div {
-    margin-right: 0 !important;
   }
 
   .user-table {
@@ -3024,17 +1771,6 @@ html[data-theme="light"] .lm-provider-info em.tone-warning {
 }
 
 /* Music visual stack: background -> one full-page glass veil -> transparent UI. */
-.luri-music-clone {
-  --zy-interface-surface: var(--zy-shared-interface-surface);
-  --zy-interface-border: rgba(255, 255, 255, 0.08);
-  --zy-interface-shadow: 0 18px 46px rgba(5, 5, 8, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.035);
-}
-
-html[data-theme="light"] .luri-music-clone {
-  --zy-interface-surface: var(--zy-shared-interface-surface);
-  --zy-interface-border: rgba(34, 38, 45, 0.09);
-  --zy-interface-shadow: 0 16px 42px rgba(34, 38, 45, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
 
 .luri-music-clone .music-page {
   position: relative;
@@ -3056,7 +1792,6 @@ html[data-theme="light"] .luri-music-clone {
   transform: none;
 }
 
-
 .luri-music-clone .music-artwork-backdrop.is-visible {
   opacity: 1;
 }
@@ -3071,41 +1806,6 @@ html[data-theme="light"] .luri-music-clone {
   content: "";
   opacity: 1;
 }
-.luri-music-clone :is(
-  .music-shell,
-  .music-content,
-  .music-header,
-  .music-sidebar,
-  .music-workspace,
-  .music-results,
-  .music-results > .music-list,
-  .music-lyrics,
-  .music-lyrics .lyrics-track,
-  .music-lyrics .lyrics-body,
-  .music-mobile-tabs
-) {
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-.luri-music-clone > .lm-site-bar,
-.luri-music-clone .music-player {
-  border: 1px solid var(--zy-interface-border) !important;
-  background: var(--zy-interface-surface) !important;
-  box-shadow: var(--zy-interface-shadow) !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-.luri-music-clone .music-search,
-.luri-music-clone .music-search:focus-within {
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
 
 .luri-music-clone .music-search-history {
   border: 1px solid var(--zy-interface-border) !important;
@@ -3114,7 +1814,6 @@ html[data-theme="light"] .luri-music-clone {
   -webkit-backdrop-filter: blur(12px) saturate(1.04) !important;
   backdrop-filter: blur(12px) saturate(1.04) !important;
 }
-
 
 html[data-theme="light"] .lm-quality-mark {
   color: #525a66 !important;
@@ -3137,18 +1836,10 @@ html[data-theme="light"] .lm-quality-mark--hires {
 }
 
 /* Selected state is expressed by colour and weight only, never a left rail. */
-.music-row.current,
-.music-nav.active,
 .admin-page aside .active,
 .lm-provider-list article.active,
 .lm-quality-options label.active {
   box-shadow: none !important;
-}
-
-.music-row.current::before,
-.music-nav.active::before {
-  display: none !important;
-  content: none !important;
 }
 
 /* Keep every text-entry control at Safari's 16px focus threshold on phones,
@@ -3168,27 +1859,9 @@ html[data-theme="light"] .lm-quality-mark--hires {
   }
 }
 
-/* Touch browsers can retain :hover while a list is being swiped. */
-@media (hover: none), (pointer: coarse) {
-  .music-row:hover:not(.current),
-  .music-row:active:not(.current) {
-    background: transparent !important;
-    box-shadow: none !important;
-    transform: none !important;
-  }
-
-  .music-row:hover:not(.current) .track-action,
-  .music-row:active:not(.current) .track-action {
-    color: var(--zy-muted) !important;
-    opacity: 0.35;
-  }
-}
-
 /* Admin visual stack: default gradient -> one page-wide glass veil -> UI surfaces. */
 .admin-page,
 .admin-login {
-  --admin-interface-surface: rgba(35, 36, 42, 0.18);
-  --admin-interface-border: rgba(255, 255, 255, 0.08);
   --admin-interface-shadow: 0 18px 46px rgba(5, 5, 8, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.035);
   position: relative;
   isolation: isolate;
@@ -3219,11 +1892,8 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 .admin-login > form,
 .admin-form,
 .filters,
-.user-cleanup,
 .user-table,
 .admin-account-list,
-.smtp-test-card,
-.config-status,
 .admin-config-list,
 .admin-empty,
 .admin-inline-loading {
@@ -3248,11 +1918,8 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
 
 .admin-form,
 .filters,
-.user-cleanup,
 .user-table,
 .admin-account-list,
-.smtp-test-card,
-.config-status,
 .admin-config-list,
 .admin-empty,
 .admin-inline-loading,
@@ -3319,7 +1986,6 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   backdrop-filter: none !important;
 }
 
-
 /* One inherited canvas for every route, including login and loading screens. */
 :root {
   --zy-shared-stage-background:
@@ -3337,18 +2003,6 @@ html[data-theme="light"] :is(.admin-page, .admin-login) {
   --zy-row-selected-surface: rgba(229, 72, 77, 0.1);
   --zy-shared-interface-surface: rgba(39, 40, 46, 0.18);
   --zy-shared-interface-border: rgba(255, 255, 255, 0.1);
-}
-
-html[data-theme="light"] {
-  --zy-shared-stage-background:
-    radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.07), transparent 30rem),
-    radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.05), transparent 34rem),
-    linear-gradient(135deg, #eae8e8 0%, #e7dee1 24%, #eeeceb 49%, #e5d3d7 74%, #e8e9ec 100%);
-  --zy-shared-interface-surface: rgba(238, 240, 243, 0.30);
-  --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
-  --zy-artwork-glass-tint: rgba(244, 242, 243, 0.60);
-  --zy-reading-accent: #481219;
-  --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
 }
 
 html,
@@ -3370,10 +2024,18 @@ body,
 }
 
 .luri-music-clone {
+  --lm-text-primary: var(--zy-text);
+  --lm-text-secondary: var(--zy-text-secondary);
+  --lm-text-muted: var(--zy-muted);
+  --lm-text-accent: var(--zy-red-hover);
+  --lm-text-danger: #ff7377;
   isolation: isolate;
   background: var(--zy-shared-stage-background) !important;
-  --zy-interface-surface: var(--zy-shared-interface-surface);
-  --zy-interface-border: var(--zy-shared-interface-border);
+  --color-text: var(--zy-theme-text);
+  --color-text-muted: var(--zy-theme-muted);
+  --zy-interface-surface: var(--zy-theme-surface);
+  --zy-interface-border: var(--zy-theme-border);
+  --zy-interface-shadow: var(--zy-theme-shadow);
 }
 
 .admin-page,
@@ -3381,7 +2043,6 @@ body,
   --admin-interface-surface: var(--zy-shared-interface-surface);
   --admin-interface-border: var(--zy-shared-interface-border);
 }
-
 
 .docs-page {
   position: relative;
@@ -3410,7 +2071,6 @@ body,
   align-items: center;
 }
 
-
 .admin-header-actions > .theme-toggle {
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   background: rgba(255, 255, 255, 0.09) !important;
@@ -3434,38 +2094,17 @@ html[data-theme="light"] .admin-header-actions > .theme-toggle {
   box-shadow: 0 8px 22px rgba(34, 38, 45, 0.09) !important;
 }
 
-
-/* Full-viewport frosted layer shared by every product surface.
-   Keep the prefixed declaration FIRST: Lightning CSS otherwise drops the
-   standard property when the WebKit declaration is last. */
-.luri-music-clone .music-page::before,
-.docs-page::before,
-.admin-page::before,
-.admin-login::before,
-.ui-loading::before {
-  position: fixed !important;
-  inset: 0 !important;
-  display: block !important;
-  background: var(--zy-shared-glass-tint) !important;
-  filter: none !important;
-  -webkit-backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) !important;
-  backdrop-filter: blur(var(--zy-shared-stage-blur)) saturate(var(--zy-shared-stage-saturate)) brightness(var(--zy-shared-stage-brightness)) !important;
-  transform: none !important;
-  pointer-events: none;
-}
-
-/* The classic full-screen player has a fixed light canvas in either site theme. */
-.luri-music-clone .music-app-now.is-classic .lyrics-body p:not(.active) {
-  color: rgba(38, 40, 42, 0.56) !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
-}
-
-.luri-music-clone .music-app-now.is-classic .lyrics-body .lyrics-empty {
-  color: rgba(38, 40, 42, 0.68) !important;
-}
-
 /* Three-theme foundation. Layout stays shared; only semantic surfaces change. */
 html[data-theme="light"] {
+  --zy-shared-stage-background:
+    radial-gradient(circle at 15% 6%, rgba(202, 78, 86, 0.07), transparent 30rem),
+    radial-gradient(circle at 86% 74%, rgba(196, 76, 84, 0.05), transparent 34rem),
+    linear-gradient(135deg, #eae8e8 0%, #e7dee1 24%, #eeeceb 49%, #e5d3d7 74%, #e8e9ec 100%);
+  --zy-shared-interface-surface: rgba(238, 240, 243, 0.30);
+  --zy-shared-interface-border: rgba(34, 38, 45, 0.1);
+  --zy-artwork-glass-tint: rgba(244, 242, 243, 0.60);
+  --zy-reading-accent: #481219;
+  --zy-row-selected-surface: rgba(199, 60, 67, 0.06);
   color-scheme: light;
   --zy-theme-canvas: #f2f3f5;
   --zy-theme-canvas-alt: #e9ebef;
@@ -3514,20 +2153,18 @@ body,
   background: var(--zy-theme-canvas) !important;
 }
 
-.luri-music-clone {
-  --color-text: var(--zy-theme-text);
-  --color-text-muted: var(--zy-theme-muted);
-  --zy-interface-surface: var(--zy-theme-surface);
-  --zy-interface-border: var(--zy-theme-border);
-  --zy-interface-shadow: var(--zy-theme-shadow);
-}
-
 /* The former page-wide blur made every route soft and expensive. */
 .luri-music-clone .music-page::before,
 .docs-page::before,
 .admin-page::before,
 .admin-login::before,
 .ui-loading::before {
+  position: fixed !important;
+  inset: 0 !important;
+  display: block !important;
+  filter: none !important;
+  transform: none !important;
+  pointer-events: none;
   background: transparent !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;

@@ -4,6 +4,8 @@ import test from 'node:test';
 
 const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
 const layout = readFileSync(new URL('../src/pages/MusicQ.css', import.meta.url), 'utf8');
+const player = readFileSync(new URL('../src/styles/player.css', import.meta.url), 'utf8');
+const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
 
 test('the app player separates transport controls from desktop utilities', () => {
   const footer = music.slice(
@@ -35,34 +37,53 @@ test('mobile library exposes favorites and playlist detail has a clear back path
 });
 
 test('mobile typography is compact and player quality follows the title width', () => {
-  assert.match(layout, /\.music-player__heading \.music-player__title[\s\S]*?flex: 0 1 auto !important/);
+  assert.match(player, /\.music-app-player \.music-player__title \{[^}]*flex: 0 1 auto;/);
   assert.match(layout, /@media \(max-width: 700px\)[\s\S]*?\.music-app-topbar h1[\s\S]*?font-size: 1\.08rem !important/);
-  assert.match(layout, /\.music-app-now__meta h2[\s\S]*?font-size: clamp\(1\.15rem, 5\.1vw, 1\.48rem\) !important/);
+  assert.match(player, /\.music-app-now__meta h2 \{[^}]*font-size: clamp\(1\.15rem, 5\.1vw, 1\.48rem\);/);
+});
+
+test('both players live in one stylesheet that loads last and needs no !important', () => {
+  assert.match(app, /import '\.\/brand-theme\.css';\n[^\n]*\nimport '\.\/styles\/player\.css';/, 'player.css must follow every other stylesheet');
+  assert.doesNotMatch(player.replace(/\/\*[\s\S]*?\*\//g, ''), /!important/);
+  for (const name of ['Music.css', 'MusicQ.css']) {
+    const css = readFileSync(new URL(`../src/pages/${name}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(css, /\.(?:music-app-player|music-app-now|music-player__[\w-]+|music-controls|music-volume)\b/, `${name} must not style the players`);
+  }
+  const breakpoints = new Set([...player.matchAll(/\((?:max|min)-width: (\d+)px\)/g)].map((match) => match[1]));
+  assert.deepEqual([...breakpoints].sort(), ['1040', '1180', '390', '700', '701'], 'Players share the app breakpoints');
 });
 
 test('desktop and mobile players use independent progress rows and non-overlapping lanes', () => {
-  assert.match(layout, /Bottom player: one layout authority/);
-  assert.match(layout, /grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\) !important/);
-  assert.match(layout, /\.music-player__progress\s*\{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?grid-row: 2 !important/);
-  assert.match(layout, /@media \(max-width: 700px\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto 44px !important;[\s\S]*?grid-template-rows: 8px minmax\(0, 1fr\) !important/);
-  assert.match(layout, /\.music-controls > \.play-button,[\s\S]*?\.music-player__next,[\s\S]*?\.music-download-button--mobile[\s\S]*?min-width: 44px !important;[\s\S]*?min-height: 44px !important/);
+  assert.match(player, /\.music-app-player \{[^}]*grid-template-columns: 310px minmax\(360px, 1fr\) 260px;[^}]*grid-template-rows: minmax\(0, 1fr\) 10px;/);
+  assert.match(player, /\.music-app-player \.music-player__progress \{[^}]*grid-column: 1 \/ -1;[^}]*grid-row: 2;/);
+  assert.match(player, /@media \(max-width: 700px\) \{\s*\.music-app-player \{[^}]*grid-template-columns: minmax\(0, 1fr\) auto 44px;[^}]*grid-template-rows: 5px minmax\(0, 1fr\);/);
+  assert.match(player, /\.music-app-player \.music-player__progress \{\s*grid-row: 1;/);
 });
 
-test('mobile now-playing uses swipe navigation and removes duplicate switch and queue actions', () => {
+test('mobile now-playing switches between artwork and lyrics by swipe or the header control', () => {
   const nowPlayer = music.slice(music.indexOf('<aside className={`music-app-now'), music.indexOf('</aside>', music.indexOf('<aside className={`music-app-now')));
   assert.match(music, /const startMobileNowSwipe/);
   assert.match(music, /Math\.abs\(deltaX\) < 48/);
   assert.match(nowPlayer, /onTouchStart=\{startMobileNowSwipe\}/);
   assert.match(nowPlayer, /onTouchEnd=\{finishMobileNowSwipe\}/);
-  assert.doesNotMatch(nowPlayer, /music-app-now__lyrics-toggle/);
+  assert.match(nowPlayer, /className="music-app-now__lyrics-toggle" role="group"[\s\S]*?aria-pressed=\{mobileNowPanel === 'cover'\}[\s\S]*?aria-pressed=\{mobileNowPanel === 'lyrics'\}/);
   assert.doesNotMatch(nowPlayer, /name="queue"/);
-  assert.match(layout, /grid-template-areas:\s*"actions"\s*"seek"\s*"controls"/);
-  assert.match(layout, /\.music-app-now\.show-lyrics \.music-app-now__actions\s*\{\s*display: none !important/);
+  assert.match(player, /\.music-app-now__lyrics-toggle \{\s*display: none;/, 'Desktop shows artwork and lyrics side by side');
+  assert.match(player, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-now__lyrics-toggle \{ display: inline-flex; \}/);
+  assert.match(player, /grid-template-areas:\s*"actions"\s*"seek"\s*"controls"/);
+  assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__actions \{ display: none; \}/);
+});
+
+test('full-screen player colours follow the site theme in both styles', () => {
+  for (const selector of ['.music-app-now.is-classic', 'html[data-theme="glass"] .music-app-now', 'html[data-theme="light"] .music-app-now', 'html[data-theme="light"] .music-app-now.is-classic']) {
+    assert.ok(player.includes(`${selector} {\n  --now-`), selector);
+  }
+  const body = player.slice(player.indexOf('.music-app-now.is-open {'));
+  assert.doesNotMatch(body.replace(/@media[^{]+\{\s*\.music-app-now \{[^}]*\}/g, ''), /(?:^|\n)\s*(?:color|background(?:-color)?): #/, 'Colours come from --now-* properties');
 });
 
 test('mobile mini-player keeps accessible hit areas while drawing lighter controls', () => {
-  assert.match(layout, /Compact mini player: large hit areas, visually lighter controls/);
-  assert.match(layout, /height: 64px !important/);
-  assert.match(layout, /\.music-controls > \.play-button::before[\s\S]*?inset: 5px/);
-  assert.match(layout, /\.music-download-button[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important/);
+  assert.match(player, /\.music-app-player \{[^}]*height: 64px;/);
+  assert.match(player, /\.music-app-player \.music-controls \.play-button::before \{[^}]*inset: 5px;/);
+  assert.match(player, /\.music-app-player \.music-controls \.music-icon-button \{[^}]*width: 44px;[^}]*height: 44px;[^}]*background: transparent;/);
 });
