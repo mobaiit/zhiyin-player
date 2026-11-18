@@ -49,6 +49,17 @@ test('shared theme works without a login-page toggle', async (t) => {
     assert.equal(stored.get(THEME_KEY), 'glass');
   });
 
+  await t.test('the browser theme-color follows the selected theme canvas', () => {
+    const meta = { content: '', setAttribute(name, value) { if (name === 'content') this.content = value; } };
+    document.querySelector = (selector) => selector === 'meta[name="theme-color"]' ? meta : null;
+    setTheme('light');
+    assert.equal(meta.content, '#f2f3f5');
+    setTheme('dark');
+    assert.equal(meta.content, '#0f1013');
+    setTheme('glass');
+    delete document.querySelector;
+  });
+
   await t.test('storage sync updates a screen with no toggle and does not write back', () => {
     storageEvent(THEME_KEY, 'light');
     assert.equal(getTheme(), 'light');

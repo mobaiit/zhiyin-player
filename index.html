@@ -10,14 +10,16 @@
       name="description"
       content="知音 — 自由连接 Music Provider 的独立网页音乐播放器。"
     />
+    <meta name="theme-color" content="#0f1013" />
     <title>知音</title>
     <script>
+      // Visitors without a saved choice follow the system light or dark preference.
+      let initialTheme = 'dark';
       try {
         const storedTheme = localStorage.getItem('zy.music.theme');
-        document.documentElement.dataset.theme = ['light', 'dark', 'glass'].includes(storedTheme) ? storedTheme : 'dark';
-      } catch {
-        document.documentElement.dataset.theme = 'dark';
-      }
+        initialTheme = ['light', 'dark', 'glass'].includes(storedTheme) ? storedTheme : window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      } catch { /* Keep the dark default when storage is unavailable. */ }
+      document.documentElement.dataset.theme = initialTheme;
     </script>
   </head>
   <body>

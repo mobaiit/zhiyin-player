@@ -566,7 +566,7 @@ html[data-theme="light"] .music-app-home-feature {
     gap: 4px;
   }
   .music-app-mobile-nav .music-icon { width: 19px; height: 19px; }
-  .music-app-mobile-nav button span { font-size: 0.64rem; line-height: 1; }
+  .music-app-mobile-nav button span { font-size: 0.7rem; line-height: 1; }
 
   .music-app-now { min-height: 100dvh; }
   .music-app-now.is-open { grid-template-rows: calc(62px + env(safe-area-inset-top)) minmax(0, 1fr) calc(244px + env(safe-area-inset-bottom)); }
@@ -917,7 +917,8 @@ html[data-theme="light"] .music-app-home-feature {
 .music-app-modal__empty b { color: var(--color-text); }
 .music-app-modal footer { display: grid; gap: 10px; border-top: 1px solid var(--app-line); }
 .music-app-modal__create { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
-.music-app-modal__create input {
+.music-app-modal__create input,
+.music-app-modal__name-form input {
   min-width: 0;
   min-height: 44px;
   padding: 0 12px;
@@ -928,7 +929,8 @@ html[data-theme="light"] .music-app-home-feature {
   background: color-mix(in srgb, currentColor 4%, transparent);
   font: inherit;
 }
-.music-app-modal__create input:focus { border-color: color-mix(in srgb, var(--app-accent) 64%, transparent); }
+.music-app-modal__create input:focus,
+.music-app-modal__name-form input:focus { border-color: color-mix(in srgb, var(--app-accent) 64%, transparent); }
 .music-app-modal__create button {
   min-height: 44px;
   padding: 0 13px;
@@ -1697,7 +1699,7 @@ html[data-theme="glass"] :is(
   }
 
   .music-app-home-cards span {
-    font-size: .64rem;
+    font-size: .7rem;
   }
 
   .music-app-track__copy b {
@@ -1706,7 +1708,7 @@ html[data-theme="glass"] :is(
 
   .music-app-track__copy small,
   .music-app-track time {
-    font-size: .64rem;
+    font-size: .7rem;
   }
 
   .music-app-playlists article > button b {
@@ -1714,7 +1716,7 @@ html[data-theme="glass"] :is(
   }
 
   .music-app-playlists article > button small {
-    font-size: .66rem;
+    font-size: .7rem;
   }
 
   .music-app-settings h2 {
@@ -1994,7 +1996,7 @@ html[data-theme="glass"] :is(
   }
 
   .music-page.music-app-shell .music-player.music-app-player .music-player__copy > small {
-    font-size: .62rem;
+    font-size: .68rem;
   }
 
   .music-page.music-app-shell .music-player.music-app-player .music-player__heading {
@@ -2002,10 +2004,10 @@ html[data-theme="glass"] :is(
   }
 
   .music-page.music-app-shell .music-player.music-app-player .music-player__heading .music-quality {
-    height: .94rem;
-    min-width: 1.4rem;
-    padding-inline: .18rem;
-    font-size: .43rem;
+    height: 1.05rem;
+    min-width: 1.6rem;
+    padding-inline: .24rem;
+    font-size: .56rem;
   }
 
   .music-page.music-app-shell .music-player.music-app-player .music-controls {
@@ -2205,3 +2207,60 @@ html[data-theme="glass"] :is(
   }
 }
 
+
+/* Layout polish: full-width empty states, visible account, themed seek bars. */
+.music-app-home-cards > .music-app-empty { grid-column: 1 / -1; }
+.music-app-now:focus { outline: none; }
+.music-app-now input[type="range"] { accent-color: var(--app-accent); }
+.music-app-track__actions button {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+}
+.music-app-track__actions button .music-icon { width: 18px; height: 18px; }
+
+@media (min-width: 701px) {
+  .music-app-sidebar {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 18px;
+  }
+  .music-app-sidebar > nav { flex: 0 0 auto; }
+  .music-app-account {
+    position: static;
+    display: grid;
+    width: auto;
+    margin: auto 0 0;
+    padding: 12px 14px;
+    flex: 0 0 auto;
+    cursor: pointer;
+  }
+  .music-app-account:hover { background: color-mix(in srgb, currentColor 7%, transparent); }
+}
+
+@media (max-width: 700px) {
+  /* The bottom navigation already has a search tab; other views keep the list taller. */
+  .music-app-shell:not(.view-search) .music-app-topbar > .music-app-search { display: none !important; }
+  .music-app-shell:not(.view-search) .music-app-topbar { min-height: 0; padding-bottom: 10px; }
+
+  /* The transparent blur theme needs the artwork layer behind its glass surfaces. */
+  html[data-theme="glass"] .music-page.music-app-shell .music-artwork-backdrop { display: block !important; }
+
+  .music-app-now__meta { text-align: center; }
+
+  /* Mini player: playback mode replaces the copy action, which stays in the full-screen player. */
+  body:not(.has-global-music-player) .music-page.music-app-shell .music-player.music-app-player .music-player__utilities .music-download-button--mobile { display: none !important; }
+  body:not(.has-global-music-player) .music-page.music-app-shell .music-player.music-app-player .music-player__utilities .music-player__mode {
+    display: grid !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    place-items: center;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  body:not(.has-global-music-player) .music-page.music-app-shell .music-player.music-app-player .music-player__mode .music-icon { width: 18px; height: 18px; }
+}

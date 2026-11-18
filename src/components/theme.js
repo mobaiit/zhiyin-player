@@ -2,6 +2,8 @@ export const THEME_KEY = 'zy.music.theme';
 const THEME_EVENT = 'zy:theme-change';
 export const THEMES = ['light', 'dark', 'glass'];
 const normalizeTheme = (value) => THEMES.includes(value) ? value : 'dark';
+// Browser chrome colour (mobile address and status bars) follows each theme canvas.
+const THEME_COLORS = { light: '#f2f3f5', dark: '#0f1013', glass: '#1c1d23' };
 
 export const getTheme = () => normalizeTheme(document.documentElement.dataset.theme);
 
@@ -9,6 +11,7 @@ export function setTheme(value, { persist = true } = {}) {
   const theme = normalizeTheme(value);
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+  document.querySelector?.('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[theme]);
   if (persist) {
     try { localStorage.setItem(THEME_KEY, theme); } catch { /* Private browsing may disallow storage. */ }
   }
