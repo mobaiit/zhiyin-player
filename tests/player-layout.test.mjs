@@ -71,7 +71,30 @@ test('mobile now-playing switches between artwork and lyrics by swipe or the hea
   assert.match(player, /\.music-app-now__lyrics-toggle \{\s*display: none;/, 'Desktop shows artwork and lyrics side by side');
   assert.match(player, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-now__lyrics-toggle \{ display: inline-flex; \}/);
   assert.match(player, /grid-template-areas:\s*"actions"\s*"seek"\s*"controls"/);
-  assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__actions \{ display: none; \}/);
+  // Both panels stay mounted and cross-fade; the transport keeps three rows so it animates.
+  assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__media \{[^}]*opacity: 0;[^}]*visibility: hidden;/);
+  assert.match(player, /\.music-app-now\.show-lyrics \.lyrics-body \{[^}]*opacity: 1;[^}]*visibility: visible;/);
+  assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__transport \{[^}]*grid-template-rows: 0 28px 58px;/);
+  assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__actions \{[^}]*max-height: 0;[^}]*visibility: hidden;/);
+});
+
+test('phone transport centres play between four equal slots', () => {
+  const controls = music.slice(music.indexOf('<div className="music-app-now__controls">'), music.indexOf('<div className="music-app-now__actions">'));
+  assert.equal((controls.match(/<button /g) || []).length + (controls.match(/likeButton\(/g) || []).length, 5, 'mode, previous, play, next, favourite');
+  assert.match(player, /\.music-app-now__controls \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\);/);
+});
+
+test('phone cover view previews the playing and next lyric lines', () => {
+  assert.match(music, /className="music-app-now__lyric-preview"[\s\S]*?lyricLines\[previewLyric\]\?\.text[\s\S]*?lyricLines\[previewLyric \+ 1\]\?\.text/);
+  assert.match(player, /\.music-app-now__controls \.music-app-now__like--controls,\n\.music-app-now__lyric-preview \{ display: none; \}/, 'Desktop already shows the full lyrics');
+});
+
+test('library rows fall back to cached or Provider artwork and prefetch the rest', () => {
+  assert.match(music, /const artworkFor = \(track\) => \{[\s\S]*?songCache\(\)\[track\.songId\]\?\.art[\s\S]*?track\.binding\?\.art/);
+  assert.match(music, /<img src=\{rowArt\(track\) \|\| EMPTY_ART\} alt="" loading="lazy" \/>/);
+  assert.match(music, /ARTWORK_PREFETCH_VIEWS = new Set\(\['likes', 'playlist', 'history'\]\)/);
+  assert.match(music, /while \(state\.active < 3 && state\.queue\.length\)/, 'Prefetch runs at most three requests at a time');
+  assert.match(music, /rememberSong\(\{ \.\.\.track, art: payload\.url/, 'Fetched artwork is cached for the next visit');
 });
 
 test('full-screen player colours follow the site theme in both styles', () => {

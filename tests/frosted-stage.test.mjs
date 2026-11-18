@@ -203,8 +203,8 @@ test('active lyrics and filled favourites use the same vivid red in both themes'
   assert.match(player, /\.music-app-now \{[^}]*--now-liked: var\(--zy-active-red\);/);
   assert.equal((player.match(/--now-(?:lyric-active|liked)\s*:/g) || []).length, 2, 'No theme or style may override the shared red');
   assert.match(player, /\.music-app-now \.lyrics-body p\.active \{[^}]*color: var\(--now-lyric-active\);/);
-  assert.match(player, /\.music-app-now__actions button\.liked \{ color: var\(--now-liked\); \}/);
-  assert.match(player, /\.music-app-now__actions button\.liked \.music-icon \{ fill: currentColor; \}/, 'Filled hearts inherit the selected colour');
+  assert.match(player, /\.music-app-now :is\(\.music-app-now__actions, \.music-app-now__controls\) button\.liked \{ color: var\(--now-liked\); \}/);
+  assert.match(player, /\.music-app-now :is\(\.music-app-now__actions, \.music-app-now__controls\) button\.liked \.music-icon \{ fill: currentColor; \}/, 'Filled hearts inherit the selected colour');
 });
 
 for (const theme of ['dark', 'light']) {
