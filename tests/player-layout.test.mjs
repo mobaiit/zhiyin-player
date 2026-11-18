@@ -98,7 +98,9 @@ test('favourites store artwork and only the playing song may ask the Provider fo
   for (const value of ['data:image/png;base64,AAAA', 'blob:https://zhiyin.us.ci/1', '', undefined]) assert.equal(storableArt(value), '', String(value));
   assert.match(music, /const artworkFor = \(track\) => \{[\s\S]*?songCache\(\)\[track\.songId\]\?\.art[\s\S]*?track\.binding\?\.art/);
   assert.doesNotMatch(music, /prefetch/i, 'Lists never fetch artwork in bulk');
-  assert.match(music, /<img src=\{rowArt\(track\) \|\| EMPTY_ART\} alt="" loading="lazy" onError=\{showEmptyArt\} \/>/, 'Broken list artwork falls back without a request');
+  assert.match(music, /<Artwork src=\{rowArt\(track\)\} loading="lazy" \/>/, 'Broken list artwork falls back without a request');
+  assert.deepEqual(music.match(/<img (?:\{\.\.\.props\}|src="[^"]*")/g), ['<img {...props}', '<img src="/zhiyin-logo.png"'], 'Every cover renders through Artwork; only the logo is a plain image');
+  assert.match(music, /function Artwork\([\s\S]*?const url = src && src !== EMPTY_ART && src !== failed \? src : EMPTY_ART;[\s\S]*?setFailed\(url\); onError\?\.\(event\);/, 'Missing or broken covers fall back to the default artwork');
   assert.match(music, /function applyArtwork\(song, url, binding\) \{[\s\S]*?setLikedTracks\(next\);[\s\S]*?markFavoritesDirty\(\);/, 'Fetched artwork is written back to favourites');
   assert.equal((music.match(/musicRequest\('artwork'/g) || []).length, 2, 'Only the current song requests artwork: when missing or when it fails to load');
 });

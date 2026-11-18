@@ -532,3 +532,6 @@
 .music-page button {
   border-radius: 10px;
 }
+
+/* Covers show the default artwork colour while loading; Artwork swaps in the default image on failure. */
+.music-artwork { background: #ece9e1; }
