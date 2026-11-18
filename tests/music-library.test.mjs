@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseUserData, serializeUserData } from '../functions/luri-music/user-data.js';
 import { sanitizeLibrary } from '../functions/luri-music/library.js';
+import { sanitizeFavorites } from '../functions/luri-music/favorites.js';
 
 const providerTrack = (title = 'Song', artist = 'Artist') => ({
   title,
@@ -35,6 +36,18 @@ test('library sanitization removes local tracks and enforces playlist/history li
   assert.equal(sanitized.playlists[0].tracks.length, 1);
   assert.equal(sanitized.history.length, 200);
   assert.ok(sanitized.history.every((track) => track.sourceType !== 'local'));
+});
+
+test('synced favourites keep Provider artwork URLs and drop them before exceeding the size limit', () => {
+  const [kept] = sanitizeFavorites([{ ...providerTrack(), art: 'https://img.example/cover.jpg' }]);
+  assert.equal(kept.art, 'https://img.example/cover.jpg');
+  for (const art of ['data:image/png;base64,AAAA', 'blob:https://zhiyin.us.ci/1', 'javascript:alert(1)', 42]) {
+    assert.equal(sanitizeFavorites([{ ...providerTrack(), art }])[0].art, '', String(art));
+  }
+  const many = Array.from({ length: 1000 }, (_, index) => ({ ...providerTrack(`Song ${index}`), art: `https://img.example/${'x'.repeat(200)}/${index}.jpg` }));
+  const trimmed = sanitizeFavorites(many);
+  assert.equal(trimmed.length, 1000, 'Songs are never dropped to make room for artwork');
+  assert.ok(trimmed.every((favorite) => favorite.art === ''));
 });
 
 test('unknown client routes are normalized to the music app root', async () => {

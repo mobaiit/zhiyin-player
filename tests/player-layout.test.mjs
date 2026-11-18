@@ -71,11 +71,11 @@ test('mobile now-playing switches between artwork and lyrics by swipe or the hea
   assert.match(player, /\.music-app-now__lyrics-toggle \{\s*display: none;/, 'Desktop shows artwork and lyrics side by side');
   assert.match(player, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-now__lyrics-toggle \{ display: inline-flex; \}/);
   assert.match(player, /grid-template-areas:\s*"actions"\s*"seek"\s*"controls"/);
-  // Both panels stay mounted and cross-fade; the transport keeps three rows so it animates.
+  // Both panels stay mounted and cross-fade; the transport is identical on both, so nothing moves.
   assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__media \{[^}]*opacity: 0;[^}]*visibility: hidden;/);
   assert.match(player, /\.music-app-now\.show-lyrics \.lyrics-body \{[^}]*opacity: 1;[^}]*visibility: visible;/);
-  assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__transport \{[^}]*grid-template-rows: 0 28px 58px;/);
-  assert.match(player, /\.music-app-now\.show-lyrics \.music-app-now__actions \{[^}]*max-height: 0;[^}]*visibility: hidden;/);
+  assert.match(player, /\.music-app-now\.show-lyrics \.lyrics-body \{ transition: opacity 0\.34s ease 0\.08s/, 'The incoming panel waits for the outgoing one');
+  assert.doesNotMatch(player, /\.show-lyrics \.music-app-now__(?:transport|actions)/, 'Switching panels must not resize the transport');
 });
 
 test('phone transport centres play between four equal slots', () => {
@@ -89,12 +89,23 @@ test('phone cover view previews the playing and next lyric lines', () => {
   assert.match(player, /\.music-app-now__controls \.music-app-now__like--controls,\n\.music-app-now__lyric-preview \{ display: none; \}/, 'Desktop already shows the full lyrics');
 });
 
-test('library rows fall back to cached or Provider artwork and prefetch the rest', () => {
+test('favourites store artwork and only the playing song may ask the Provider for it', () => {
+  assert.match(music, /const minimalFavorites = [^\n]*art: storableArt\(artworkFor\(track\)\)/, 'Stored and synced favourites keep the artwork URL');
+  const storable = music.match(/const storableArt = (\(value\) => [^;]+);/)?.[1];
+  assert.ok(storable, 'storableArt must exist');
+  const storableArt = new Function(`return ${storable}`)();
+  assert.equal(storableArt('https://img.example/a.jpg'), 'https://img.example/a.jpg', 'Provider URLs are stored');
+  for (const value of ['data:image/png;base64,AAAA', 'blob:https://zhiyin.us.ci/1', '', undefined]) assert.equal(storableArt(value), '', String(value));
   assert.match(music, /const artworkFor = \(track\) => \{[\s\S]*?songCache\(\)\[track\.songId\]\?\.art[\s\S]*?track\.binding\?\.art/);
-  assert.match(music, /<img src=\{rowArt\(track\) \|\| EMPTY_ART\} alt="" loading="lazy" \/>/);
-  assert.match(music, /ARTWORK_PREFETCH_VIEWS = new Set\(\['likes', 'playlist', 'history'\]\)/);
-  assert.match(music, /while \(state\.active < 3 && state\.queue\.length\)/, 'Prefetch runs at most three requests at a time');
-  assert.match(music, /rememberSong\(\{ \.\.\.track, art: payload\.url/, 'Fetched artwork is cached for the next visit');
+  assert.doesNotMatch(music, /prefetch/i, 'Lists never fetch artwork in bulk');
+  assert.match(music, /<img src=\{rowArt\(track\) \|\| EMPTY_ART\} alt="" loading="lazy" onError=\{showEmptyArt\} \/>/, 'Broken list artwork falls back without a request');
+  assert.match(music, /function applyArtwork\(song, url, binding\) \{[\s\S]*?setLikedTracks\(next\);[\s\S]*?markFavoritesDirty\(\);/, 'Fetched artwork is written back to favourites');
+  assert.equal((music.match(/musicRequest\('artwork'/g) || []).length, 2, 'Only the current song requests artwork: when missing or when it fails to load');
+});
+
+test('library sub-pages offer a way back to 音乐库 on phones', () => {
+  assert.match(music, /\['likes', 'history', 'local'\]\.includes\(listView\) && <div className="music-app-toolbar music-app-library-back">[\s\S]*?navigate\('\/playlists'\)[\s\S]*?返回音乐库/);
+  assert.match(layout, /\.music-app-library-back \{ display: none; \}[\s\S]*?@media \(max-width: 700px\) \{\s*\.music-app-library-back \{\s*display: flex;/);
 });
 
 test('full-screen player colours follow the site theme in both styles', () => {

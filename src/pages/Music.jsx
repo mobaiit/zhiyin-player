@@ -79,17 +79,16 @@ const chartStoreKey = (platform, chart) => `${STORE_CHART}.${platform}.${chart}`
 const readChartStore = (platform, chart) => { try { return JSON.parse(localStorage.getItem(chartStoreKey(platform, chart)) || 'null'); } catch { return null; } };
 const hydrateChart = (payload) => ({ ...payload, tracks: canonicalTracks(payload?.tracks).map((track, index) => ({ ...track, rank: Number(track.rank) || index + 1 })) });
 const chartUpdatedLabel = (value) => { const timestamp = Date.parse(value || ''); return Number.isFinite(timestamp) ? new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(timestamp) : '暂无缓存'; };
-const minimalFavorites = (items) => canonicalTracks(items).map((track) => ({ songId: track.songId, title: track.title, artist: track.artist, album: track.album, binding: track.binding }));
-// Synced favourites carry no artwork of their own: fall back to this device's
-// song cache, then to the binding's artwork hint from the Provider.
+// Only Provider artwork URLs are worth storing and syncing; data: and blob: URLs are device-local.
+const storableArt = (value) => /^https?:\/\//i.test(String(value || '')) ? String(value).slice(0, 2000) : '';
+// Artwork already known on this device: the track itself, the song cache, then the binding hint.
 const artworkFor = (track) => {
   if (!track) return '';
   if (track.art && track.art !== EMPTY_ART) return String(track.art);
   if (track.sourceType === 'local') return '';
   return String(songCache()[track.songId]?.art || '') || String(track.binding?.art || '');
 };
-const ARTWORK_PREFETCH_VIEWS = new Set(['likes', 'playlist', 'history']);
-const ARTWORK_PREFETCH_LIMIT = 120;
+const minimalFavorites = (items) => canonicalTracks(items).map((track) => ({ songId: track.songId, title: track.title, artist: track.artist, album: track.album, art: storableArt(artworkFor(track)), binding: track.binding }));
 const resolvedExpiry = (payload) => { const explicit = Date.parse(payload?.expiresAt || ''); if (Number.isFinite(explicit)) return new Date(explicit).toISOString(); const seconds = Number(payload?.expiresIn); return Number.isFinite(seconds) && seconds > 0 ? new Date(Date.now() + seconds * 1000).toISOString() : null; };
 const playbackUrlExpired = (track) => { if (track?.sourceType === 'local') return false; const expires = Date.parse(track?.expiresAt || ''); return Boolean(track?.url && (!Number.isFinite(expires) || expires <= Date.now() + 5000)); };
 const providerPayload = async (response) => {
@@ -241,7 +240,6 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const [volume, setVolume] = useState(0.8); const [muted, setMuted] = useState(false);
   const [lyrics, setLyrics] = useState(''); const [translation, setTranslation] = useState(''); const [lyricsState, setLyricsState] = useState('');
   const { library, updateLibrary, syncState } = useMusicLibrary(favoriteNamespace, favoriteSyncEnabled, notify);
-  const [prefetchedArt, setPrefetchedArt] = useState({}); const artworkQueueRef = useRef({ queue: [], seen: new Set(), active: 0, controller: new AbortController() });
   const [localTracks, setLocalTracks] = useState([]); const [libraryDialog, setLibraryDialog] = useState(''); const [dialogTrack, setDialogTrackState] = useState(null); const [playlistSelection, setPlaylistSelection] = useState([]); const [newPlaylistName, setNewPlaylistName] = useState(''); const [dialogPlaylist, setDialogPlaylist] = useState(null);
   const libraryDialogRef = useRef(null); const nowPanelRef = useRef(null);
   const setDialogTrack = (track) => {
@@ -433,26 +431,28 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (!current || current.sourceType === 'local' || (current.art && current.art !== EMPTY_ART) || !current.binding) return undefined;
     const controller = new AbortController();
     musicRequest('artwork', { songId: current.songId, title: current.title, artist: current.artist, album: current.album, binding: current.binding }, controller.signal).then(providerPayload).then((payload) => {
-      if (payload.url && !controller.signal.aborted) {
-        const returnedBinding = canonicalBinding(payload.binding);
-        rememberSong({ ...current, art: payload.url, binding: returnedBinding || current.binding });
-        const update = (track) => track.songId === current.songId ? { ...track, art: payload.url, binding: returnedBinding || track.binding } : track;
-        (activeQueue === 'favorites' ? setLikedTracks : setTracks)((items) => items.map(update));
-        setPlaybackQueue((items) => items.map(update));
-      }
+      if (payload.url && !controller.signal.aborted) applyArtwork(current, payload.url, canonicalBinding(payload.binding));
     }).catch(() => {});
     return () => controller.abort();
-  }, [activeQueue, current]);
+  }, [current]);
+  // Artwork comes from the Provider only for the song being played, when the stored
+  // or synced URL is missing or fails to load. Favourites keep the result and sync it.
+  function applyArtwork(song, url, binding) {
+    rememberSong({ ...song, art: url, binding: binding || song.binding });
+    const update = (track) => track.songId === song.songId ? { ...track, art: url, binding: binding || track.binding } : track;
+    setTracks((items) => items.map(update)); setPlaybackQueue((items) => items.map(update));
+    if (!likedTracksRef.current.some((track) => sameFavorite(track, song))) return;
+    const next = likedTracksRef.current.map((track) => sameFavorite(track, song) ? { ...track, art: url, binding: binding || track.binding } : track);
+    likedTracksRef.current = next; setLikedTracks(next);
+    if (storableArt(url)) markFavoritesDirty();
+  }
   const refreshArtwork = (event) => {
     const image = event.currentTarget;
     if (!current || current.art === EMPTY_ART || artworkRefreshIdsRef.current.has(current.songId)) { image.src = EMPTY_ART; return; }
     artworkRefreshIdsRef.current.add(current.songId);
     void musicRequest('artwork', { songId: current.songId, title: current.title, artist: current.artist, album: current.album, binding: current.binding, refresh: 1 }).then(providerPayload).then((payload) => {
       if (!payload.url) throw new Error('No artwork');
-      const returnedBinding = canonicalBinding(payload.binding);
-      rememberSong({ ...current, art: payload.url, binding: returnedBinding || current.binding });
-      const update = (track) => track.songId === current.songId ? { ...track, art: payload.url, binding: returnedBinding || track.binding } : track;
-      setTracks((items) => items.map(update)); setLikedTracks((items) => items.map(update)); setPlaybackQueue((items) => items.map(update));
+      applyArtwork(current, payload.url, canonicalBinding(payload.binding));
     }).catch(() => { image.src = EMPTY_ART; });
   };
   const artworkLoaded = (event) => {
@@ -1020,32 +1020,9 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
 
   const isChartView = listView === 'netease' || listView === 'qq';
   const visibleTracks = listView === 'search' ? results : listView === 'likes' ? likedTracks : listView === 'random' ? randomTracks : listView === 'playlist' ? selectedPlaylist?.tracks || [] : listView === 'history' ? library.history : listView === 'local' ? localTracks : isChartView ? chartData.tracks : tracks;
-  const rowArt = (track) => prefetchedArt[track?.songId] || artworkFor(track);
-  // Library rows can arrive without artwork (synced favourites, other devices):
-  // fetch it a few at a time and remember it in the song cache for the next visit.
-  const prefetchTargets = ARTWORK_PREFETCH_VIEWS.has(listView) ? visibleTracks.slice(0, ARTWORK_PREFETCH_LIMIT) : [];
-  const prefetchTargetsRef = useRef(prefetchTargets); prefetchTargetsRef.current = prefetchTargets;
-  const prefetchKey = prefetchTargets.map((track) => track.songId).join('\u001f');
-  useEffect(() => {
-    if (!providerClient || !prefetchKey) return;
-    const state = artworkQueueRef.current;
-    for (const track of prefetchTargetsRef.current) {
-      if (!track?.binding || track.sourceType === 'local' || state.seen.has(track.songId) || artworkFor(track)) continue;
-      state.seen.add(track.songId); state.queue.push(track);
-    }
-    const pump = () => {
-      while (state.active < 3 && state.queue.length) {
-        const track = state.queue.shift(); state.active += 1;
-        musicRequest('artwork', { songId: track.songId, title: track.title, artist: track.artist, album: track.album, binding: track.binding }, state.controller.signal).then(providerPayload).then((payload) => {
-          if (!payload.url || state.controller.signal.aborted) return;
-          rememberSong({ ...track, art: payload.url, binding: canonicalBinding(payload.binding) || track.binding });
-          setPrefetchedArt((items) => ({ ...items, [track.songId]: payload.url }));
-        }).catch(() => {}).finally(() => { state.active -= 1; pump(); });
-      }
-    };
-    pump();
-  }, [prefetchKey, providerClient, musicRequest]);
-  useEffect(() => () => artworkQueueRef.current.controller.abort(), []);
+  const rowArt = artworkFor;
+  // List rows never ask the Provider; an expired URL falls back until the song is played.
+  const showEmptyArt = (event) => { if (event.currentTarget.getAttribute('src') !== EMPTY_ART) event.currentTarget.src = EMPTY_ART; };
   const isSearching = searchState === TEXT.searching;
   const isPlaybackBusy = randomLoading || playbackState === 'resolving' || playbackState === 'loading';
   const rowPlaybackState = (id) => id === playbackTrackId ? playbackState : 'idle';
@@ -1119,7 +1096,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     {visibleTracks.map((track, index) => { const state = rowPlaybackState(track.songId); const isCurrent = track.songId === currentId; const busy = isCurrent && isPlaybackBusy; return <div ref={isCurrent ? currentRowRef : null} key={`${track.songId}:${index}`} className={`music-app-track${isCurrent ? ' is-current' : ''}`}>
       <button className="music-app-track__main" type="button" onClick={() => handleTrackAction(track)} disabled={busy} aria-label={`${track.title}，${state === 'playing' ? '暂停' : '播放'}`}>
         <span className="music-app-track__index">{state === 'loading' || state === 'resolving' ? <span className="music-spinner" /> : state === 'playing' ? <MusicIcon name="pause" /> : String(isChartView ? track.rank || index + 1 : index + 1).padStart(2, '0')}</span>
-        <img src={rowArt(track) || EMPTY_ART} alt="" loading="lazy" /><span className="music-app-track__copy"><span className="music-app-track__title"><b>{track.title}</b>{isCurrent && <QualityBadge track={current} fallbackQuality={playbackQuality} />}</span><span className="music-app-track__meta"><small>{track.artist}{track.album ? ` · ${track.album}` : ''}</small></span></span>
+        <img src={rowArt(track) || EMPTY_ART} alt="" loading="lazy" onError={showEmptyArt} /><span className="music-app-track__copy"><span className="music-app-track__title"><b>{track.title}</b>{isCurrent && <QualityBadge track={current} fallbackQuality={playbackQuality} />}</span><span className="music-app-track__meta"><small>{track.artist}{track.album ? ` · ${track.album}` : ''}</small></span></span>
         {track.playedAt && <time>{new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(track.playedAt))}</time>}
       </button>
       <div className="music-app-track__actions">
@@ -1148,6 +1125,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
           {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <img src={rowArt(track) || EMPTY_ART} alt="" key={`${track?.songId || 'empty'}:${index}`} />)}{!randomTracks.length && !current && <img src={EMPTY_ART} alt="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3><p>每次点击都会从曲库中随机挑选一首歌开始播放。</p><ul>{randomTracks.slice(0, 3).map((track) => <li key={track.songId}><b>{track.title}</b><span>{track.artist}</span></li>)}</ul><div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div></section><div className="music-app-home-section-title"><div><h3>最近发现</h3><p>随机播放成功的歌曲会保留在这里</p></div></div><div className="music-app-home-cards">{randomTracks.slice(0, 8).map((track) => <button type="button" key={track.songId} onClick={() => handleTrackAction(track)}><img src={rowArt(track) || EMPTY_ART} alt="" /><b>{track.title}</b><span>{track.artist}</span></button>)}{!randomTracks.length && <div className="music-app-empty"><strong>还没有发现记录</strong><span>点击“随机播放”开始探索。</span></div>}</div></section>}
           {isChartView && <div className="music-app-toolbar"><div className="music-app-segment"><button className={chartPlatform === 'netease' ? 'active' : ''} type="button" onClick={openNetease}>网易</button><button className={chartPlatform === 'qq' ? 'active' : ''} type="button" onClick={openQQ}>QQ</button></div><div className="music-app-segment">{CHART_TYPES.map((chart) => <button className={chartType === chart.value ? 'active' : ''} type="button" onClick={() => selectChartType(chart.value)} key={chart.value}>{chart.label}</button>)}</div><button className="music-app-quiet" type="button" onClick={() => loadChart(chartPlatform, chartType, true)} disabled={chartLoading}>刷新</button></div>}
           {listView === 'playlists' && <><div className="music-app-toolbar"><button className="music-app-primary" type="button" onClick={() => createPlaylist()}>新建歌单</button><button className="music-app-quiet" type="button" onClick={() => importRef.current?.click()}>导入</button><span className="music-app-sync">{syncState === 'synced' ? '已同步' : syncState === 'syncing' ? '同步中' : syncState === 'pending' ? '等待同步' : '仅本机'}</span></div><div className="music-app-playlists"><article className="music-app-playlist-pinned"><button type="button" onClick={() => navigate('/favorites')}><span><MusicIcon name="heart" /></span><b>我的喜欢</b><small>{likedTracks.length} 首歌曲</small></button></article>{library.playlists.map((playlist) => <article key={playlist.id}><button type="button" onClick={() => navigate(`/playlists/${encodeURIComponent(playlist.id)}`)}><span><MusicIcon name="playlist" /></span><b>{playlist.name}</b><small>{playlist.tracks.length} 首歌曲</small></button><div><button type="button" onClick={() => renamePlaylist(playlist)}>重命名</button><button type="button" onClick={() => deletePlaylist(playlist)}>删除</button></div></article>)}{!library.playlists.length && <div className="music-app-empty"><strong>创建你的第一张歌单</strong><span>歌单会随账户在多端同步，音频文件本身不会上传。</span></div>}</div></>}
+          {['likes', 'history', 'local'].includes(listView) && <div className="music-app-toolbar music-app-library-back"><button className="music-app-quiet music-app-back-button" type="button" onClick={() => navigate('/playlists')}><MusicIcon name="back" /><span>返回音乐库</span></button></div>}
           {listView === 'playlist' && selectedPlaylist && <div className="music-app-toolbar music-app-playlist-toolbar"><button className="music-app-quiet music-app-back-button" type="button" onClick={() => navigate('/playlists')}><MusicIcon name="back" /><span>返回音乐库</span></button><button className="music-app-primary" type="button" disabled={!selectedPlaylist.tracks.length} onClick={() => selectTrack(selectedPlaylist.tracks[0]?.songId, selectedPlaylist.tracks)}>播放全部</button><button className="music-app-quiet" type="button" onClick={() => renamePlaylist(selectedPlaylist)}>重命名</button><button className="music-app-quiet danger" type="button" onClick={() => deletePlaylist(selectedPlaylist)}>删除</button></div>}
           {listView === 'local' && <div className="music-app-local-note"><div><b>播放此设备上的音乐</b><span>桌面端可选择整个文件夹；Android 建议选择一个或多个音频文件。不会上传、缓存或跨设备同步。</span></div><button className="music-app-primary" type="button" onClick={() => localFilesRef.current?.click()}>选择歌曲</button><button className="music-app-quiet music-app-folder-button" type="button" onClick={() => localFolderRef.current?.click()}>选择文件夹</button></div>}
           {listView === 'settings' && <div className="music-app-settings">

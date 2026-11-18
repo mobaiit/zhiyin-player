@@ -1043,11 +1043,12 @@ html[data-theme="light"] .music-app-now.is-classic {
     touch-action: pan-y;
   }
 
+  /* The outgoing panel leaves quickly; the incoming one starts a beat later and settles slowly. */
   .music-app-now__media,
   .music-app-now .lyrics-body {
     grid-area: panel;
     min-height: 0;
-    transition: opacity 0.32s var(--now-panel-ease), transform 0.32s var(--now-panel-ease), visibility 0s linear 0.32s;
+    transition: opacity 0.2s ease, transform 0.3s var(--now-panel-ease), visibility 0s linear 0.3s;
   }
 
   .music-app-now__media {
@@ -1165,9 +1166,9 @@ html[data-theme="light"] .music-app-now.is-classic {
   }
 
   .music-app-now:not(.show-lyrics) .music-app-now__media,
-  .music-app-now.show-lyrics .lyrics-body { transition-delay: 0s; }
+  .music-app-now.show-lyrics .lyrics-body { transition: opacity 0.34s ease 0.08s, transform 0.42s var(--now-panel-ease), visibility 0s; }
 
-  /* Transport keeps its track count in both panels so the rows animate. */
+  /* The transport is identical on both panels, so switching never moves the layout. */
   .music-app-now__transport {
     position: relative;
     z-index: 5;
@@ -1184,7 +1185,6 @@ html[data-theme="light"] .music-app-now.is-classic {
     margin: 0;
     padding: 4px 18px calc(8px + env(safe-area-inset-bottom));
     background: var(--now-transport-fade);
-    transition: grid-template-rows 0.32s var(--now-panel-ease), min-height 0.32s var(--now-panel-ease);
   }
 
   .music-app-now.is-classic .music-app-now__transport {
@@ -1195,11 +1195,6 @@ html[data-theme="light"] .music-app-now.is-classic {
     box-shadow: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-  }
-
-  .music-app-now.show-lyrics .music-app-now__transport {
-    grid-template-rows: 0 28px 58px;
-    min-height: calc(106px + env(safe-area-inset-bottom));
   }
 
   .music-app-now__seek {
@@ -1249,17 +1244,7 @@ html[data-theme="light"] .music-app-now.is-classic {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    min-height: 0;
-    max-height: 44px;
-    overflow: hidden;
-    transition: opacity 0.24s ease, max-height 0.32s var(--now-panel-ease);
-  }
-
-  .music-app-now.show-lyrics .music-app-now__actions {
-    max-height: 0;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
+    min-height: 44px;
   }
 
   .music-app-now__actions :is(button, a) {
@@ -1298,11 +1283,6 @@ html[data-theme="light"] .music-app-now.is-classic {
     min-height: calc(138px + env(safe-area-inset-bottom));
   }
 
-  .music-app-now.show-lyrics .music-app-now__transport {
-    grid-template-rows: 0 26px 52px;
-    min-height: calc(92px + env(safe-area-inset-bottom));
-  }
-
   .music-app-now .lyrics-body {
     padding-block: 42px;
     scroll-padding-block: 42px;
@@ -1314,10 +1294,7 @@ html[data-theme="light"] .music-app-now.is-classic {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .music-app-now__media,
-  .music-app-now .lyrics-body,
-  .music-app-now__transport,
-  .music-app-now__actions,
-  .music-app-now .lyrics-body p { transition-duration: 0.01ms; }
+  .music-app-now:is(.show-lyrics, :not(.show-lyrics)) :is(.music-app-now__media, .lyrics-body),
+  .music-app-now .lyrics-body p { transition-duration: 0.01ms; transition-delay: 0s; }
   .music-app-now__lyric-preview span { animation: none; }
 }

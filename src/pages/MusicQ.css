@@ -966,3 +966,19 @@ html[data-theme="glass"] :is(
   /* The transparent blur theme needs the artwork layer behind its glass surfaces. */
   html[data-theme="glass"] .music-page.music-app-shell .music-artwork-backdrop { display: block !important; }
 }
+
+/* Library sub-pages on phones: the sidebar is gone, so offer the way back to 音乐库. */
+.music-app-library-back { display: none; }
+
+@media (max-width: 700px) {
+  .music-app-library-back {
+    display: flex;
+    margin-bottom: 10px;
+  }
+
+  .music-app-library-back .music-app-back-button {
+    min-height: 40px;
+    padding-inline: 4px 10px;
+    border-color: transparent;
+  }
+}

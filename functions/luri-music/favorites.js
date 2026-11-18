@@ -16,14 +16,20 @@ const binding = (value) => {
   };
 };
 
-const sanitizeFavorites = (items) => {
+// Artwork is a display cache: only http(s) URLs are kept, and they are the first
+// thing dropped when a large collection would exceed the snapshot limit.
+const artUrl = (value) => /^https?:\/\//i.test(String(value || '')) ? text(value, 2000) : '';
+const byteLength = (value) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
+
+export const sanitizeFavorites = (items) => {
   const seen = new Set();
-  return (Array.isArray(items) ? items : []).slice(0, MAX_FAVORITES).flatMap((item) => {
+  const favorites = (Array.isArray(items) ? items : []).slice(0, MAX_FAVORITES).flatMap((item) => {
     const title = String(item?.title || ''); const artist = String(item?.artist || ''); const songId = title && artist ? songIdFor(title, artist) : ''; const sourceBinding = binding(item?.binding);
     if (!songId || !sourceBinding || seen.has(songId)) return [];
     seen.add(songId);
-    return [{ songId, title, artist, album: String(item?.album || ''), binding: sourceBinding }];
+    return [{ songId, title, artist, album: String(item?.album || ''), art: artUrl(item?.art), binding: sourceBinding }];
   });
+  return byteLength(favorites) > MAX_SNAPSHOT_BYTES ? favorites.map(({ art: _art, ...favorite }) => ({ ...favorite, art: '' })) : favorites;
 };
 
 export async function handleFavoriteRequest(request, env, user) {
@@ -37,7 +43,7 @@ export async function handleFavoriteRequest(request, env, user) {
     const data = await request.json().catch(() => ({})); const items = sanitizeFavorites(data.items);
     const row = await env.LURI_MUSIC_DB.prepare('SELECT favorites_json FROM luri_music_users WHERE id=?').bind(user.id).first();
     const stored = parseUserData(row?.favorites_json); const snapshot = serializeUserData(items, stored.library);
-    if (new TextEncoder().encode(JSON.stringify(items)).byteLength > MAX_SNAPSHOT_BYTES) return json({ error: '收藏数据过大' }, 413);
+    if (byteLength(items) > MAX_SNAPSHOT_BYTES) return json({ error: '收藏数据过大' }, 413);
     const timestamp = now();
     await env.LURI_MUSIC_DB.prepare('UPDATE luri_music_users SET favorites_json=?,favorites_updated_at=?,updated_at=? WHERE id=?').bind(snapshot, timestamp, timestamp, user.id).run();
     return json({ ok: true, items, updatedAt: timestamp, count: items.length }, 200, { 'cache-control': 'no-store' });
