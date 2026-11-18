@@ -10,16 +10,11 @@
       name="description"
       content="知音 — 自由连接 Music Provider 的独立网页音乐播放器。"
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
     <title>知音</title>
     <script>
       try {
-        document.documentElement.dataset.theme = localStorage.getItem('zy.music.theme') === 'light' ? 'light' : 'dark';
+        const storedTheme = localStorage.getItem('zy.music.theme');
+        document.documentElement.dataset.theme = ['light', 'dark', 'glass'].includes(storedTheme) ? storedTheme : 'dark';
       } catch {
         document.documentElement.dataset.theme = 'dark';
       }

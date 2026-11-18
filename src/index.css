@@ -29,6 +29,14 @@ body {
   background-repeat: repeat;
 }
 
+.app-route-loading {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  color: var(--color-text-muted);
+  font: 500 0.9375rem/1.5 var(--font-ui);
+}
+
 ::selection {
   background: var(--color-text);
   color: var(--color-bg);

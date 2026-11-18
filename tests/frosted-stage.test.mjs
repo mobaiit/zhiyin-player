@@ -5,8 +5,10 @@ import test from 'node:test';
 const source = readFileSync(new URL('../src/brand-theme.css', import.meta.url), 'utf8');
 const assets = new URL('../dist/assets/', import.meta.url);
 const cssFiles = readdirSync(assets).filter((file) => file.endsWith('.css'));
-assert.equal(cssFiles.length, 1, 'Run npm run build before this production-CSS regression check');
-const built = readFileSync(new URL(cssFiles[0], assets), 'utf8');
+const index = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
+const entryCss = index.match(/href="\/assets\/([^"]+\.css)"/)?.[1];
+assert.ok(entryCss && cssFiles.includes(entryCss), 'Run npm run build before this production-CSS regression check');
+const built = readFileSync(new URL(entryCss, assets), 'utf8');
 // Inspect declarations in the actual minified artifact, not just the source.
 const rules = [...built.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
   .map(([, selector, body]) => ({ selector, body }));
@@ -87,45 +89,32 @@ test('all shared toasts omit countdown bars but retain dismiss behavior', () => 
   assert.match(feedback, /onClick=\{onClose\} aria-label="关闭通知"/);
 });
 
-test('original artwork and theme tone use the existing image and single frosted layer', () => {
-  assert.equal((source.match(/\.luri-music-clone \.music-artwork-backdrop\s*\{/g) || []).length, 1);
+test('transparent blur theme reuses the existing artwork element', () => {
   assert.doesNotMatch(source, /music-artwork-backdrop::after|--(?:zy|admin)-stage-/);
   assert.ok(rules.some(({ selector, body }) => selector === '.luri-music-clone .music-artwork-backdrop' && body.includes('filter:none!important')));
-  assert.doesNotMatch(source, /--zy-artwork-(?:brightness|contrast|saturate|opacity)\b/);
-  const active = rules.find(({ selector }) => selector === '.luri-music-clone:has(.music-artwork-backdrop.is-visible)');
-  assert.ok(active, 'Glass tint must follow artwork availability, not playback success');
-  assert.match(active.body, /--zy-shared-glass-tint:var\(--zy-artwork-glass-tint\)/);
+  const glassArtwork = rules.find(({ selector, body }) => selector === 'html[data-theme=glass] .luri-music-clone .music-artwork-backdrop' && body.includes('blur(38px)'));
+  assert.ok(glassArtwork, 'Only the transparent blur theme should process the existing artwork backdrop');
+  assert.match(glassArtwork.body, /saturate\(1\.22\)/);
+  assert.match(glassArtwork.body, /brightness\(\.58\)/);
   const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
   assert.equal((music.match(/className=\{`music-artwork-backdrop/g) || []).length, 1);
 });
 
-test('one theme-aware glass controls readability without fading or flattening the original cover', () => {
+test('white, black and transparent blur themes use one shared semantic surface system', () => {
   assert.ok(rules.some(({ selector, body }) => selector === '.luri-music-clone .music-artwork-backdrop.is-visible' && /(?:^|;)opacity:1(?:;|$)/.test(body)));
   for (const rule of rules.filter(({ selector }) => selector === '.luri-music-clone .music-artwork-backdrop')) {
     assert.doesNotMatch(rule.body, /transition:/, 'Artwork and glass must switch atomically to avoid unreadable intermediate tones');
   }
-  const surfaces = [...source.matchAll(/--zy-shared-interface-surface:\s*rgba\(([^)]+)\)/g)]
-    .map(([, value]) => Number(value.split(',').at(-1)));
-  assert.deepEqual(surfaces, [0.18, 0.30]);
-  assert.match(built, /--zy-shared-interface-surface:#27282e2e/);
-  assert.match(built, /--zy-shared-interface-surface:#eef0f34d/);
-  for (const rule of rules.filter(({ selector }) => ['html[data-theme=light] .lm-site-bar', 'html[data-theme=light] .music-player'].includes(selector))) {
-    assert.doesNotMatch(rule.body, /(?:^|;)background:/, 'Old higher-specificity light styles must not override the shared navigation/player surface');
+  for (const theme of ['light', 'dark', 'glass']) {
+    const palette = rules.find(({ selector, body }) => selector === `html[data-theme=${theme}]` && body.includes('--zy-theme-surface:'));
+    assert.ok(palette, `${theme} palette must define the shared surface tokens`);
+    for (const token of ['--zy-theme-canvas:', '--zy-theme-surface:', '--zy-theme-surface-raised:', '--zy-theme-border:', '--zy-theme-text:', '--zy-theme-muted:']) assert.match(palette.body, new RegExp(token));
   }
-  assert.ok(rules.some(({ selector, body }) => selector.includes('.luri-music-clone>.lm-site-bar') && selector.includes('.luri-music-clone .music-player') && body.includes('background:var(--zy-interface-surface)!important')));
-  const tints = [...source.matchAll(/--zy-artwork-glass-tint:\s*rgba\(([^)]+)\)/g)]
-    .map(([, value]) => value.split(',').map(Number));
-  assert.deepEqual(tints, [[26, 27, 33, 0.76], [244, 242, 243, 0.60]]);
-  // The more-specific light selector must not keep an old hardcoded tint.
-  for (const selector of ['.luri-music-clone', 'html[data-theme=light] .luri-music-clone']) {
-    const declarations = rules.filter((rule) => rule.selector === selector && rule.body.includes('--zy-interface-surface:'));
-    assert.ok(declarations.length > 0, selector);
-    for (const rule of declarations) assert.match(rule.body, /--zy-interface-surface:var\(--zy-shared-interface-surface\)/);
-  }
-  assert.ok(rules.some(({ body }) => body.includes('--zy-shared-stage-blur:9px')));
-  for (const rule of rules.filter(({ selector, body }) => selector.includes('html[data-theme=light]') && body.includes('--admin-interface-surface:'))) {
-    assert.match(rule.body, /--admin-interface-surface:var\(--zy-shared-interface-surface\)/);
-  }
+  const bridge = rules.find(({ selector, body }) => selector === '.luri-music-clone' && body.includes('--zy-interface-surface:var(--zy-theme-surface)'));
+  assert.ok(bridge, 'Existing pages must consume the new semantic theme tokens');
+  const glassSurfaces = rules.find(({ selector, body }) => selector.includes('html[data-theme=glass] :is(') && body.includes('backdrop-filter:blur(18px)'));
+  assert.ok(glassSurfaces, 'Blur belongs to explicit glass surfaces, not a full-page veil');
+  assert.ok(rules.some(({ selector, body }) => selector.includes('.luri-music-clone .music-page:before') && body.includes('backdrop-filter:none!important')));
 });
 
 test('mobile admin navigation has one alignment and an opaque themed surface', () => {

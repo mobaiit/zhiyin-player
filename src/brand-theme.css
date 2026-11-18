@@ -3453,3 +3453,100 @@ html[data-theme="light"] .admin-header-actions > .theme-toggle {
   transform: none !important;
   pointer-events: none;
 }
+
+/* The classic full-screen player has a fixed light canvas in either site theme. */
+.luri-music-clone .music-app-now.is-classic .lyrics-body p:not(.active) {
+  color: rgba(38, 40, 42, 0.56) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.luri-music-clone .music-app-now.is-classic .lyrics-body .lyrics-empty {
+  color: rgba(38, 40, 42, 0.68) !important;
+}
+
+/* Three-theme foundation. Layout stays shared; only semantic surfaces change. */
+html[data-theme="light"] {
+  color-scheme: light;
+  --zy-theme-canvas: #f2f3f5;
+  --zy-theme-canvas-alt: #e9ebef;
+  --zy-theme-surface: #ffffff;
+  --zy-theme-surface-raised: #f7f8fa;
+  --zy-theme-border: rgba(25, 28, 34, 0.12);
+  --zy-theme-text: #1c1e23;
+  --zy-theme-muted: #656a74;
+  --zy-theme-shadow: 0 14px 38px rgba(32, 36, 44, 0.1);
+  --zy-theme-blur: 0px;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --zy-theme-canvas: #0f1013;
+  --zy-theme-canvas-alt: #15171c;
+  --zy-theme-surface: #1a1c22;
+  --zy-theme-surface-raised: #22252c;
+  --zy-theme-border: rgba(255, 255, 255, 0.11);
+  --zy-theme-text: #f4f5f7;
+  --zy-theme-muted: #a8adb7;
+  --zy-theme-shadow: 0 16px 42px rgba(0, 0, 0, 0.3);
+  --zy-theme-blur: 0px;
+}
+
+html[data-theme="glass"] {
+  color-scheme: dark;
+  --zy-theme-canvas:
+    radial-gradient(circle at 14% 8%, rgba(211, 78, 89, 0.22), transparent 34rem),
+    radial-gradient(circle at 86% 78%, rgba(97, 105, 145, 0.22), transparent 38rem),
+    linear-gradient(135deg, #24252c, #17191f 48%, #29242a);
+  --zy-theme-canvas-alt: rgba(20, 22, 28, 0.62);
+  --zy-theme-surface: rgba(24, 27, 34, 0.62);
+  --zy-theme-surface-raised: rgba(38, 42, 51, 0.7);
+  --zy-theme-border: rgba(255, 255, 255, 0.16);
+  --zy-theme-text: #f7f7f8;
+  --zy-theme-muted: #c4c7cf;
+  --zy-theme-shadow: 0 18px 52px rgba(0, 0, 0, 0.28);
+  --zy-theme-blur: 18px;
+}
+
+html,
+body,
+.luri-music-clone {
+  color: var(--zy-theme-text) !important;
+  background: var(--zy-theme-canvas) !important;
+}
+
+.luri-music-clone {
+  --color-text: var(--zy-theme-text);
+  --color-text-muted: var(--zy-theme-muted);
+  --zy-interface-surface: var(--zy-theme-surface);
+  --zy-interface-border: var(--zy-theme-border);
+  --zy-interface-shadow: var(--zy-theme-shadow);
+}
+
+/* The former page-wide blur made every route soft and expensive. */
+.luri-music-clone .music-page::before,
+.docs-page::before,
+.admin-page::before,
+.admin-login::before,
+.ui-loading::before {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.luri-music-clone .music-artwork-backdrop { display: none; }
+html[data-theme="glass"] .luri-music-clone .music-artwork-backdrop {
+  display: block;
+  filter: blur(38px) saturate(1.22) brightness(0.58) !important;
+  transform: scale(1.12);
+}
+
+.theme-toggle {
+  border: 1px solid var(--zy-theme-border) !important;
+  color: var(--zy-theme-text) !important;
+  background: var(--zy-theme-surface-raised) !important;
+}
+
+html[data-theme="glass"] .theme-toggle {
+  -webkit-backdrop-filter: blur(var(--zy-theme-blur)) saturate(1.12);
+  backdrop-filter: blur(var(--zy-theme-blur)) saturate(1.12);
+}

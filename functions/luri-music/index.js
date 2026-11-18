@@ -1,6 +1,8 @@
 import { cookie, hash, id, json, now, passwordHash, sessionCookie, token, verifyPassword, verifyTurnstileToken } from './shared.js';
 import { handleProviderRequest } from './providers.js';
 import { handleFavoriteRequest } from './favorites.js';
+import { handleLibraryRequest } from './library.js';
+import { parseUserData } from './user-data.js';
 import { publicSmtpConfig, saveSmtpConfig, sendSmtpTest, sendVerificationEmail } from './email.js';
 
 const USER_COOKIE = 'zy_music_session';
@@ -45,8 +47,8 @@ const createSession = async (userId, env) => {
 };
 const userPayload = async (user) => {
   if (!user) return null;
-  let favorites = []; try { favorites = JSON.parse(user.favorites_json || '[]'); } catch { /* Invalid legacy data is returned as an empty collection. */ }
-  return { ...publicUser(user), favorites: Array.isArray(favorites) ? favorites : [], favoritesUpdatedAt: user.favorites_updated_at || null };
+  const stored = parseUserData(user.favorites_json);
+  return { ...publicUser(user), favorites: stored.favorites, favoritesUpdatedAt: user.favorites_updated_at || null };
 };
 const verifyHuman = async (data, env) => {
   const result = await verifyTurnstileToken(data.turnstileToken, env);
@@ -76,6 +78,7 @@ export async function handleLuriMusic(request, env) {
     return json({ playbackQuality });
   }
   if (action === 'favorites') return handleFavoriteRequest(request, env, await currentUser(request, env));
+  if (action === 'library') return handleLibraryRequest(request, env, await currentUser(request, env));
   if (action === 'providers' || action.startsWith('providers/')) return handleProviderRequest(request, env, action, await currentUser(request, env));
 
   if (action === 'auth/email-code' && request.method === 'POST') {

@@ -1,21 +1,32 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import LuriMusic from './luri-music/LuriMusic';
-import Admin from './luri-music/Admin';
-import Docs from './pages/Docs';
 import { syncThemeAcrossTabs } from './components/theme';
 import './luri-music/page-titles.css';
 import './brand-theme.css';
 
+const Admin = lazy(() => import('./luri-music/Admin'));
+const Docs = lazy(() => import('./pages/Docs'));
+
+const MUSIC_ROUTES = new Set(['/', '/charts', '/search', '/favorites', '/playlists', '/history', '/local', '/settings']);
+const isMusicRoute = (pathname) => MUSIC_ROUTES.has(pathname) || /^\/playlists\/[^/]+$/.test(pathname);
+
 export default function App() {
   useEffect(syncThemeAcrossTabs, []);
-  const { pathname, search } = window.location;
+  let { pathname } = window.location; const { search } = window.location;
+  if (pathname !== '/admin' && pathname !== '/docs' && !isMusicRoute(pathname)) {
+    window.history.replaceState(null, '', '/'); pathname = '/';
+  }
   const isAdmin = pathname === '/admin' || new URLSearchParams(search).get('admin') === '1';
 
   useEffect(() => {
     document.title = isAdmin ? '知音后台' : pathname === '/docs' ? '知音文档' : '知音';
   }, [isAdmin, pathname]);
 
-  if (isAdmin) return <Admin />;
-  if (pathname === '/docs') return <Docs />;
+  if (isAdmin) return <Suspense fallback={<RouteLoading />}><Admin /></Suspense>;
+  if (pathname === '/docs') return <Suspense fallback={<RouteLoading />}><Docs /></Suspense>;
   return <LuriMusic active standalone docsEnabled />;
+}
+
+function RouteLoading() {
+  return <main className="app-route-loading" role="status" aria-live="polite">正在加载…</main>;
 }

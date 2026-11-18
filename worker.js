@@ -33,8 +33,6 @@ export default {
         return json({ error: `后台服务异常（${pathname.endsWith('/admin/login') ? '登录' : '请求'}未完成），请稍后重试` }, 500);
       }
     }
-    if (pathname === '/admin') return Response.redirect(new URL('/?admin=1', request.url), 302);
-    if (pathname === '/music' || pathname === '/luri-music') return Response.redirect(new URL('/', request.url), 301);
     if (pathname === '/' && searchParams.get('admin') === '1') return staticAsset(request, env, pathname);
     return staticAsset(request, env, pathname);
   },

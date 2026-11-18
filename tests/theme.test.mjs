@@ -42,11 +42,18 @@ test('shared theme works without a login-page toggle', async (t) => {
     unsubscribeSecond();
   });
 
+  await t.test('the transparent blur theme persists and uses a dark color scheme', () => {
+    setTheme('glass');
+    assert.equal(getTheme(), 'glass');
+    assert.equal(document.documentElement.style.colorScheme, 'dark');
+    assert.equal(stored.get(THEME_KEY), 'glass');
+  });
+
   await t.test('storage sync updates a screen with no toggle and does not write back', () => {
     storageEvent(THEME_KEY, 'light');
     assert.equal(getTheme(), 'light');
     assert.equal(document.documentElement.style.colorScheme, 'light');
-    assert.equal(stored.get(THEME_KEY), 'dark');
+    assert.equal(stored.get(THEME_KEY), 'glass');
     storageEvent('unrelated-setting', 'dark');
     assert.equal(getTheme(), 'light');
   });

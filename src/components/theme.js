@@ -1,13 +1,14 @@
 export const THEME_KEY = 'zy.music.theme';
 const THEME_EVENT = 'zy:theme-change';
-const normalizeTheme = (value) => value === 'light' ? 'light' : 'dark';
+export const THEMES = ['light', 'dark', 'glass'];
+const normalizeTheme = (value) => THEMES.includes(value) ? value : 'dark';
 
 export const getTheme = () => normalizeTheme(document.documentElement.dataset.theme);
 
 export function setTheme(value, { persist = true } = {}) {
   const theme = normalizeTheme(value);
   document.documentElement.dataset.theme = theme;
-  document.documentElement.style.colorScheme = theme;
+  document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
   if (persist) {
     try { localStorage.setItem(THEME_KEY, theme); } catch { /* Private browsing may disallow storage. */ }
   }
