@@ -113,6 +113,14 @@ test('favourites store artwork; the Provider is asked only for the playing song 
   assert.equal((music.match(/musicRequest\('artwork'/g) || []).length, 3, 'Artwork is requested only for the playing song (missing or failed) and for a list cover that failed');
 });
 
+test('search loads the next page when the end of the results scrolls into view', () => {
+  assert.doesNotMatch(music, /onScroll=\{handleListScroll\}/, 'The list itself does not scroll, so a scroll handler on it never fires');
+  assert.match(music, /\{listView === 'search' && hasMoreResults && <div ref=\{listEndRef\} className="music-app-list-end" aria-hidden="true" \/>\}/);
+  assert.match(music, /new IntersectionObserver\(\(entries\) => \{ if \(entries\.some\(\(entry\) => entry\.isIntersecting\)\) loadNextPageRef\.current\(\); \}, \{ root: scrollParentOf\(end\), rootMargin: '0px 0px 400px 0px' \}\)/);
+  assert.match(music, /\}, \[listView, hasMoreResults, results\.length, loadingMore\]\);/, 'Re-observing after each page fills screens taller than one page');
+  assert.match(music, /const row = currentRowRef\.current; const list = scrollParentOf\(musicListRef\.current\);/, 'The playing row is located inside the element that actually scrolls');
+});
+
 test('library sub-pages offer a way back to 音乐库 on phones', () => {
   assert.match(music, /\['likes', 'history', 'local'\]\.includes\(listView\) && <div className="music-app-toolbar music-app-library-back">[\s\S]*?navigate\('\/playlists'\)[\s\S]*?返回音乐库/);
   assert.match(layout, /\.music-app-library-back \{ display: none; \}[\s\S]*?@media \(max-width: 700px\) \{\s*\.music-app-library-back \{\s*display: flex;/);

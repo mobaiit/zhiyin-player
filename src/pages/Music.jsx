@@ -161,6 +161,14 @@ function Artwork({ src, onError, onUnavailable, className = '', ...props }) {
   return <img {...props} ref={imageRef} className={`music-artwork${className ? ` ${className}` : ''}`} src={url} alt="" onError={(event) => { if (url === EMPTY_ART) return; setFailed(url); onError?.(event); }} />;
 }
 
+// Lists grow with their rows; the scrolling happens on an ancestor (.music-app-page today).
+const scrollParentOf = (element) => {
+  for (let node = element?.parentElement; node && node !== document.body; node = node.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight) return node;
+  }
+  return null;
+};
+
 const QUALITY_META = {
   '128k': { label: '普通 128K', icon: 'low', mark: 'STD' },
   '192k': { label: '标准 192K', icon: 'medium', mark: 'HQ' },
@@ -276,7 +284,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     setPlaylistSelection(library.playlists.filter((playlist) => playlist.tracks.some((item) => samePlaylistTrack(item, track))).map((playlist) => playlist.id));
     setNewPlaylistName('');
   };
-  const lyricsRef = useRef(null); const musicListRef = useRef(null); const currentRowRef = useRef(null); const searchFormRef = useRef(null); const searchSuggestionsRef = useRef(null); const locatedTrackRef = useRef('');
+  const lyricsRef = useRef(null); const musicListRef = useRef(null); const listEndRef = useRef(null); const currentRowRef = useRef(null); const searchFormRef = useRef(null); const searchSuggestionsRef = useRef(null); const locatedTrackRef = useRef('');
   const localFilesRef = useRef(null); const localFolderRef = useRef(null); const importRef = useRef(null); const localUrlsRef = useRef(new Set());
   const searchInputRef = useRef(null); const controlButtonRefs = useRef({}); const controlFeedbackTimerRef = useRef(null); const mobileNowSwipeRef = useRef(null);
   const resolveRequestRef = useRef(null); const chartRequestRef = useRef(null); const mediaDeadlineRef = useRef(null); const mediaDeadlineTrackRef = useRef(''); const ignoreAudioErrorRef = useRef(false); const failedPlaybackIdsRef = useRef(new Set()); const playbackRefreshModesRef = useRef(new Map()); const artworkRefreshIdsRef = useRef(new Set());
@@ -588,8 +596,9 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (!currentId) return undefined;
     if (window.matchMedia('(max-width: 700px)').matches && mobileView !== 'playlist') return undefined;
     const frame = window.requestAnimationFrame(() => {
-      const list = musicListRef.current; const row = currentRowRef.current;
-      if (!list || !row) return;
+      const row = currentRowRef.current; const list = scrollParentOf(musicListRef.current);
+      // Leaving the list forgets where it was located, so returning finds the song again.
+      if (!list || !row) { locatedTrackRef.current = ''; return; }
       const locationKey = `${listView}:${activeSearchRef.current}:${currentId}:${mobileView}`;
       if (locatedTrackRef.current === locationKey) return;
       locatedTrackRef.current = locationKey;
@@ -977,10 +986,17 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (listView !== 'search' || !keyword || !results.length || !hasMoreResults || loadingMoreRef.current) return;
     loadResults(keyword, resultPage + 1, true);
   };
-  const handleListScroll = (event) => {
-    const element = event.currentTarget;
-    if (element.scrollTop + element.clientHeight >= element.scrollHeight - 80) loadNextPage();
-  };
+  const loadNextPageRef = useRef(loadNextPage);
+  useEffect(() => { loadNextPageRef.current = loadNextPage; });
+  // The next page loads when the end of the results comes within 400px of view.
+  // Re-observing after each page also fills screens taller than one page.
+  useEffect(() => {
+    const end = listEndRef.current;
+    if (!end || listView !== 'search' || !hasMoreResults || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) loadNextPageRef.current(); }, { root: scrollParentOf(end), rootMargin: '0px 0px 400px 0px' });
+    observer.observe(end);
+    return () => observer.disconnect();
+  }, [listView, hasMoreResults, results.length, loadingMore]);
 
   const navigate = (path) => { if (onNavigate) onNavigate(path); else { window.history.pushState(null, '', path); setListView(routeView(path)); } };
   const selectedPlaylistId = routePath?.startsWith('/playlists/') ? decodeURIComponent(routePath.slice('/playlists/'.length)) : '';
@@ -1157,7 +1173,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     ['/favorites', '我的喜欢', 'heart'], ['/playlists', '我的歌单', 'playlist'], ['/history', '播放历史', 'history'], ['/local', '本地音乐', 'folder'],
     ['/settings', '设置', 'settings'],
   ];
-  const renderTrackList = () => <div className="music-app-track-list" ref={musicListRef} onScroll={handleListScroll}>
+  const renderTrackList = () => <div className="music-app-track-list" ref={musicListRef}>
     {visibleTracks.map((track, index) => { const state = rowPlaybackState(track.songId); const isCurrent = track.songId === currentId; const busy = isCurrent && isPlaybackBusy; return <div ref={isCurrent ? currentRowRef : null} key={`${track.songId}:${index}`} className={`music-app-track${isCurrent ? ' is-current' : ''}`}>
       <button className="music-app-track__main" type="button" onClick={() => handleTrackAction(track)} disabled={busy} aria-label={`${track.title}，${state === 'playing' ? '暂停' : '播放'}`}>
         <span className="music-app-track__index">{state === 'loading' || state === 'resolving' ? <span className="music-spinner" /> : state === 'playing' ? <MusicIcon name="pause" /> : String(isChartView ? track.rank || index + 1 : index + 1).padStart(2, '0')}</span>
@@ -1168,6 +1184,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
         {listView === 'playlist' ? <button type="button" onClick={() => removeTrackFromPlaylist(selectedPlaylist.id, track.songId)} aria-label="从歌单移除">移除</button> : track.sourceType !== 'local' && <button type="button" onClick={() => openAddToPlaylist(track)} aria-label={`将 ${track.title} 加入歌单`} title="加入歌单"><MusicIcon name="playlist" /></button>}
       </div>
     </div>; })}
+    {listView === 'search' && hasMoreResults && <div ref={listEndRef} className="music-app-list-end" aria-hidden="true" />}
     {loadingMore && <p className="music-list-status">正在加载更多…</p>}
     {!visibleTracks.length && <div className="music-app-empty"><strong>{isChartView ? chartState || (chartLoading ? '正在加载榜单…' : '暂无榜单数据') : '这里还没有歌曲'}</strong><span>{isChartView ? '可以切换榜单或点击刷新' : listView === 'local' ? '选择本地音频即可开始播放' : listView === 'playlist' ? '可以从搜索、榜单或历史中加入歌曲' : '播放或添加歌曲后会显示在这里'}</span></div>}
   </div>;
