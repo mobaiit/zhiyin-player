@@ -106,7 +106,8 @@ test('favourites store artwork; the Provider is asked only for the playing song 
   assert.equal(usable('120/s3s94/93/1.jpg'), '', 'Bare paths are never requested from this site');
   assert.equal(usable('https://img1.kuwo.cn/a.jpg'), 'https://img1.kuwo.cn/a.jpg');
   assert.deepEqual(music.match(/<img (?:\{\.\.\.props\}|src="[^"]*")/g), ['<img {...props}', '<img src="/zhiyin-logo.png"'], 'Every cover renders through Artwork; only the logo is a plain image');
-  assert.match(music, /function Artwork\([\s\S]*?const url = src && src !== EMPTY_ART && src !== failed \? src : EMPTY_ART;[\s\S]*?setFailed\(url\); onError\?\.\(event\);/, 'Missing or broken covers fall back to the default artwork');
+  assert.match(music, /function Artwork\([\s\S]*?const url = usableArt\(src\) && src !== failed \? src : EMPTY_ART;[\s\S]*?setFailed\(url\); onError\?\.\(event\);/, 'Missing or broken covers fall back to the default artwork');
+  assert.match(music, /const invalid = Boolean\(src\) && src !== EMPTY_ART && !usableArt\(src\);[\s\S]*?useEffect\(\(\) => \{ if \(invalid\) onErrorRef\.current\?\.\(\); \}, \[invalid, src\]\);/, 'An unusable URL counts as a failed cover without being requested');
   assert.match(music, /function applyArtwork\(song, url, binding\) \{[\s\S]*?setLikedTracks\(next\);[\s\S]*?markFavoritesDirty\(\);/, 'Fetched artwork is written back to favourites');
   assert.equal((music.match(/musicRequest\('artwork'/g) || []).length, 3, 'Artwork is requested only for the playing song (missing or failed) and for a list cover that failed');
 });

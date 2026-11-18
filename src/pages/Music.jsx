@@ -142,7 +142,8 @@ function Artwork({ src, onError, className = '', ...props }) {
   const url = usableArt(src) && src !== failed ? src : EMPTY_ART;
   // An unusable URL (for example a bare path) counts as a failed load, without requesting it.
   const invalid = Boolean(src) && src !== EMPTY_ART && !usableArt(src);
-  const onErrorRef = useRef(onError); onErrorRef.current = onError;
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onErrorRef.current = onError; });
   useEffect(() => { if (invalid) onErrorRef.current?.(); }, [invalid, src]);
   return <img {...props} className={`music-artwork${className ? ` ${className}` : ''}`} src={url} alt="" onError={(event) => { if (url === EMPTY_ART) return; setFailed(url); onError?.(event); }} />;
 }
