@@ -1,4 +1,4 @@
-import { cookie, hash, id, json, now, passwordHash, sessionCookie, token, verifyPassword, verifyTurnstileToken } from './shared.js';
+import { cookie, hash, id, json, now, passwordHash, sessionCookie, token, verifyPassword, verifyTurnstileToken, loginRequired } from './shared.js';
 import { handleProviderRequest } from './providers.js';
 import { handleFavoriteRequest } from './favorites.js';
 import { handleLibraryRequest } from './library.js';
@@ -70,7 +70,7 @@ export async function handleLuriMusic(request, env) {
   const action = pathname.startsWith('/api/luri-music/') ? pathname.slice('/api/luri-music/'.length) : pathname.slice('/api/'.length);
   if (action === 'auth/me') { const user = await currentUser(request, env, true); return json({ user: await userPayload(user), sessionExpiresAt: user?.session_expires_at || null, turnstile: { enabled: Boolean(env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY), siteKey: env.TURNSTILE_SITE_KEY || '' } }); }
   if (action === 'preferences' && request.method === 'PATCH') {
-    const user = await currentUser(request, env); if (!user) return json({ error: '请先登录' }, 401);
+    const user = await currentUser(request, env); if (!user) return loginRequired();
     const data = await body(request); const requestedQuality = String(data.playbackQuality || '').toLowerCase();
     if (!PLAYBACK_QUALITIES.has(requestedQuality)) return json({ error: '不支持的音质设置' }, 400);
     const playbackQuality = requestedQuality === 'auto' ? '128k' : requestedQuality;
@@ -149,7 +149,7 @@ export async function handleLuriMusic(request, env) {
   if (action === 'admin/logout') return json({ ok: true }, 200, { 'set-cookie': sessionCookie(ADMIN_COOKIE, '', 0) });
   if (action === 'auth/password' && request.method === 'POST') {
     const user = await currentUser(request, env); const data = await body(request);
-    if (!user) return json({ error: '请先登录' }, 401);
+    if (!user) return loginRequired();
     const row = await env.LURI_MUSIC_DB.prepare('SELECT password_hash FROM luri_music_users WHERE id=?').bind(user.id).first();
     if (!await verifyPassword(data.currentPassword || '', row.password_hash)) return json({ error: '旧密码错误' }, 400);
     if (!validPassword(data.password)) return json({ error: '新密码至少需要 8 位' }, 400);

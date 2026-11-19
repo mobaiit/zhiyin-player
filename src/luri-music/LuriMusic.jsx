@@ -3,12 +3,13 @@ import Music from '../pages/Music';
 import ProviderClient, { normalizeProviderConnection, verifyProviderConnection } from './ProviderClient';
 import Turnstile from './Turnstile';
 import { ConfirmDialog, Spinner, Toast } from './UiFeedback';
+import { LOGIN_REQUIRED, reportSessionExpired, SESSION_EXPIRED_EVENT } from './session';
 import './luri-music.css';
 import './auth-ux.css';
 import './account-provider.css';
 import './ui-feedback.css';
 
-const api = async (path, options = {}) => { const response = await fetch(`/api/${path}`, { credentials: 'same-origin', headers: { 'content-type': 'application/json' }, ...options }); const data = await response.json().catch(() => ({})); if (!response.ok) throw Error(data.error || '请求失败，请稍后重试'); return data; };
+const api = async (path, options = {}) => { const response = await fetch(`/api/${path}`, { credentials: 'same-origin', headers: { 'content-type': 'application/json' }, ...options }); const data = await response.json().catch(() => ({})); if (!response.ok) { if (response.status === 401 && data.code === LOGIN_REQUIRED) reportSessionExpired(); throw Error(data.error || '请求失败，请稍后重试'); } return data; };
 const ANNOUNCEMENT_DISMISSED = 'luri.music.announcement.dismissed.v2';
 const ACCOUNT_CACHE_KEY = 'luri.music.account.v1';
 const TERMS_VERSION = '2026-09-22.1';
@@ -69,6 +70,22 @@ export default function LuriMusic({ active = true, standalone = false, docsEnabl
   const loadProviders = useCallback(async (identity = null) => { const data = await api('providers'); const items = data.items || []; const quality = data.preferences?.playbackQuality === 'auto' ? '128k' : data.preferences?.playbackQuality || '128k'; setProviders(items); setPlaybackQuality(quality); const snapshot = identity || readAccountCache(); if (snapshot) writeAccountCache({ ...snapshot, providers: items, playbackQuality: quality }); return items; }, []);
   const refresh = useCallback(async () => { const data = await api('auth/me'); const nextTurnstile = data.turnstile || { enabled: false, siteKey: '' }; setUser(data.user || null); setTurnstile(nextTurnstile); if (data.user && data.sessionExpiresAt) await loadProviders({ user: data.user, providers: [], playbackQuality: '128k', turnstile: nextTurnstile, expiresAt: data.sessionExpiresAt }); else { clearAccountCache(); setProviders([]); setPlaybackQuality('128k'); } return data.user; }, [loadProviders]);
   useEffect(() => { if (cachedAccount) return; refresh().catch((error) => notify('加载失败', error.message, 'error')).finally(() => setBooting(false)); }, [cachedAccount, refresh, notify]);
+  // The page signs in from a cached account without asking the server, so a session ended
+  // elsewhere (password changed, signed out, expired) is only noticed when a request fails.
+  // Sign this device out once and ask to log in again instead of blaming the Provider.
+  const userRef = useRef(user);
+  useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => {
+    const expire = () => {
+      if (!userRef.current) return;
+      userRef.current = null;
+      clearAccountCache(); setUser(null); setProviders([]); setPlaybackQuality('128k');
+      setAuthMode('login'); setDialog('auth'); setMenuOpen(false);
+      notify('登录已失效', '账号可能在其他设备上修改了密码或退出了登录，请重新登录', 'warning');
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, expire);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, expire);
+  }, [notify]);
   const activeProvider = providers.find((provider) => provider.active) || null;
   const providerClient = useMemo(() => activeProvider ? new ProviderClient(activeProvider, () => loadProviders().catch(() => {})) : null, [activeProvider, loadProviders]);
   const openAuth = () => { setAuthMode('login'); setDialog('auth'); setMenuOpen(false); };

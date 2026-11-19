@@ -1,5 +1,8 @@
 const encoder = new TextEncoder();
 export const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers } });
+// No valid session: never signed in, expired, signed out, or the password was changed on another
+// device. The code lets the client tell this apart from a Provider rejecting its credentials.
+export const loginRequired = () => json({ error: '请先登录', code: 'login_required' }, 401);
 export const now = () => new Date().toISOString();
 export const id = () => crypto.randomUUID();
 export const token = () => [...crypto.getRandomValues(new Uint8Array(32))].map((n) => n.toString(16).padStart(2, '0')).join('');

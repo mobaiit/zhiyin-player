@@ -1,4 +1,4 @@
-import { json, now } from './shared.js';
+import { json, now, loginRequired } from './shared.js';
 import { songIdFor } from '../../shared/song-identity.js';
 import { parseUserData, serializeUserData } from './user-data.js';
 
@@ -33,7 +33,7 @@ export const sanitizeFavorites = (items) => {
 };
 
 export async function handleFavoriteRequest(request, env, user) {
-  if (!user) return json({ error: '请先登录' }, 401);
+  if (!user) return loginRequired();
   if (request.method === 'GET') {
     const row = await env.LURI_MUSIC_DB.prepare('SELECT favorites_json,favorites_updated_at FROM luri_music_users WHERE id=?').bind(user.id).first();
     const items = sanitizeFavorites(parseUserData(row?.favorites_json).favorites);

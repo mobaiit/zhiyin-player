@@ -1,4 +1,4 @@
-import { id, json, now } from './shared.js';
+import { id, json, now, loginRequired } from './shared.js';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -361,7 +361,7 @@ async function prepareCredential(manifest, providerUrl, data, user) {
 const publicConfig = (row, activeId, presentation = null) => ({ id: row.id, providerId: row.provider_id, providerUrl: row.provider_url, displayName: row.display_name, protocolVersion: row.protocol_version, connectionType: row.auth_type === 'connection' ? (row.connection_type === 'official' ? 'official' : 'third_party') : row.connection_type || 'third_party', status: row.auth_type === 'connection' ? 'configured' : row.cached_status, presentation, lastSyncedAt: row.last_synced_at, active: row.id === activeId, createdAt: row.created_at });
 
 export async function handleProviderRequest(request, env, action, user) {
-  if (!user) return json({ error: '请先登录' }, 401);
+  if (!user) return loginRequired();
   if (action === 'providers' && request.method === 'GET') {
     const [configs, preference] = await Promise.all([
       env.LURI_MUSIC_DB.prepare('SELECT * FROM luri_music_provider_configs WHERE user_id=? ORDER BY updated_at DESC').bind(user.id).all(),

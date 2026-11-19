@@ -58,3 +58,50 @@ test('settings group account, playback and about rows and hide sign-in-only rows
   assert.doesNotMatch(settings, /activeProvider\?\.name\b/, 'Providers expose displayName');
   assert.doesNotMatch(settings, /登录后设置|登录后配置|请先登录/);
 });
+
+test('every signed-in endpoint answers an ended session with code login_required', async () => {
+  // A cookie whose session is gone: the user lookup finds nothing.
+  for (const [method, path] of [['GET', 'library'], ['PUT', 'library'], ['GET', 'favorites'], ['PUT', 'favorites'], ['GET', 'providers'], ['POST', 'providers/p1/proxy'], ['PATCH', 'preferences'], ['POST', 'auth/password']]) {
+    const response = await handleLuriMusic(new Request(`https://example.test/api/${path}`, { method, headers: { 'content-type': 'application/json', cookie: 'zy_music_session=ended' }, ...(method === 'GET' ? {} : { body: '{}' }) }), { LURI_MUSIC_DB: fakeDatabase() });
+    assert.equal(response.status, 401, `${method} ${path}`);
+    assert.deepEqual(await response.json(), { error: '请先登录', code: 'login_required' }, `${method} ${path}`);
+  }
+});
+
+test('an ended session is reported once to the account shell, never as a Provider rejection', async () => {
+  const { createServer } = await import('vite');
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom', logLevel: 'silent' });
+  const originalFetch = globalThis.fetch; const originalWindow = globalThis.window;
+  try {
+    globalThis.window = new EventTarget(); let reported = 0;
+    window.addEventListener('zhiyin:session-expired', () => { reported += 1; });
+    const { default: ProviderClient } = await server.ssrLoadModule('/src/luri-music/ProviderClient.js');
+    const { sessionExpired } = await server.ssrLoadModule('/src/luri-music/session.js');
+    const client = new ProviderClient({ id: 'p1' });
+    globalThis.fetch = async () => Response.json({ error: '请先登录', code: 'login_required' }, { status: 401 });
+    await assert.rejects(client.request('search', { q: 'x' }), (error) => error.code === 'login_required' && error.message === '登录已失效，请重新登录');
+    assert.equal(reported, 1, 'The proxy reports an ended login');
+    globalThis.fetch = async () => Response.json({ error: 'Provider rejected', code: 'provider_access_denied' }, { status: 401 });
+    await assert.rejects(client.request('search', { q: 'x' }), (error) => error.code === 'provider_access_denied');
+    assert.equal(reported, 1, 'A Provider rejection is not a session problem');
+    globalThis.fetch = async () => Response.json({ error: '未找到可播放音源', code: 'no_candidate' }, { status: 400 });
+    await assert.rejects(client.request('search', { q: 'x' }), (error) => error.code === 'no_candidate', 'Top-level proxy codes reach the player');
+    assert.equal(await sessionExpired(Response.json({ code: 'login_required' }, { status: 401 })), true);
+    assert.equal(await sessionExpired(Response.json({ error: '邮箱或密码错误' }, { status: 401 })), false, 'A failed sign-in is not an ended session');
+    assert.equal(reported, 2);
+  } finally {
+    globalThis.fetch = originalFetch; globalThis.window = originalWindow;
+    await server.close();
+  }
+});
+
+test('the account shell signs this device out and asks to log in again', () => {
+  const shell = readFileSync(new URL('../src/luri-music/LuriMusic.jsx', import.meta.url), 'utf8');
+  assert.match(shell, /if \(!userRef\.current\) return;\s*userRef\.current = null;\s*clearAccountCache\(\); setUser\(null\); setProviders\(\[\]\);[\s\S]*?setAuthMode\('login'\); setDialog\('auth'\);[\s\S]*?notify\('登录已失效'/);
+  const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
+  assert.match(music, /const providerDenied = \(error\) => !loginExpired\(error\) && /, 'An ended login never shows a Provider access message');
+  assert.match(music, /if \(loginExpired\(error\)\) \{ setPlaying\(false\); setPlaybackState\('paused'\);/, 'Playback stops quietly instead of retrying or skipping');
+  assert.equal((music.match(/error\?\.code === 'provider_access_denied' \|\| error\?\.status === 401/g) || []).length, 1, 'Every access check goes through providerDenied');
+  const library = readFileSync(new URL('../src/luri-music/useMusicLibrary.js', import.meta.url), 'utf8');
+  assert.equal((library.match(/if \(await sessionExpired\(response\)\) \{ setSyncState\('pending'\); return; \}/g) || []).length, 2, 'Library load and save keep local changes and stay quiet');
+});

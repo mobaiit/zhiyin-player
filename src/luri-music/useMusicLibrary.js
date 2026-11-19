@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { sessionExpired } from './session';
 
 const EMPTY_LIBRARY = { playlists: [], history: [], settings: {}, updatedAt: null };
 const MAX_HISTORY = 200;
@@ -68,6 +69,8 @@ export default function useMusicLibrary(namespace, syncEnabled, notify) {
     syncingRef.current = true; setSyncState('syncing');
     try {
       const response = await fetch('/api/library', { method: 'PUT', credentials: 'same-origin', keepalive: leaving && body.length < KEEPALIVE_LIMIT, headers: { 'content-type': 'application/json' }, body });
+      // Changes stay in local storage and sync after signing in again.
+      if (await sessionExpired(response)) { setSyncState('pending'); return; }
       const data = await response.json().catch(() => ({}));
       if (response.status === 409 && data.library) {
         const merged = mergeLibraries(snapshot, data.library); serverUpdatedAtRef.current = data.updatedAt || data.library.updatedAt || null;
@@ -87,6 +90,7 @@ export default function useMusicLibrary(namespace, syncEnabled, notify) {
     if (!syncEnabled || !namespace) return undefined;
     const controller = new AbortController();
     fetch('/api/library', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal }).then(async (response) => {
+      if (await sessionExpired(response)) { setSyncState('pending'); return; }
       const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || '音乐库加载失败');
       if (controller.signal.aborted) return;
       serverUpdatedAtRef.current = data.updatedAt || data.library?.updatedAt || null;

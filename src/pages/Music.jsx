@@ -6,9 +6,14 @@ import PlayerTitle from '../components/PlayerTitle';
 import { activateOverlayFocus } from '../components/useOverlayFocus';
 import { getTheme, setTheme, subscribeToTheme } from '../components/theme';
 import useMusicLibrary from '../luri-music/useMusicLibrary';
+import { LOGIN_REQUIRED, sessionExpired } from '../luri-music/session';
 import './Music.css';
 import './MusicQ.css';
 
+// An expired login is handled by the account shell (it asks to sign in again), so it is never
+// reported as the Provider refusing access.
+const loginExpired = (error) => error?.code === LOGIN_REQUIRED;
+const providerDenied = (error) => !loginExpired(error) && (error?.code === 'provider_access_denied' || error?.status === 401 || error?.status === 403);
 const EMPTY_ART = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23ece9e1"/%3E%3Ccircle cx="200" cy="200" r="106" fill="%23c8c2b7"/%3E%3Ccircle cx="200" cy="200" r="22" fill="%23111111"/%3E%3C/svg%3E';
 const TEXT = { title: '\u97f3\u4e50', discover: '\u53d1\u73b0\u97f3\u4e50', likes: '\u6211\u7684\u559c\u6b22', search: '\u641c\u7d22', searchHint: '\u641c\u7d22\u6b4c\u66f2\u3001\u827a\u4eba\u6216\u4e13\u8f91', searching: '\u6b63\u5728\u641c\u7d22\u2026', queue: '\u64ad\u653e\u961f\u5217', tracks: '\u9996\u6b4c\u66f2', noResult: '\u6682\u65e0\u641c\u7d22\u7ed3\u679c', noTrack: '\u6682\u65e0\u6b4c\u66f2', choose: '\u8bf7\u641c\u7d22\u540e\u9009\u62e9\u6b4c\u66f2', now: '\u6b63\u5728\u64ad\u653e', play: '\u64ad\u653e', pause: '\u6682\u505c', prev: '\u4e0a\u4e00\u9996', next: '\u4e0b\u4e00\u9996', load: '\u6b63\u5728\u83b7\u53d6\u53ef\u64ad\u653e\u6587\u4ef6\u2026', unavailable: '\u6ca1\u6709\u627e\u5230\u53ef\u76f4\u64ad\u7684\u97f3\u9891\u6587\u4ef6', source: '\u516c\u5f00\u97f3\u9891\u76ee\u5f55', disclaimer: '\u672c\u9875\u4ec5\u63d0\u4f9b\u641c\u7d22\u4e0e\u64ad\u653e\u754c\u9762\uff0c\u4e0d\u6258\u7ba1\u3001\u4e0d\u590d\u5236\u3001\u4e0d\u4ee3\u7406\u4efb\u4f55\u97f3\u9891\u6587\u4ef6\u3002\u8bf7\u4ec5\u4f7f\u7528\u5df2\u83b7\u6388\u6743\u7684\u97f3\u6e90\uff0c\u5e76\u9075\u5b88\u5176\u670d\u52a1\u6761\u6b3e\u4e0e\u9002\u7528\u6cd5\u5f8b\u3002' };
 const time = (value = 0) => Number.isFinite(value) ? `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}` : '0:00';
@@ -416,7 +421,8 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       }
     }).catch((error) => {
       if (controller.signal.aborted) return;
-      if (error?.code === 'provider_access_denied' || error?.status === 401 || error?.status === 403) {
+      if (loginExpired(error)) { setPlaying(false); setPlaybackState('paused'); clearMediaDeadline(); clearRandomBudget(); return; }
+      if (providerDenied(error)) {
         setPlaying(false); setPlaybackTrackId(resolvingTrack.songId); setPlaybackState('error'); clearMediaDeadline();
         if (!restoreRandomSwitch('Provider 认证失败，已恢复上一首')) { playMode.current = 'manual'; showToast('Provider 认证失败，请重新配置认证信息', 'warning'); }
         return;
@@ -584,6 +590,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       let wrote = false; let synced = false;
       try {
         const response = await fetch('/api/favorites', { method: 'PUT', credentials: 'same-origin', keepalive, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items }) });
+        await sessionExpired(response);
         const payload = response.ok ? await response.json() : null;
         if (response.ok) { rememberSyncedAt(payload?.updatedAt); wrote = true; }
         const latestSnapshot = JSON.stringify(minimalFavorites(likedTracksRef.current));
@@ -603,6 +610,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       state.pulling = true; const mutation = favoriteMutationRef.current;
       try {
         const response = await fetch('/api/favorites', { credentials: 'same-origin', cache: 'no-store' });
+        await sessionExpired(response);
         const payload = response.ok ? await response.json() : null;
         if (!stopped && response.ok && mutation === favoriteMutationRef.current && !readDirtySince()) {
           const items = canonicalTracks(payload?.items);
@@ -656,7 +664,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (!lyricTrack) { setLyrics(''); setTranslation(''); setLyricsState(''); return undefined; }
     if (lyricTrack.sourceType === 'local') { setLyrics(''); setTranslation(''); setLyricsState('本地歌曲暂不提供在线歌词'); return undefined; }
     const controller = new AbortController(); setLyrics(''); setTranslation(''); setLyricsState('正在加载歌词…');
-    musicRequest('lyrics', { songId: lyricTrack.songId, title: lyricTrack.title, artist: lyricTrack.artist, album: lyricTrack.album, binding: lyricTrack.binding }, controller.signal).then(providerPayload).then((payload) => { if (!controller.signal.aborted) { const text = payload.lyrics || payload.translation || ''; setLyrics(payload.lyrics || ''); setTranslation(payload.translation || ''); setLyricsState(text ? '' : '暂无匹配歌词'); } }).catch((error) => { if (!controller.signal.aborted) { setLyricsState('暂无匹配歌词'); if (error?.code === 'provider_access_denied' || error?.status === 401 || error?.status === 403) showToast('Provider 没有访问权限，请重新配置或联系服务提供方', 'warning'); } });
+    musicRequest('lyrics', { songId: lyricTrack.songId, title: lyricTrack.title, artist: lyricTrack.artist, album: lyricTrack.album, binding: lyricTrack.binding }, controller.signal).then(providerPayload).then((payload) => { if (!controller.signal.aborted) { const text = payload.lyrics || payload.translation || ''; setLyrics(payload.lyrics || ''); setTranslation(payload.translation || ''); setLyricsState(text ? '' : '暂无匹配歌词'); } }).catch((error) => { if (!controller.signal.aborted) { setLyricsState('暂无匹配歌词'); if (providerDenied(error)) showToast('Provider 没有访问权限，请重新配置或联系服务提供方', 'warning'); } });
     return () => controller.abort();
   }, [current?.songId, musicRequest]);
   const stopRandom = () => {
@@ -939,8 +947,9 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (controller.signal.aborted || session !== randomSession.current) return;
       startRandomBatch(tracks, payload.singer || '');
     } catch (error) {
-      if (!controller.signal.aborted && session === randomSession.current) {
-        const accessDenied = error?.code === 'provider_access_denied' || error?.status === 401 || error?.status === 403;
+      if (loginExpired(error)) { stopRandom(); setPlaybackState('paused'); }
+      else if (!controller.signal.aborted && session === randomSession.current) {
+        const accessDenied = providerDenied(error);
         if (!restoreRandomSwitch(accessDenied ? 'Provider 没有访问权限，已恢复上一首' : '下一首加载失败，已恢复上一首')) { playMode.current = 'manual'; showToast(accessDenied ? 'Provider 没有访问权限，请重新配置或联系服务提供方' : '暂时没有可播放的随机歌曲，请重试', accessDenied ? 'warning' : 'error'); }
       }
     } finally {
@@ -1054,7 +1063,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       setResultPage(page); setHasMoreResults(Boolean(payload.hasMore && incoming.length)); setSearchState('');
     } catch (error) {
       if (controller.signal.aborted || searchRequestRef.current !== controller || activeSearchRef.current !== keyword) return;
-      const accessDenied = error?.code === 'provider_access_denied' || error?.status === 401 || error?.status === 403; setHasMoreResults(false); setSearchState(''); showToast(accessDenied ? 'Provider 没有访问权限，请重新配置或联系服务提供方' : '搜索服务暂时不可用', accessDenied ? 'warning' : 'error');
+      const accessDenied = providerDenied(error); setHasMoreResults(false); setSearchState(''); if (!loginExpired(error)) showToast(accessDenied ? 'Provider 没有访问权限，请重新配置或联系服务提供方' : '搜索服务暂时不可用', accessDenied ? 'warning' : 'error');
     } finally {
       if (searchRequestRef.current === controller) { searchRequestRef.current = null; loadingMoreRef.current = false; setLoadingMore(false); }
     }

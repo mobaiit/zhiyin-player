@@ -1,4 +1,7 @@
+import { LOGIN_REQUIRED, reportSessionExpired } from './session';
+
 const PROVIDER_ERROR_MESSAGES = {
+  login_required: '登录已失效，请重新登录',
   connection_credential_bound: '该连接凭据已绑定其他知音账号，请使用原账号或更换凭据',
   invalid_connection_credential: '连接凭据无效或当前不可用，请检查后重试',
   activation_code_used: '该连接凭据已绑定其他知音账号，请使用原账号或更换凭据',
@@ -19,6 +22,7 @@ const api = async (path, options = {}) => {
   if (!response.ok) {
     const detail = data.error && typeof data.error === 'object' ? data.error : null;
     const code = detail?.code || data.code || (response.status === 401 || response.status === 403 ? 'provider_access_denied' : 'provider_request_failed');
+    if (code === LOGIN_REQUIRED) reportSessionExpired();
     const error = new Error(providerMessage(code, detail?.message || data.error || 'Provider 配置读取失败'));
     error.status = response.status;
     error.code = code;
@@ -54,7 +58,9 @@ const providerError = async (response) => {
   if (response.ok) return response;
   const data = await response.clone().json().catch(() => ({}));
   const detail = data.error && typeof data.error === 'object' ? data.error : null;
-  const code = detail?.code || (response.status === 401 || response.status === 403 ? 'provider_access_denied' : 'provider_request_failed');
+  // The proxy puts its own codes at the top level; an expired login must not read as a Provider rejection.
+  const code = detail?.code || data.code || (response.status === 401 || response.status === 403 ? 'provider_access_denied' : 'provider_request_failed');
+  if (code === LOGIN_REQUIRED) reportSessionExpired();
   const error = new Error(providerMessage(code, detail?.message || data.error || `Provider 请求失败（${response.status}）`));
   error.status = response.status;
   error.code = code;
