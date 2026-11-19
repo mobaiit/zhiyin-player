@@ -293,7 +293,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const mediaActionsRef = useRef({ play: () => {}, pause: () => {}, previous: () => {}, next: () => {} });
   const playRejectionRef = useRef(() => {});
   const randomHistoryKey = 'luri.music.random-history.v1'; const storedRandomHistory = useRef(readSession(randomHistoryKey));
-  const randomRequest = useRef(null); const randomSession = useRef(0); const randomSwitchRef = useRef(null); const randomListWriteIdRef = useRef(''); const pendingRestoreRef = useRef(null); const playMode = useRef('manual'); const playbackListRef = useRef('');
+  const randomRequest = useRef(null); const randomSession = useRef(0); const randomSwitchRef = useRef(null); const randomListWriteIdRef = useRef(''); const historyStartIdRef = useRef(''); const pendingRestoreRef = useRef(null); const playMode = useRef('manual'); const playbackListRef = useRef('');
   const shufflePlaybackRef = useRef({ queueKey: '', history: [], index: -1 });
 
   useEffect(() => {
@@ -483,7 +483,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     const stale = (items) => items.some((track) => track.songId === song.songId && track.art !== url);
     if (storableArt(url) && (library.history.some((track) => track.songId === song.songId && track.art !== url) || library.playlists.some((playlist) => stale(playlist.tracks)))) {
       const art = (track) => track.songId === song.songId ? { ...track, art: url } : track;
-      updateLibrary((value) => ({ ...value, history: value.history.map(art), playlists: value.playlists.map((playlist) => stale(playlist.tracks) ? { ...playlist, tracks: playlist.tracks.map(art) } : playlist) }));
+      updateLibrary((value) => ({ ...value, history: value.history.map(art), playlists: value.playlists.map((playlist) => stale(playlist.tracks) ? { ...playlist, tracks: playlist.tracks.map(art) } : playlist) }), { deferSync: true });
     }
     if (!likedTracksRef.current.some((track) => sameFavorite(track, song))) return;
     const next = likedTracksRef.current.map((track) => sameFavorite(track, song) ? { ...track, art: url, binding: binding || track.binding } : track);
@@ -728,11 +728,12 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     }
     if (audio.current) { ignoreAudioErrorRef.current = true; audio.current.pause(); audio.current.removeAttribute('src'); audio.current.load(); }
     setPlaying(false); setProgress(0); setDuration(0);
-    setCurrentId(id);
+    historyStartIdRef.current = id; setCurrentId(id);
   };
   const next = (automatic = false) => {
     const queue = playbackQueue.length ? playbackQueue : activeTracks; if (!queue.length) return;
     if (automatic && playbackMode === 'repeat-one' && current) {
+      historyStartIdRef.current = currentId;
       if (audio.current) { audio.current.currentTime = 0; setProgress(0); audio.current.play().catch(handlePlayRejection); }
       return;
     }
@@ -889,7 +890,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       rememberRandomTrack(selected, payload.singer || '');
       randomListWriteIdRef.current = selected.songId;
       if (randomSwitchRef.current) randomSwitchRef.current.targetId = selected.songId;
-      playbackListRef.current = 'random'; clearMediaDeadline(); setPlaybackQueue(tracks); setCurrentId(selected.songId); setPlaybackTrackId(selected.songId); setPlaybackState('resolving');
+      playbackListRef.current = 'random'; clearMediaDeadline(); setPlaybackQueue(tracks); historyStartIdRef.current = selected.songId; setCurrentId(selected.songId); setPlaybackTrackId(selected.songId); setPlaybackState('resolving');
     } catch (error) {
       if (!controller.signal.aborted && session === randomSession.current) {
         const accessDenied = error?.code === 'provider_access_denied' || error?.status === 401 || error?.status === 403;
@@ -1048,7 +1049,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const recordHistory = (track) => {
     const snapshot = canonicalTrack(track); if (!snapshot) return;
     const now = new Date().toISOString();
-    updateLibrary((value) => { const previous = value.history.find((item) => item.songId === snapshot.songId); return { ...value, history: [{ ...snapshot, playedAt: now, playCount: Number(previous?.playCount || 0) + 1 }, ...value.history.filter((item) => item.songId !== snapshot.songId)].slice(0, 200) }; });
+    updateLibrary((value) => { const previous = value.history.find((item) => item.songId === snapshot.songId); return { ...value, history: [{ ...snapshot, playedAt: now, playCount: Number(previous?.playCount || 0) + 1 }, ...value.history.filter((item) => item.songId !== snapshot.songId)].slice(0, 200) }; }, { deferSync: true });
   };
   const acceptLocalFiles = (fileList) => {
     const files = [...(fileList || [])].filter((file) => file.type.startsWith('audio/') || /\.(mp3|flac|wav|m4a|aac|ogg|opus)$/i.test(file.name));
@@ -1243,7 +1244,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     {!visibleTracks.length && <div className="music-app-empty"><strong>{isChartView ? chartState || (chartLoading ? '正在加载榜单…' : '暂无榜单数据') : '这里还没有歌曲'}</strong><span>{isChartView ? '可以切换榜单或点击刷新' : listView === 'local' ? '选择本地音频即可开始播放' : listView === 'playlist' ? '可以从搜索、榜单或历史中加入歌曲' : '播放或添加歌曲后会显示在这里'}</span></div>}
   </div>;
   return <main className={`music-page music-app-shell view-${listView} mobile-view-${mobileView}${playing ? ' is-playing' : ''}${isSearching ? ' is-searching' : ''}`}>
-    <audio ref={audio} onPlay={() => { setPlaying(true); setPlaybackTrackId(currentId); setPlaybackState('playing'); }} onPause={() => { setPlaying(false); setPlaybackState((state) => state === 'loading' || state === 'resolving' ? state : 'paused'); }} onLoadStart={() => setPlaybackState('loading')} onWaiting={() => { setPlaybackState('loading'); beginMediaDeadline(currentId); }} onPlaying={() => { clearMediaDeadline(); failedPlaybackIdsRef.current.clear(); playbackRefreshModesRef.current.delete(currentId); setPlaybackState('playing'); if (current) recordHistory(current); if (randomListWriteIdRef.current === currentId && current) { rememberRandomListTrack(current); randomListWriteIdRef.current = ''; } if (randomSwitchRef.current?.targetId === currentId) randomSwitchRef.current = null; }} onError={(event) => { if (ignoreAudioErrorRef.current) { ignoreAudioErrorRef.current = false; return; } clearMediaDeadline(); const mediaError = event.currentTarget.error?.code; handlePlaybackFailure('播放地址无法加载，已尝试刷新音源', mediaError === 3 || mediaError === 4 ? 'decode' : 'url'); }} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onLoadedMetadata={handleLoadedMetadata} onEnded={() => { clearMediaDeadline(); next(true); }} />
+    <audio ref={audio} onPlay={() => { setPlaying(true); setPlaybackTrackId(currentId); setPlaybackState('playing'); }} onPause={() => { setPlaying(false); setPlaybackState((state) => state === 'loading' || state === 'resolving' ? state : 'paused'); }} onLoadStart={() => setPlaybackState('loading')} onWaiting={() => { setPlaybackState('loading'); beginMediaDeadline(currentId); }} onPlaying={() => { clearMediaDeadline(); failedPlaybackIdsRef.current.clear(); playbackRefreshModesRef.current.delete(currentId); setPlaybackState('playing'); if (current && historyStartIdRef.current === currentId) { historyStartIdRef.current = ''; recordHistory(current); } if (randomListWriteIdRef.current === currentId && current) { rememberRandomListTrack(current); randomListWriteIdRef.current = ''; } if (randomSwitchRef.current?.targetId === currentId) randomSwitchRef.current = null; }} onError={(event) => { if (ignoreAudioErrorRef.current) { ignoreAudioErrorRef.current = false; return; } clearMediaDeadline(); const mediaError = event.currentTarget.error?.code; handlePlaybackFailure('播放地址无法加载，已尝试刷新音源', mediaError === 3 || mediaError === 4 ? 'decode' : 'url'); }} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onLoadedMetadata={handleLoadedMetadata} onEnded={() => { clearMediaDeadline(); next(true); }} />
     <Toast toast={toast} onClose={() => setToast(null)} />
     <div className={`music-artwork-backdrop${activeArtworkBackground ? ' is-visible' : ''}`} style={activeArtworkBackground ? { backgroundImage: `url(${JSON.stringify(activeArtworkBackground)})` } : undefined} aria-hidden="true" />
     <aside className="music-app-sidebar">

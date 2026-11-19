@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const EMPTY_LIBRARY = { playlists: [], history: [], settings: {}, updatedAt: null };
 const MAX_HISTORY = 200;
+// Playlist edits sync almost at once; play history and artwork write-backs wait and share one request.
+const EDIT_SYNC_DELAY_MS = 1800;
+const DEFERRED_SYNC_DELAY_MS = 30 * 1000;
+// Browsers reject keepalive bodies over 64 KB.
+const KEEPALIVE_LIMIT = 60 * 1024;
 const storageKey = (namespace) => `luri.music.library.v1.${namespace || 'guest'}`;
 
 const readLibrary = (namespace) => {
@@ -41,38 +46,43 @@ const mergeLibraries = (local, remote) => {
 
 export default function useMusicLibrary(namespace, syncEnabled, notify) {
   const [library, setLibrary] = useState(() => readLibrary(namespace));
-  const [syncState, setSyncState] = useState('local');
+  const [syncState, setSyncState] = useState('local'); const [syncRetry, setSyncRetry] = useState(0);
   const namespaceRef = useRef(namespace); const dirtyRef = useRef(false); const serverUpdatedAtRef = useRef(null); const syncTimerRef = useRef(null);
+  const urgentRef = useRef(false); const versionRef = useRef(0); const libraryRef = useRef(library); const syncingRef = useRef(false);
 
   const saveLocal = useCallback((next) => {
     try { localStorage.setItem(storageKey(namespaceRef.current), JSON.stringify(storableLibrary(next))); } catch { /* Storage may be unavailable. */ }
   }, []);
 
-  const updateLibrary = useCallback((updater) => {
+  const updateLibrary = useCallback((updater, { deferSync = false } = {}) => {
     setLibrary((current) => {
       const updated = typeof updater === 'function' ? updater(current) : updater;
       const next = { ...updated, updatedAt: new Date().toISOString() };
-      dirtyRef.current = true; saveLocal(next); return next;
+      dirtyRef.current = true; versionRef.current += 1; if (!deferSync) urgentRef.current = true; saveLocal(next); return next;
     });
   }, [saveLocal]);
 
-  const syncNow = useCallback(async (snapshot) => {
-    if (!syncEnabled || !namespaceRef.current || !dirtyRef.current) return;
-    setSyncState('syncing');
+  const syncNow = useCallback(async (snapshot, { leaving = false } = {}) => {
+    if (!syncEnabled || !namespaceRef.current || !dirtyRef.current || syncingRef.current) return;
+    const version = versionRef.current; const body = JSON.stringify({ library: storableLibrary(snapshot), baseUpdatedAt: serverUpdatedAtRef.current });
+    syncingRef.current = true; setSyncState('syncing');
     try {
-      const response = await fetch('/api/library', { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ library: storableLibrary(snapshot), baseUpdatedAt: serverUpdatedAtRef.current }) });
+      const response = await fetch('/api/library', { method: 'PUT', credentials: 'same-origin', keepalive: leaving && body.length < KEEPALIVE_LIMIT, headers: { 'content-type': 'application/json' }, body });
       const data = await response.json().catch(() => ({}));
       if (response.status === 409 && data.library) {
         const merged = mergeLibraries(snapshot, data.library); serverUpdatedAtRef.current = data.updatedAt || data.library.updatedAt || null;
         dirtyRef.current = true; setLibrary(merged); saveLocal(merged); setSyncState('pending'); return;
       }
       if (!response.ok) throw new Error(data.error || '音乐库同步失败');
-      serverUpdatedAtRef.current = data.updatedAt || null; dirtyRef.current = false; setSyncState('synced');
-    } catch (error) { setSyncState('pending'); notify?.('同步稍后重试', error.message, 'warning'); }
+      serverUpdatedAtRef.current = data.updatedAt || null;
+      // A change made while the request was in flight still needs its own sync.
+      if (version === versionRef.current) { dirtyRef.current = false; urgentRef.current = false; setSyncState('synced'); } else { setSyncState('pending'); setSyncRetry((value) => value + 1); }
+    } catch (error) { setSyncState('pending'); if (!leaving) notify?.('同步稍后重试', error.message, 'warning'); }
+    finally { syncingRef.current = false; }
   }, [notify, saveLocal, syncEnabled]);
 
   useEffect(() => {
-    namespaceRef.current = namespace; dirtyRef.current = false; serverUpdatedAtRef.current = null;
+    namespaceRef.current = namespace; dirtyRef.current = false; urgentRef.current = false; serverUpdatedAtRef.current = null;
     const local = readLibrary(namespace); setLibrary(local); setSyncState(syncEnabled ? 'syncing' : 'local');
     if (!syncEnabled || !namespace) return undefined;
     const controller = new AbortController();
@@ -87,11 +97,25 @@ export default function useMusicLibrary(namespace, syncEnabled, notify) {
   }, [namespace, notify, saveLocal, syncEnabled]);
 
   useEffect(() => {
+    libraryRef.current = library;
     if (!syncEnabled || !dirtyRef.current) return undefined;
     if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
-    syncTimerRef.current = window.setTimeout(() => { syncTimerRef.current = null; void syncNow(library); }, 1800);
+    syncTimerRef.current = window.setTimeout(() => { syncTimerRef.current = null; void syncNow(libraryRef.current); }, urgentRef.current ? EDIT_SYNC_DELAY_MS : DEFERRED_SYNC_DELAY_MS);
     return () => { if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current); };
-  }, [library, syncEnabled, syncNow]);
+  }, [library, syncEnabled, syncNow, syncRetry]);
+
+  // Deferred changes must not wait for a timer that never fires once the tab is hidden or closed.
+  useEffect(() => {
+    if (!syncEnabled) return undefined;
+    const flush = (event) => {
+      if (event.type === 'visibilitychange' && document.visibilityState !== 'hidden') return;
+      if (!dirtyRef.current) return;
+      if (syncTimerRef.current) { window.clearTimeout(syncTimerRef.current); syncTimerRef.current = null; }
+      void syncNow(libraryRef.current, { leaving: true });
+    };
+    document.addEventListener('visibilitychange', flush); window.addEventListener('pagehide', flush);
+    return () => { document.removeEventListener('visibilitychange', flush); window.removeEventListener('pagehide', flush); };
+  }, [syncEnabled, syncNow]);
 
   useEffect(() => () => { if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current); }, []);
   return { library, updateLibrary, syncState };

@@ -154,3 +154,13 @@ test('mobile mini-player keeps accessible hit areas while drawing lighter contro
   assert.match(player, /\.music-app-player \.music-controls \.play-button::before \{[^}]*inset: 5px;/);
   assert.match(player, /\.music-app-player \.music-controls \.music-icon-button \{[^}]*width: 44px;[^}]*height: 44px;[^}]*background: transparent;/);
 });
+
+test('play history counts each song start once and syncs lazily', () => {
+  const hook = readFileSync(new URL('../src/luri-music/useMusicLibrary.js', import.meta.url), 'utf8');
+  assert.match(music, /if \(current && historyStartIdRef\.current === currentId\) \{ historyStartIdRef\.current = ''; recordHistory\(current\); \}/, 'Resume, seek and buffering fire playing again but do not count');
+  assert.equal((music.match(/historyStartIdRef\.current = (?:id|currentId|selected\.songId);/g) || []).length, 3, 'A new song, a repeat-one restart and a random pick start a play');
+  assert.match(music, /const recordHistory = [\s\S]*?\}, \{ deferSync: true \}\);\r?\n  \};/, 'History changes wait for the deferred sync');
+  assert.match(hook, /urgentRef\.current \? EDIT_SYNC_DELAY_MS : DEFERRED_SYNC_DELAY_MS/);
+  assert.match(hook, /document\.addEventListener\('visibilitychange', flush\); window\.addEventListener\('pagehide', flush\);/, 'Deferred changes are flushed when the page is hidden or closed');
+  assert.match(hook, /keepalive: leaving && body\.length < KEEPALIVE_LIMIT/);
+});
