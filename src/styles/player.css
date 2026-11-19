@@ -1167,6 +1167,9 @@ html[data-theme="light"] .music-app-now.is-classic {
     font-weight: 650;
   }
 
+  /* Loading and empty messages keep both lines' height, so the cover above never moves. */
+  .music-app-now__lyric-preview .is-placeholder { font-size: 1rem; }
+
   .music-app-now .lyrics-body {
     position: relative;
     z-index: 1;

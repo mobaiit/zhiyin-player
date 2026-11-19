@@ -99,6 +99,13 @@ test('phone transport centres play between four equal slots', () => {
   assert.match(player, /\.music-app-now__controls \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\);/);
 });
 
+test('the phone lyric preview always takes two lines, so switching songs never moves the cover', () => {
+  const preview = music.slice(music.indexOf('className="music-app-now__lyric-preview"'), music.indexOf('</button>', music.indexOf('className="music-app-now__lyric-preview"')));
+  assert.match(preview, /lyricLines\[previewLyric \+ 1\]\?\.text \|\| '\\u00a0'/, 'The last line keeps an empty second line');
+  assert.match(preview, /<span className="is-placeholder">\{lyricsState \|\| '暂无歌词'\}<\/span><span aria-hidden="true">\{'\\u00a0'\}<\/span>/, 'Loading and no-lyrics messages keep two lines');
+  assert.match(player, /\.music-app-now__lyric-preview \.is-placeholder \{ font-size: 1rem; \}/, 'The message line is as tall as the playing line');
+});
+
 test('phone cover view previews the playing and next lyric lines', () => {
   assert.match(music, /className="music-app-now__lyric-preview"[\s\S]*?lyricLines\[previewLyric\]\?\.text[\s\S]*?lyricLines\[previewLyric \+ 1\]\?\.text/);
   assert.match(player, /\.music-app-now__controls \.music-app-now__like--controls,\n\.music-app-now__lyric-preview \{ display: none; \}/, 'Desktop already shows the full lyrics');
