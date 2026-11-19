@@ -155,6 +155,34 @@ test('mobile mini-player keeps accessible hit areas while drawing lighter contro
   assert.match(player, /\.music-app-player \.music-controls \.music-icon-button \{[^}]*width: 44px;[^}]*height: 44px;[^}]*background: transparent;/);
 });
 
+test('random play gives each song a fixed time to start and refreshes it only once', () => {
+  assert.match(music, /const RANDOM_TRACK_BUDGET_MS = 25000;/);
+  assert.match(music, /setCurrentId\(selected\.songId\); beginRandomBudget\(selected\.songId\);/, 'The budget starts when a random pick is selected');
+  assert.match(music, /beginRandomBudget\(track\.songId\); selectTrack\(track\.songId, inQueue \? null : randomBatchRef\.current\.tracks, 'random'\);/, 'Every song from the batch gets its own budget');
+  assert.match(music, /onPlaying=\{\(\) => \{ clearMediaDeadline\(\); clearRandomBudget\(\);/, 'Playing ends the budget');
+  assert.match(music, /randomBudgetExpiredRef\.current = \(songId\) => \{[\s\S]*?resolveRequestRef\.current\?\.abort\(\);[\s\S]*?playNextRandom\('这首歌加载超时，已自动播放下一首'\);/, 'An expired budget abandons the song and plays a backup');
+  assert.match(music, /if \(playMode\.current === 'random' && previous\) return false;/, 'Random play refreshes a failing song once');
+  assert.match(music, /if \(retryWithRefresh\(refreshMode\)\) \{ setToast\(\{ title: '正在重新获取音源'/, 'A retry says so instead of claiming the next song plays');
+  assert.match(music, /function playNextRandom\(message = '', recover = false\) \{\s*if \(message\) \{\s*showToast\(message, 'warning'\); randomFailuresRef\.current \+= 1;/, 'Skipping in random play is announced and counted');
+  assert.match(music, /if \(randomFailuresRef\.current >= RANDOM_FAILURE_LIMIT\) \{ stopRandom\(\);/, 'A run of failures stops random play instead of requesting batches forever');
+});
+
+test('random play works through one batch before asking the Provider again', () => {
+  const next = music.slice(music.indexOf('  const next = (automatic = false) => {'), music.indexOf('  const previous = () => {'));
+  assert.match(next, /if \(playMode\.current === 'random'\) \{ playNextRandom\('', !automatic\); return; \}\s*if \(playbackMode === 'shuffle'\)/, 'Next and auto-advance pick from the batch in every playback mode');
+  assert.doesNotMatch(next, /startRandom\(/, 'Skipping a song never requests a batch directly');
+  const previous = music.slice(music.indexOf('  const previous = () => {'), music.indexOf('  const toggle = () => {'));
+  assert.ok(previous.indexOf("playMode.current === 'random'") < previous.indexOf("playbackMode === 'shuffle'"), 'Previous walks random history before shuffle');
+  assert.match(music, /function unplayedRandomTracks\(\) \{ return randomBatchRef\.current\.tracks\.filter\(\(track\) => !randomTrackKeys\.current\.includes\(randomTrackKey\(track\)\)\); \}/);
+  const pick = music.slice(music.indexOf('  function playNextRandom('), music.indexOf('  const loadChart'));
+  assert.ok(pick.indexOf('unplayedRandomTracks()') < pick.indexOf('randomBatchRef.current.next') && pick.indexOf('randomBatchRef.current.next') < pick.indexOf('startRandom({ recover })'), 'Unplayed songs first, then the batch requested ahead, then a new request');
+  assert.match(music, /if \(playMode\.current === 'random'\) \{ randomFailuresRef\.current = 0; requestNextRandomBatch\(\); \}/, 'Each song that starts may request the next batch ahead');
+  assert.match(music, /if \(!batch\.tracks\.length \|\| batch\.next \|\| batch.request \|\| unplayedRandomTracks\(\)\.length\) return;/, 'The next batch is requested only once, while the last song plays');
+  assert.match(music, /onClick=\{startRandom\} disabled=\{randomLoading\}/, 'The home button always requests a fresh batch');
+  assert.doesNotMatch(music, /randomFallbackTracks/);
+  assert.doesNotMatch(music, /已尝试刷新音源|已强制刷新音源|重新解析后仍无法播放/, 'Skip messages describe what actually happened');
+});
+
 test('play history counts each song start once and syncs lazily', () => {
   const hook = readFileSync(new URL('../src/luri-music/useMusicLibrary.js', import.meta.url), 'utf8');
   assert.match(music, /if \(current && historyStartIdRef\.current === currentId\) \{ historyStartIdRef\.current = ''; recordHistory\(current\); \}/, 'Resume, seek and buffering fire playing again but do not count');

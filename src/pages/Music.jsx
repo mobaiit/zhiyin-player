@@ -26,6 +26,9 @@ const PLAYBACK_MODE_META = {
 const CHART_TYPES = [{ value: 'rising', label: '飙升榜' }, { value: 'new', label: '新歌榜' }, { value: 'original', label: '原创榜' }, { value: 'hot', label: '热歌榜' }];
 const CHART_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MEDIA_LOAD_TIMEOUT_MS = 20000;
+const RANDOM_TRACK_BUDGET_MS = 25000;
+// Random play stops after this many songs in a row fail, instead of requesting batches forever.
+const RANDOM_FAILURE_LIMIT = 10;
 const MIN_PLAYABLE_DURATION_SECONDS = 20;
 const FAVORITES_SYNC_DEBOUNCE_MS = 30 * 1000;
 const FAVORITES_WRITE_INTERVAL_MS = 60 * 60 * 1000;
@@ -293,6 +296,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const loadingMoreRef = useRef(false); const activeSearchRef = useRef(query.trim()); const searchRequestRef = useRef(null);
   const mediaActionsRef = useRef({ play: () => {}, pause: () => {}, previous: () => {}, next: () => {} });
   const playRejectionRef = useRef(() => {});
+  const randomBudgetRef = useRef({ songId: '', timer: null }); const randomBudgetExpiredRef = useRef(() => {});
   const randomHistoryKey = 'luri.music.random-history.v1'; const storedRandomHistory = useRef(readSession(randomHistoryKey));
   const randomRequest = useRef(null); const randomSession = useRef(0); const randomSwitchRef = useRef(null); const randomListWriteIdRef = useRef(''); const historyStartIdRef = useRef(''); const pendingRestoreRef = useRef(null); const playMode = useRef('manual'); const playbackListRef = useRef('');
   const shufflePlaybackRef = useRef({ queueKey: '', history: [], index: -1 });
@@ -307,7 +311,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     document.addEventListener('pointerdown', hideSearchHistory);
     return () => document.removeEventListener('pointerdown', hideSearchHistory);
   }, [searchFocused]);
-  const randomFallbackTracks = useRef([]); const randomSingers = useRef(Array.isArray(storedRandomHistory.current.singers) ? storedRandomHistory.current.singers : []); const randomTrackKeys = useRef(Array.isArray(storedRandomHistory.current.tracks) ? storedRandomHistory.current.tracks : []);
+  const randomBatchRef = useRef({ tracks: [], next: null, request: null }); const randomFailuresRef = useRef(0); const randomSingers = useRef(Array.isArray(storedRandomHistory.current.singers) ? storedRandomHistory.current.singers : []); const randomTrackKeys = useRef(Array.isArray(storedRandomHistory.current.tracks) ? storedRandomHistory.current.tracks : []);
   const [randomLoading, setRandomLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const activeTracks = activeQueue === 'favorites' ? likedTracks : tracks;
@@ -323,6 +327,9 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const translatedByTime = new Map(parsedLyrics(translation).filter((line) => line.time >= 0).map((line) => [line.time.toFixed(3), line.text]));
   const lyricLines = parsedLyrics(lyrics || translation).map((line) => ({ ...line, translation: lyrics ? translatedByTime.get(line.time.toFixed(3)) || '' : '' }));
   const activeLyric = lyricLines.reduce((active, line, index) => line.time >= 0 && line.time <= progress ? index : active, -1);
+  // Random play has backup songs, so each song gets a fixed time to start instead of using up every retry.
+  const clearRandomBudget = () => { const budget = randomBudgetRef.current; if (budget.timer) window.clearTimeout(budget.timer); budget.timer = null; budget.songId = ''; };
+  const beginRandomBudget = (songId) => { clearRandomBudget(); randomBudgetRef.current = { songId, timer: window.setTimeout(() => randomBudgetExpiredRef.current(songId), RANDOM_TRACK_BUDGET_MS) }; };
   const clearMediaDeadline = () => { if (mediaDeadlineRef.current) window.clearTimeout(mediaDeadlineRef.current); mediaDeadlineRef.current = null; mediaDeadlineTrackRef.current = ''; };
   const pulseControl = useCallback((name) => {
     const button = controlButtonRefs.current[name];
@@ -339,7 +346,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (mediaDeadlineTrackRef.current !== id) return;
       ignoreAudioErrorRef.current = true; audio.current?.pause(); audio.current?.removeAttribute('src'); audio.current?.load();
       setPlaying(false); clearMediaDeadline();
-      handlePlaybackFailure('重新解析后仍无法播放，已自动播放下一首');
+      handlePlaybackFailure('音频加载超时，已自动播放下一首');
     }, MEDIA_LOAD_TIMEOUT_MS);
   };
 
@@ -347,7 +354,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     document.body.classList.toggle('has-global-music-player', !isMusicPage);
     return () => { document.body.classList.remove('has-global-music-player'); resolveRequestRef.current?.abort(); chartRequestRef.current?.abort(); searchRequestRef.current?.abort(); if (mediaDeadlineRef.current) window.clearTimeout(mediaDeadlineRef.current); if (controlFeedbackTimerRef.current) window.clearTimeout(controlFeedbackTimerRef.current); };
   }, [isMusicPage]);
-  useEffect(() => () => { localUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)); localUrlsRef.current.clear(); }, []);
+  useEffect(() => () => { localUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)); localUrlsRef.current.clear(); if (randomBudgetRef.current.timer) window.clearTimeout(randomBudgetRef.current.timer); }, []);
   useEffect(() => {
     if (activeSingerSuggestion >= 0) searchSuggestionsRef.current?.querySelector('.music-search-history__item.active')?.scrollIntoView({ block: 'nearest' });
   }, [activeSingerSuggestion]);
@@ -404,7 +411,8 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       }
       if (['no_candidate', 'all_resolvers_failed', 'quality_unavailable'].includes(error?.code)) {
         setPlaying(false); discardCurrentUrl();
-        if (playMode.current === 'random') playNextRandom(); else skipFailedTrack(error.code === 'no_candidate' ? '未找到可播放音源，已自动播放下一首' : '所有音源均解析失败，已自动播放下一首');
+        const message = error.code === 'no_candidate' ? '未找到可播放音源，已自动播放下一首' : '所有音源均解析失败，已自动播放下一首';
+        if (playMode.current === 'random') playNextRandom(message); else skipFailedTrack(message);
       } else handlePlaybackFailure();
     }).finally(() => { if (resolveRequestRef.current === controller) resolveRequestRef.current = null; });
     return () => { controller.abort(); if (resolveRequestRef.current === controller) resolveRequestRef.current = null; };
@@ -632,7 +640,8 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     randomSession.current += 1;
     if (randomRequest.current) randomRequest.current.abort();
     randomRequest.current = null; randomSwitchRef.current = null; randomListWriteIdRef.current = ''; pendingRestoreRef.current = null;
-    playMode.current = 'manual'; setRandomLoading(false);
+    playMode.current = 'manual'; setRandomLoading(false); clearRandomBudget();
+    randomBatchRef.current.request?.abort(); randomBatchRef.current = { tracks: [], next: null, request: null }; randomFailuresRef.current = 0;
   };
   const rememberRandomTrack = (track, singer = '') => {
     const singers = [...randomSingers.current, singer, ...trackArtists(track)].filter(Boolean);
@@ -649,7 +658,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const restoreRandomSwitch = (message = '下一首加载失败，已恢复上一首') => {
     const snapshot = randomSwitchRef.current;
     if (!snapshot) return false;
-    randomSwitchRef.current = null; randomListWriteIdRef.current = ''; randomSession.current += 1; randomRequest.current?.abort(); randomRequest.current = null; randomFallbackTracks.current = [];
+    clearRandomBudget(); randomSwitchRef.current = null; randomListWriteIdRef.current = ''; randomSession.current += 1; randomRequest.current?.abort(); randomRequest.current = null;
     playMode.current = snapshot.mode; pendingRestoreRef.current = { songId: snapshot.songId, currentTime: snapshot.currentTime, wasPlaying: snapshot.wasPlaying };
     setPlaybackQueue(snapshot.queue); setCurrentId(snapshot.songId); setPlaybackTrackId(snapshot.songId); setProgress(snapshot.currentTime); setPlaybackState(snapshot.wasPlaying ? 'loading' : 'paused'); setRandomLoading(false);
     if (currentId === snapshot.songId && audio.current) {
@@ -738,14 +747,14 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (audio.current) { audio.current.currentTime = 0; setProgress(0); audio.current.play().catch(handlePlayRejection); }
       return;
     }
+    // Random play picks from its batch in every playback mode; a manual skip can still restore the song.
+    if (playMode.current === 'random') { playNextRandom('', !automatic); return; }
     if (playbackMode === 'shuffle') { selectShuffleOffset(queue, 1); return; }
-    if (playMode.current === 'random') return startRandom({ recover: !automatic });
     const index = queue.findIndex((track) => track.songId === currentId);
     selectTrack(queue[index < 0 ? 0 : (index + 1) % queue.length].songId, null, playMode.current);
   };
   const previous = () => {
     const queue = playbackQueue.length ? playbackQueue : activeTracks;
-    if (playbackMode === 'shuffle') { selectShuffleOffset(queue, -1); return; }
     if (playMode.current === 'random') {
       if (restoreRandomSwitch(null)) return;
       const index = randomTracks.findIndex((track) => track.songId === currentId);
@@ -753,6 +762,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (!track) return;
       playbackListRef.current = 'random'; selectTrack(track.songId, randomTracks, 'random'); return;
     }
+    if (playbackMode === 'shuffle') { selectShuffleOffset(queue, -1); return; }
     if (!queue.length) return;
     const index = queue.findIndex((track) => track.songId === currentId);
     selectTrack(queue[index <= 0 ? queue.length - 1 : index - 1].songId, null, playMode.current);
@@ -789,19 +799,32 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     // treating this as another failure races the refresh and skips the track.
     if (error?.name === 'AbortError') return;
     clearMediaDeadline();
-    if (error?.name === 'NotAllowedError') { setPlaying(false); setPlaybackState('paused'); return; }
+    // Autoplay was blocked: the song is fine and waits for the user, so random play must not skip it.
+    if (error?.name === 'NotAllowedError') { clearRandomBudget(); setPlaying(false); setPlaybackState('paused'); return; }
     // Media loading and decoding failures reject play() and also emit an
     // audio error event. Let onError own that shared failure so a single bad
     // URL cannot refresh once and then immediately skip the track.
     if (audio.current?.error) return;
     ignoreAudioErrorRef.current = true;
     window.setTimeout(() => { ignoreAudioErrorRef.current = false; }, 1000);
-    handlePlaybackFailure('播放地址无法加载，已尝试刷新音源', error?.name === 'NotSupportedError' ? 'decode' : 'url');
+    handlePlaybackFailure('播放地址无法加载，已自动播放下一首', error?.name === 'NotSupportedError' ? 'decode' : 'url');
   }
   playRejectionRef.current = handlePlayRejection;
+  randomBudgetExpiredRef.current = (songId) => {
+    if (randomBudgetRef.current.songId !== songId) return;
+    clearRandomBudget();
+    if (playMode.current !== 'random' || currentId !== songId) return;
+    // Keep the song's URL: clearing it would start a new resolve while a fresh random list loads.
+    resolveRequestRef.current?.abort(); clearMediaDeadline();
+    ignoreAudioErrorRef.current = true; audio.current?.pause(); audio.current?.removeAttribute('src'); audio.current?.load();
+    setPlaying(false);
+    playNextRandom('这首歌加载超时，已自动播放下一首');
+  };
   const retryWithRefresh = (mode = 'url') => {
     if (!current) return false;
     const previous = playbackRefreshModesRef.current.get(current.songId);
+    // Random play refreshes a song once, then moves on to a backup song.
+    if (playMode.current === 'random' && previous) return false;
     const recoveryQuality = playbackQuality;
     if (!previous && current.url) {
       providerClient?.invalidateCache('resolve', { songId: current.songId, quality: recoveryQuality });
@@ -847,11 +870,11 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (!nextTrack) { setPlaybackState('error'); return; }
     showToast(message, 'warning'); selectTrack(nextTrack.songId, null, playMode.current, true);
   }
-  function handlePlaybackFailure(message, refreshMode = 'url') {
+  function handlePlaybackFailure(message = '歌曲播放失败，已自动播放下一首', refreshMode = 'url') {
     setPlaying(false);
-    if (retryWithRefresh(refreshMode)) return;
+    if (retryWithRefresh(refreshMode)) { setToast({ title: '正在重新获取音源', message: '当前播放地址无法使用', type: 'info', duration: 2200 }); return; }
     discardCurrentUrl();
-    if (playMode.current === 'random') { playNextRandom(); return; }
+    if (playMode.current === 'random') { playNextRandom(message); return; }
     skipFailedTrack(message);
   }
   const handleLoadedMetadata = (event) => {
@@ -859,7 +882,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     const mediaDuration = media.duration;
     if (Number.isFinite(mediaDuration) && mediaDuration > 0 && mediaDuration < MIN_PLAYABLE_DURATION_SECONDS) {
       clearMediaDeadline(); media.pause(); setDuration(0);
-      handlePlaybackFailure('音频时长不足 20 秒，已强制刷新音源', 'url');
+      handlePlaybackFailure('音频时长不足 20 秒，已自动播放下一首', 'url');
       return;
     }
     const restore = pendingRestoreRef.current;
@@ -868,6 +891,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   };
   const startRandom = async ({ recover = true } = {}) => {
     if (!hasAccess()) return;
+    clearRandomBudget();
     if (recover && current && !randomSwitchRef.current) {
       randomSwitchRef.current = { songId: current.songId, currentTime: audio.current?.currentTime || progress, wasPlaying: Boolean(playing), mode: playMode.current, queue: playbackQueue.length ? playbackQueue : activeTracks };
     }
@@ -884,14 +908,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       const tracks = canonicalTracks(payload.tracks).filter((track) => track.binding);
       if (!tracks.length) throw Error();
       if (controller.signal.aborted || session !== randomSession.current) return;
-      const freshTracks = tracks.filter((track) => !randomTrackKeys.current.includes(randomTrackKey(track))); const candidates = freshTracks.length ? freshTracks : tracks;
-      const selected = candidates[Math.floor(Math.random() * candidates.length)];
-      const fallbackCandidates = tracks.filter((track) => track.songId !== selected.songId && randomTrackKey(track) !== randomTrackKey(selected) && !randomTrackKeys.current.includes(randomTrackKey(track)));
-      randomFallbackTracks.current = shuffled(fallbackCandidates).slice(0, 5);
-      rememberRandomTrack(selected, payload.singer || '');
-      randomListWriteIdRef.current = selected.songId;
-      if (randomSwitchRef.current) randomSwitchRef.current.targetId = selected.songId;
-      playbackListRef.current = 'random'; clearMediaDeadline(); setPlaybackQueue(tracks); historyStartIdRef.current = selected.songId; setCurrentId(selected.songId); setPlaybackTrackId(selected.songId); setPlaybackState('resolving');
+      startRandomBatch(tracks, payload.singer || '');
     } catch (error) {
       if (!controller.signal.aborted && session === randomSession.current) {
         const accessDenied = error?.code === 'provider_access_denied' || error?.status === 401 || error?.status === 403;
@@ -901,15 +918,51 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (session === randomSession.current) { randomRequest.current = null; setRandomLoading(false); }
     }
   };
-  function playNextRandom() {
-    const candidates = randomFallbackTracks.current;
-    if (!candidates.length) { startRandom({ recover: false }); return; }
-    const index = Math.floor(Math.random() * candidates.length);
-    const [track] = candidates.splice(index, 1);
-    rememberRandomTrack(track);
-    randomListWriteIdRef.current = track.songId;
-    if (randomSwitchRef.current) randomSwitchRef.current.targetId = track.songId;
-    selectTrack(track.songId, null, 'random');
+  // One Provider request returns a batch; random play works through it before asking for another.
+  // Songs heard recently (the last 50) count as played, so a batch never repeats them.
+  function unplayedRandomTracks() { return randomBatchRef.current.tracks.filter((track) => !randomTrackKeys.current.includes(randomTrackKey(track))); }
+  function startRandomBatch(tracks, singer = '') {
+    randomBatchRef.current.request?.abort();
+    randomBatchRef.current = { tracks, next: null, request: null };
+    const fresh = unplayedRandomTracks(); const candidates = fresh.length ? fresh : tracks;
+    const selected = candidates[Math.floor(Math.random() * candidates.length)];
+    rememberRandomTrack(selected, singer);
+    randomListWriteIdRef.current = selected.songId;
+    if (randomSwitchRef.current) randomSwitchRef.current.targetId = selected.songId;
+    if (audio.current) { ignoreAudioErrorRef.current = true; audio.current.pause(); audio.current.removeAttribute('src'); audio.current.load(); }
+    setPlaying(false); setProgress(0); setDuration(0);
+    playbackListRef.current = 'random'; clearMediaDeadline(); setPlaybackQueue(tracks); historyStartIdRef.current = selected.songId; setCurrentId(selected.songId); beginRandomBudget(selected.songId); setPlaybackTrackId(selected.songId); setPlaybackState('resolving');
+  }
+  // Ask for the next batch while its last song plays, so the switch does not wait for the Provider.
+  function requestNextRandomBatch() {
+    const batch = randomBatchRef.current;
+    if (!batch.tracks.length || batch.next || batch.request || unplayedRandomTracks().length) return;
+    const controller = new AbortController(); batch.request = controller;
+    musicRequest('random', { exclude: randomSingers.current.join(',') }, controller.signal).then(providerPayload).then((payload) => {
+      const tracks = canonicalTracks(payload.tracks).filter((track) => track.binding);
+      if (randomBatchRef.current === batch && tracks.length) batch.next = { tracks, singer: payload.singer || '' };
+    }).catch(() => { /* The batch is requested again when it runs out. */ }).finally(() => { if (batch.request === controller) batch.request = null; });
+  }
+  function playNextRandom(message = '', recover = false) {
+    if (message) {
+      showToast(message, 'warning'); randomFailuresRef.current += 1;
+      if (randomFailuresRef.current >= RANDOM_FAILURE_LIMIT) { stopRandom(); setPlaying(false); setPlaybackState('error'); showToast(`连续 ${RANDOM_FAILURE_LIMIT} 首歌曲无法播放，请稍后重试或检查 Provider`, 'error'); return; }
+    }
+    const unplayed = unplayedRandomTracks();
+    if (unplayed.length) {
+      const track = unplayed[Math.floor(Math.random() * unplayed.length)];
+      rememberRandomTrack(track);
+      randomListWriteIdRef.current = track.songId;
+      if (randomSwitchRef.current) randomSwitchRef.current.targetId = track.songId;
+      playbackListRef.current = 'random';
+      // After going back through history the queue holds that history, so put the batch back.
+      const inQueue = playbackQueue.some((item) => item.songId === track.songId);
+      beginRandomBudget(track.songId); selectTrack(track.songId, inQueue ? null : randomBatchRef.current.tracks, 'random');
+      return;
+    }
+    const ready = randomBatchRef.current.next;
+    if (ready) { startRandomBatch(ready.tracks, ready.singer); return; }
+    startRandom({ recover });
   }
 
   const loadChart = async (platform = chartPlatform, type = chartType, refresh = false) => {
@@ -1244,7 +1297,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     {!visibleTracks.length && <div className="music-app-empty"><strong>{isChartView ? chartState || (chartLoading ? '正在加载榜单…' : '暂无榜单数据') : '这里还没有歌曲'}</strong><span>{isChartView ? '可以切换榜单或点击刷新' : listView === 'local' ? '选择本地音频即可开始播放' : listView === 'playlist' ? '可以从搜索、榜单或历史中加入歌曲' : '播放或添加歌曲后会显示在这里'}</span></div>}
   </div>;
   return <main className={`music-page music-app-shell view-${listView} mobile-view-${mobileView}${playing ? ' is-playing' : ''}${isSearching ? ' is-searching' : ''}`}>
-    <audio ref={audio} onPlay={() => { setPlaying(true); setPlaybackTrackId(currentId); setPlaybackState('playing'); }} onPause={() => { setPlaying(false); setPlaybackState((state) => state === 'loading' || state === 'resolving' ? state : 'paused'); }} onLoadStart={() => setPlaybackState('loading')} onWaiting={() => { setPlaybackState('loading'); beginMediaDeadline(currentId); }} onPlaying={() => { clearMediaDeadline(); failedPlaybackIdsRef.current.clear(); playbackRefreshModesRef.current.delete(currentId); setPlaybackState('playing'); if (current && historyStartIdRef.current === currentId) { historyStartIdRef.current = ''; recordHistory(current); } if (randomListWriteIdRef.current === currentId && current) { rememberRandomListTrack(current); randomListWriteIdRef.current = ''; } if (randomSwitchRef.current?.targetId === currentId) randomSwitchRef.current = null; }} onError={(event) => { if (ignoreAudioErrorRef.current) { ignoreAudioErrorRef.current = false; return; } clearMediaDeadline(); const mediaError = event.currentTarget.error?.code; handlePlaybackFailure('播放地址无法加载，已尝试刷新音源', mediaError === 3 || mediaError === 4 ? 'decode' : 'url'); }} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onLoadedMetadata={handleLoadedMetadata} onEnded={() => { clearMediaDeadline(); next(true); }} />
+    <audio ref={audio} onPlay={() => { setPlaying(true); setPlaybackTrackId(currentId); setPlaybackState('playing'); }} onPause={() => { setPlaying(false); setPlaybackState((state) => state === 'loading' || state === 'resolving' ? state : 'paused'); }} onLoadStart={() => setPlaybackState('loading')} onWaiting={() => { setPlaybackState('loading'); beginMediaDeadline(currentId); }} onPlaying={() => { clearMediaDeadline(); clearRandomBudget(); failedPlaybackIdsRef.current.clear(); playbackRefreshModesRef.current.delete(currentId); setPlaybackState('playing'); if (current && historyStartIdRef.current === currentId) { historyStartIdRef.current = ''; recordHistory(current); } if (randomListWriteIdRef.current === currentId && current) { rememberRandomListTrack(current); randomListWriteIdRef.current = ''; } if (randomSwitchRef.current?.targetId === currentId) randomSwitchRef.current = null; if (playMode.current === 'random') { randomFailuresRef.current = 0; requestNextRandomBatch(); } }} onError={(event) => { if (ignoreAudioErrorRef.current) { ignoreAudioErrorRef.current = false; return; } clearMediaDeadline(); const mediaError = event.currentTarget.error?.code; handlePlaybackFailure('播放地址无法加载，已自动播放下一首', mediaError === 3 || mediaError === 4 ? 'decode' : 'url'); }} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onLoadedMetadata={handleLoadedMetadata} onEnded={() => { clearMediaDeadline(); next(true); }} />
     <Toast toast={toast} onClose={() => setToast(null)} />
     <div className={`music-artwork-backdrop${activeArtworkBackground ? ' is-visible' : ''}`} style={activeArtworkBackground ? { backgroundImage: `url(${JSON.stringify(activeArtworkBackground)})` } : undefined} aria-hidden="true" />
     <aside className="music-app-sidebar">
