@@ -615,6 +615,12 @@ html[data-theme="light"] .music-app-now.is-classic {
 
 .music-app-now:focus { outline: none; }
 
+/* While swiped right the player slides over the list it returns to. */
+.music-app-now.is-dragging {
+  box-shadow: -18px 0 42px rgba(0, 0, 0, 0.32);
+  will-change: transform;
+}
+
 .music-app-now::after {
   position: absolute;
   z-index: -1;

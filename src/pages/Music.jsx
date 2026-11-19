@@ -1123,6 +1123,30 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (!libraryDialog || !panel) return undefined;
     return activateOverlayFocus(panel, () => { setLibraryDialog(''); setDialogTrackState(null); setDialogPlaylist(null); setNewPlaylistName(''); });
   }, [libraryDialog]);
+  // The full-screen player owns one history entry (same URL, marked state), so the
+  // system back button or edge swipe closes it instead of leaving the page.
+  const nowHistoryRef = useRef(false);
+  const closeNowPlaying = () => setMobileView('playlist');
+  useEffect(() => {
+    const open = mobileView === 'now';
+    if (open && !nowHistoryRef.current) {
+      window.history.pushState({ ...(window.history.state || {}), zhiyinNowPlaying: true }, '');
+      nowHistoryRef.current = true;
+    } else if (!open && nowHistoryRef.current) {
+      nowHistoryRef.current = false;
+      if (window.history.state?.zhiyinNowPlaying) window.history.back();
+    }
+  }, [mobileView]);
+  useEffect(() => {
+    // A reload keeps the marked entry; it no longer belongs to an open player.
+    if (window.history.state?.zhiyinNowPlaying) { const { zhiyinNowPlaying: _marker, ...state } = window.history.state; window.history.replaceState(state, ''); }
+    const onPopState = () => {
+      if (!nowHistoryRef.current || window.history.state?.zhiyinNowPlaying) return;
+      nowHistoryRef.current = false; clearNowDrag(); setMobileView('playlist');
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
   const nowOverlayActive = mobileView === 'now' && !libraryDialog;
   useEffect(() => {
     const panel = nowPanelRef.current;
@@ -1130,7 +1154,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     // Focus the panel itself so Space reaches the playback shortcut instead of
     // activating the first header button.
     if (!panel.contains(document.activeElement)) panel.focus({ preventScroll: true });
-    return activateOverlayFocus(panel, () => setMobileView('playlist'));
+    return activateOverlayFocus(panel, closeNowPlaying);
   }, [nowOverlayActive]);
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -1155,19 +1179,49 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const isLiked = Boolean(current && likedTracks.some((track) => sameFavorite(track, current)));
   const likeButton = (placement) => <button className={`${placement}${isLiked ? ' liked' : ''}`} type="button" disabled={!current || current.sourceType === 'local'} aria-label={isLiked ? '取消收藏' : '收藏歌曲'} aria-pressed={isLiked} onClick={() => current && like(current.songId)}><MusicIcon name="heart" /><span>收藏</span></button>;
   const previewLyric = Math.max(activeLyric, 0);
+  // On the cover panel a right swipe drags the whole player away, revealing the
+  // list behind it; released far or fast enough it closes, otherwise it springs back.
+  const setNowDrag = (offset, animate) => {
+    const panel = nowPanelRef.current; if (!panel) return;
+    panel.style.transition = animate ? 'transform 0.24s cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none';
+    panel.style.transform = offset ? `translate3d(${offset}px, 0, 0)` : '';
+    panel.classList.toggle('is-dragging', offset > 0);
+  };
+  const clearNowDrag = () => { const panel = nowPanelRef.current; if (!panel) return; panel.style.transition = ''; panel.style.transform = ''; panel.classList.remove('is-dragging'); };
   const startMobileNowSwipe = (event) => {
     const touch = event.touches?.[0];
     if (!touch) return;
-    mobileNowSwipeRef.current = { x: touch.clientX, y: touch.clientY };
+    mobileNowSwipeRef.current = { x: touch.clientX, y: touch.clientY, time: performance.now(), dragging: false };
+  };
+  const moveMobileNowSwipe = (event) => {
+    const start = mobileNowSwipeRef.current; const touch = event.touches?.[0];
+    if (!start || !touch || mobileNowPanel !== 'cover') return;
+    const deltaX = touch.clientX - start.x; const deltaY = touch.clientY - start.y;
+    if (!start.dragging) {
+      if (deltaX < 12 || deltaX <= Math.abs(deltaY) * 1.15) return;
+      start.dragging = true;
+    }
+    setNowDrag(Math.max(0, deltaX), false);
   };
   const finishMobileNowSwipe = (event) => {
     const start = mobileNowSwipeRef.current; const touch = event.changedTouches?.[0]; mobileNowSwipeRef.current = null;
     if (!start || !touch) return;
     const deltaX = touch.clientX - start.x; const deltaY = touch.clientY - start.y;
+    if (start.dragging) {
+      const width = nowPanelRef.current?.clientWidth || window.innerWidth;
+      const speed = deltaX / Math.max(1, performance.now() - start.time);
+      if (deltaX > width * 0.25 || (deltaX > 40 && speed > 0.5)) {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { clearNowDrag(); closeNowPlaying(); return; }
+        setNowDrag(width, true);
+        window.setTimeout(() => { closeNowPlaying(); clearNowDrag(); }, 240);
+      } else setNowDrag(0, true);
+      return;
+    }
     if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return;
     if (deltaX < 0 && mobileNowPanel === 'cover') setMobileNowPanel('lyrics');
     if (deltaX > 0 && mobileNowPanel === 'lyrics') setMobileNowPanel('cover');
   };
+  const cancelMobileNowSwipe = () => { if (mobileNowSwipeRef.current?.dragging) setNowDrag(0, true); mobileNowSwipeRef.current = null; };
   const shellNav = [
     ['/', '首页', 'home'], ['/charts', '排行榜', 'chart'], ['/search', '搜索', 'search'],
     ['/favorites', '我的喜欢', 'heart'], ['/playlists', '我的歌单', 'playlist'], ['/history', '播放历史', 'history'], ['/local', '本地音乐', 'folder'],
@@ -1224,7 +1278,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
           {!['playlists', 'settings', 'random'].includes(listView) && renderTrackList()}
           {listView === 'playlist' && !selectedPlaylist && <div className="music-app-empty"><strong>歌单不存在</strong><button type="button" onClick={() => navigate('/playlists')}>返回歌单</button></div>}
         </div>
-        <aside className={`music-app-now is-${playerStyle}${mobileView === 'now' ? ' is-open' : ''}${mobileNowPanel === 'lyrics' ? ' show-lyrics' : ''}`} ref={nowPanelRef} tabIndex={-1} aria-label="正在播放"><div className="music-app-now__backdrop" style={usableArt(current?.art) ? { backgroundImage: `url(${JSON.stringify(current.art)})` } : undefined} aria-hidden="true" /><header className="music-app-now__header"><button type="button" onClick={() => setMobileView('playlist')} aria-label="返回音乐列表"><MusicIcon name="back" /></button><span className="music-app-now__title">正在播放</span><div className="music-app-now__lyrics-toggle" role="group" aria-label="切换封面和歌词"><button type="button" aria-pressed={mobileNowPanel === 'cover'} onClick={() => setMobileNowPanel('cover')}>封面</button><button type="button" aria-pressed={mobileNowPanel === 'lyrics'} onClick={() => setMobileNowPanel('lyrics')}>歌词</button></div><button type="button" onClick={cyclePlayerStyle} aria-label={playerStyle === 'classic' ? '切换为沉浸封面样式' : '切换为唱片样式'} title={playerStyle === 'classic' ? '沉浸封面样式' : '唱片样式'}><MusicIcon name="disc" /></button></header><div className="music-app-now__stage" onTouchStart={startMobileNowSwipe} onTouchEnd={finishMobileNowSwipe} onTouchCancel={() => { mobileNowSwipeRef.current = null; }}><section className="music-app-now__media"><div className="music-app-now__visual"><Artwork className="music-app-now__cover" src={usableArt(current?.art)} onLoad={artworkLoaded} onError={refreshArtwork} /></div><div className="music-app-now__meta"><h2><span>{current?.title || '选择一首歌曲'}</span><QualityBadge track={current} fallbackQuality={playbackQuality} /></h2><p>{current?.artist || '知音'}</p><small>{current?.album || ''}</small></div><button className="music-app-now__lyric-preview" type="button" onClick={() => setMobileNowPanel('lyrics')} aria-label="查看完整歌词">{lyricLines.length ? <><span key={previewLyric} className={activeLyric >= 0 ? 'is-current' : ''}>{lyricLines[previewLyric]?.text}</span><span key={`next:${previewLyric}`}>{lyricLines[previewLyric + 1]?.text || ''}</span></> : <span>{lyricsState || '暂无歌词'}</span>}</button></section><div ref={lyricsRef} className="lyrics-body" onClick={seekLyric}>{lyricLines.length ? lyricLines.map((line, index) => <p key={`${line.time}:${line.text}:${index}`}><span>{line.text}</span>{line.translation && <small>{line.translation}</small>}</p>) : <p className="lyrics-empty">{lyricsState || TEXT.choose}</p>}</div></div><footer className="music-app-now__transport"><div className="music-app-now__seek"><input type="range" min="0" max={duration || 0} value={Math.min(progress, duration || 0)} onChange={(event) => { const value = Number(event.target.value); if (audio.current) audio.current.currentTime = value; setProgress(value); }} /><span>{time(progress)}</span><span>{time(duration)}</span></div><div className="music-app-now__footer-song"><Artwork src={usableArt(current?.art)} /><span><b>{current?.title || TEXT.noTrack}</b><small>{current?.artist || '知音'}</small></span></div><div className="music-app-now__controls"><button type="button" onClick={cyclePlaybackMode} aria-label={PLAYBACK_MODE_META[playbackMode].label}><MusicIcon name={PLAYBACK_MODE_META[playbackMode].icon} /></button><button type="button" onClick={previous} aria-label="上一首"><MusicIcon name="previous" /></button><button className="play" type="button" onClick={toggle} disabled={isPlaybackBusy} aria-label={playing ? '暂停' : '播放'}>{isPlaybackBusy ? <span className="music-spinner" /> : <MusicIcon name={playing ? 'pause' : 'play'} />}</button><button type="button" onClick={() => next()} aria-label="下一首"><MusicIcon name="next" /></button>{likeButton('music-app-now__like--controls')}</div><div className="music-app-now__actions"><DownloadButton track={current} notify={notify} />{likeButton('music-app-now__like--actions')}{current?.sourceType !== 'local' && <button type="button" disabled={!current} aria-label="加入歌单" onClick={() => { setDialogTrack(current); setLibraryDialog('add'); }}><MusicIcon name="playlist" /><span>加入歌单</span></button>}</div></footer></aside>
+        <aside className={`music-app-now is-${playerStyle}${mobileView === 'now' ? ' is-open' : ''}${mobileNowPanel === 'lyrics' ? ' show-lyrics' : ''}`} ref={nowPanelRef} tabIndex={-1} aria-label="正在播放"><div className="music-app-now__backdrop" style={usableArt(current?.art) ? { backgroundImage: `url(${JSON.stringify(current.art)})` } : undefined} aria-hidden="true" /><header className="music-app-now__header"><button type="button" onClick={closeNowPlaying} aria-label="返回音乐列表"><MusicIcon name="back" /></button><span className="music-app-now__title">正在播放</span><div className="music-app-now__lyrics-toggle" role="group" aria-label="切换封面和歌词"><button type="button" aria-pressed={mobileNowPanel === 'cover'} onClick={() => setMobileNowPanel('cover')}>封面</button><button type="button" aria-pressed={mobileNowPanel === 'lyrics'} onClick={() => setMobileNowPanel('lyrics')}>歌词</button></div><button type="button" onClick={cyclePlayerStyle} aria-label={playerStyle === 'classic' ? '切换为沉浸封面样式' : '切换为唱片样式'} title={playerStyle === 'classic' ? '沉浸封面样式' : '唱片样式'}><MusicIcon name="disc" /></button></header><div className="music-app-now__stage" onTouchStart={startMobileNowSwipe} onTouchMove={moveMobileNowSwipe} onTouchEnd={finishMobileNowSwipe} onTouchCancel={cancelMobileNowSwipe}><section className="music-app-now__media"><div className="music-app-now__visual"><Artwork className="music-app-now__cover" src={usableArt(current?.art)} onLoad={artworkLoaded} onError={refreshArtwork} /></div><div className="music-app-now__meta"><h2><span>{current?.title || '选择一首歌曲'}</span><QualityBadge track={current} fallbackQuality={playbackQuality} /></h2><p>{current?.artist || '知音'}</p><small>{current?.album || ''}</small></div><button className="music-app-now__lyric-preview" type="button" onClick={() => setMobileNowPanel('lyrics')} aria-label="查看完整歌词">{lyricLines.length ? <><span key={previewLyric} className={activeLyric >= 0 ? 'is-current' : ''}>{lyricLines[previewLyric]?.text}</span><span key={`next:${previewLyric}`}>{lyricLines[previewLyric + 1]?.text || ''}</span></> : <span>{lyricsState || '暂无歌词'}</span>}</button></section><div ref={lyricsRef} className="lyrics-body" onClick={seekLyric}>{lyricLines.length ? lyricLines.map((line, index) => <p key={`${line.time}:${line.text}:${index}`}><span>{line.text}</span>{line.translation && <small>{line.translation}</small>}</p>) : <p className="lyrics-empty">{lyricsState || TEXT.choose}</p>}</div></div><footer className="music-app-now__transport"><div className="music-app-now__seek"><input type="range" min="0" max={duration || 0} value={Math.min(progress, duration || 0)} onChange={(event) => { const value = Number(event.target.value); if (audio.current) audio.current.currentTime = value; setProgress(value); }} /><span>{time(progress)}</span><span>{time(duration)}</span></div><div className="music-app-now__footer-song"><Artwork src={usableArt(current?.art)} /><span><b>{current?.title || TEXT.noTrack}</b><small>{current?.artist || '知音'}</small></span></div><div className="music-app-now__controls"><button type="button" onClick={cyclePlaybackMode} aria-label={PLAYBACK_MODE_META[playbackMode].label}><MusicIcon name={PLAYBACK_MODE_META[playbackMode].icon} /></button><button type="button" onClick={previous} aria-label="上一首"><MusicIcon name="previous" /></button><button className="play" type="button" onClick={toggle} disabled={isPlaybackBusy} aria-label={playing ? '暂停' : '播放'}>{isPlaybackBusy ? <span className="music-spinner" /> : <MusicIcon name={playing ? 'pause' : 'play'} />}</button><button type="button" onClick={() => next()} aria-label="下一首"><MusicIcon name="next" /></button>{likeButton('music-app-now__like--controls')}</div><div className="music-app-now__actions"><DownloadButton track={current} notify={notify} />{likeButton('music-app-now__like--actions')}{current?.sourceType !== 'local' && <button type="button" disabled={!current} aria-label="加入歌单" onClick={() => { setDialogTrack(current); setLibraryDialog('add'); }}><MusicIcon name="playlist" /><span>加入歌单</span></button>}</div></footer></aside>
       </section>
     </section>
     <footer className="music-player music-app-player"><div className="music-player__progress"><input type="range" min="0" max={duration || 0} value={Math.min(progress, duration || 0)} onChange={(event) => { const value = Number(event.target.value); if (audio.current) audio.current.currentTime = value; setProgress(value); }} /></div><button className="music-player__song" type="button" onClick={() => setMobileView('now')}><Artwork src={usableArt(current?.art)} /><span className="music-player__copy"><span className="music-player__heading"><PlayerTitle>{current?.title || TEXT.noTrack}</PlayerTitle><QualityBadge track={current} fallbackQuality={playbackQuality} /></span><small>{current?.artist || '知音'}</small></span></button><div className="music-controls"><button className="music-icon-button music-player__previous" type="button" onClick={previous} aria-label="上一首"><MusicIcon name="previous" /></button><button className="music-icon-button play-button" type="button" onClick={toggle} disabled={isPlaybackBusy}>{isPlaybackBusy ? <span className="music-spinner" /> : <MusicIcon name={playing ? 'pause' : 'play'} />}</button><button className="music-icon-button music-player__next" type="button" onClick={() => next()} aria-label="下一首"><MusicIcon name="next" /></button></div><div className="music-player__utilities"><button className={`music-icon-button music-player__mode music-playback-mode music-playback-mode--${playbackMode}`} type="button" onClick={cyclePlaybackMode} aria-label={PLAYBACK_MODE_META[playbackMode].label}><MusicIcon name={PLAYBACK_MODE_META[playbackMode].icon} /></button><div className="music-volume"><button className="music-icon-button" type="button" onClick={() => setMuted((value) => !value)} aria-label={muted || volume === 0 ? '取消静音' : '静音'}><MusicIcon name={muted || volume === 0 ? 'mute' : 'volume'} /></button><input type="range" min="0" max="1" step="0.01" value={muted ? 0 : volume} aria-label="音量" onChange={(event) => { const value = Number(event.target.value); setVolume(value); setMuted(value === 0); }} /></div><DownloadButton track={current} notify={notify} /><button className="music-player__lyrics-button" type="button" aria-label="打开正在播放" onClick={() => setMobileView('now')}>词</button></div></footer>

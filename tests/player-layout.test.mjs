@@ -78,6 +78,21 @@ test('mobile now-playing switches between artwork and lyrics by swipe or the hea
   assert.doesNotMatch(player, /\.show-lyrics \.music-app-now__(?:transport|actions)/, 'Switching panels must not resize the transport');
 });
 
+test('a right swipe on the phone cover drags the player away and closes it', () => {
+  const nowPlayer = music.slice(music.indexOf('<aside className={`music-app-now'), music.indexOf('</aside>', music.indexOf('<aside className={`music-app-now')));
+  assert.match(nowPlayer, /onTouchMove=\{moveMobileNowSwipe\}[\s\S]*?onTouchCancel=\{cancelMobileNowSwipe\}/);
+  assert.match(music, /const moveMobileNowSwipe = [\s\S]*?mobileNowPanel !== 'cover'\) return;[\s\S]*?deltaX <= Math\.abs\(deltaY\) \* 1\.15\) return;/, 'Only horizontal right drags on the cover panel move the player');
+  assert.match(music, /if \(deltaX > width \* 0\.25 \|\| \(deltaX > 40 && speed > 0\.5\)\)/, 'A quarter of the width or a quick flick closes it; anything less springs back');
+  assert.match(player, /\.music-app-now\.is-dragging \{[^}]*box-shadow:/);
+});
+
+test('the full-screen player owns a history entry so system back closes it', () => {
+  assert.match(music, /window\.history\.pushState\(\{ \.\.\.\(window\.history\.state \|\| \{\}\), zhiyinNowPlaying: true \}, ''\);/, 'Opening adds an entry with the same URL');
+  assert.match(music, /if \(window\.history\.state\?\.zhiyinNowPlaying\) window\.history\.back\(\);/, 'Closing in the page consumes that entry');
+  assert.match(music, /const onPopState = \(\) => \{\s*if \(!nowHistoryRef\.current \|\| window\.history\.state\?\.zhiyinNowPlaying\) return;[\s\S]*?setMobileView\('playlist'\);/, 'System back closes the player');
+  assert.match(music, /<header className="music-app-now__header"><button type="button" onClick=\{closeNowPlaying\}/);
+});
+
 test('phone transport centres play between four equal slots', () => {
   const controls = music.slice(music.indexOf('<div className="music-app-now__controls">'), music.indexOf('<div className="music-app-now__actions">'));
   assert.equal((controls.match(/<button /g) || []).length + (controls.match(/likeButton\(/g) || []).length, 5, 'mode, previous, play, next, favourite');
