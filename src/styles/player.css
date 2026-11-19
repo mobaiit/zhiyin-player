@@ -28,6 +28,36 @@
   100% { transform: scale(1); }
 }
 
+/* A switched song slides in from the side it comes from: next from the right, previous from the left. */
+@keyframes music-switch-next {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes music-switch-previous {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A highlight sweeps along the progress bar until the song starts. */
+@keyframes music-progress-pending {
+  from { background-position: 100% 50%; }
+  to { background-position: 0% 50%; }
+}
+
+:is(.music-app-player, .music-app-now) [data-switch] { animation: music-switch-next 0.26s ease-out backwards; }
+:is(.music-app-player, .music-app-now) [data-switch="previous"] { animation-name: music-switch-previous; }
+
+.music-app-player .music-player__progress.is-pending input {
+  background: linear-gradient(90deg, var(--zy-border) 0 38%, var(--zy-red) 50%, var(--zy-border) 62% 100%) 100% 50% / 300% 3px no-repeat;
+  animation: music-progress-pending 1.2s linear infinite;
+}
+
+/* Status text replaces the artist while a song is fetched, buffered or cannot play. */
+.music-app-player .music-player__copy small.is-status { color: var(--zy-red); }
+.music-app-now__meta p.is-status,
+.music-app-now__footer-song small.is-status { color: var(--app-accent); }
+
 /* ===== Bottom player ===== */
 
 .music-app-player {
@@ -234,7 +264,8 @@ html[data-theme="glass"] .music-app-player {
 }
 
 .music-app-player .music-controls .music-icon-button:active { transform: scale(0.9); }
-.music-app-player .music-controls .music-icon-button.is-control-feedback { animation: music-control-feedback 0.26s ease-out; }
+.music-app-player .music-controls .music-icon-button.is-control-feedback,
+.music-app-now__controls button.is-control-feedback { animation: music-control-feedback 0.26s ease-out; }
 
 .music-app-player .music-controls .play-button {
   position: relative;
@@ -504,7 +535,10 @@ html[data-theme="glass"] .music-app-player {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .music-app-player .music-controls .music-icon-button.is-control-feedback { animation-duration: 0.01ms; }
+  .music-app-player .music-controls .music-icon-button.is-control-feedback,
+  .music-app-now__controls button.is-control-feedback { animation-duration: 0.01ms; }
+  :is(.music-app-player, .music-app-now) [data-switch] { animation: none; }
+  .music-app-player .music-player__progress.is-pending input { animation: none; background-position: 50% 50%; }
   .music-app-player .play-button .music-spinner { animation: none; }
   .music-app-player .music-player__title[data-overflow="true"] { text-overflow: ellipsis; }
   .music-app-player .music-player__title[data-overflow="true"] .music-player__title-text { animation: none; }

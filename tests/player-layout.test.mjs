@@ -183,6 +183,26 @@ test('random play works through one batch before asking the Provider again', () 
   assert.doesNotMatch(music, /已尝试刷新音源|已强制刷新音源|重新解析后仍无法播放/, 'Skip messages describe what actually happened');
 });
 
+test('switching songs shows its state, slides the new song in and answers every press', () => {
+  assert.match(music, /const playbackStatus = playbackState === 'resolving' \? \(recoveringId === currentId \? '音源失效，正在重新获取…' : '正在获取音源…'\)/);
+  assert.match(music, /playbackState === 'loading' \? '正在缓冲…'/);
+  assert.match(music, /playbackState === 'error' \? '无法播放，点击播放按钮重试'/);
+  assert.match(music, /const shownTitle = randomLoading \? '正在挑选下一首…' : current\?\.title;/, 'Waiting for a random batch does not keep the previous title');
+  assert.match(music, /<span className="music-visually-hidden" role="status">\{playbackAnnouncement\}<\/span>/, 'Screen readers hear the state');
+  assert.match(music, /className=\{`music-player__progress\$\{isPlaybackBusy \? ' is-pending' : ''\}`\}/);
+  for (const key of ['art', 'copy', 'cover', 'meta']) assert.match(music, new RegExp(`key=\\{\`${key}:\\$\\{currentId\\}\`\\} data-switch=\\{switchDirection\\}`), key);
+  assert.equal((music.match(/data-control="(?:previous|play|next)" onClick=\{\(event\) => \{ pressFeedback\(event\.currentTarget\);/g) || []).length, 6, 'Both players animate previous, play and next on every press');
+  assert.match(music, /const pulseControl = useCallback\(\(name\) => \{ document\.querySelectorAll\(`\[data-control="\$\{name\}"\]`\)\.forEach\(pressFeedback\); \}, \[\]\);/, 'Media keys reach the same buttons');
+  assert.match(player, /:is\(\.music-app-player, \.music-app-now\) \[data-switch="previous"\] \{ animation-name: music-switch-previous; \}/);
+  assert.match(player, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\[data-switch\] \{ animation: none; \}/);
+});
+
+test('previous switches straight back and says so when there is nothing before', () => {
+  const previous = music.slice(music.indexOf('  const previous = () => {'), music.indexOf('  const toggle = () => {'));
+  assert.doesNotMatch(previous, /currentTime = 0/, 'Previous never restarts the current song instead of switching');
+  assert.equal((previous.match(/noPreviousTrack\(\); return;/g) || []).length, 3, 'Random history, shuffle and an empty queue each explain why nothing changed');
+});
+
 test('play history counts each song start once and syncs lazily', () => {
   const hook = readFileSync(new URL('../src/luri-music/useMusicLibrary.js', import.meta.url), 'utf8');
   assert.match(music, /if \(current && historyStartIdRef\.current === currentId\) \{ historyStartIdRef\.current = ''; recordHistory\(current\); \}/, 'Resume, seek and buffering fire playing again but do not count');
