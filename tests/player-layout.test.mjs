@@ -210,6 +210,13 @@ test('previous switches straight back and says so when there is nothing before',
   assert.equal((previous.match(/noPreviousTrack\(\); return;/g) || []).length, 3, 'Random history, shuffle and an empty queue each explain why nothing changed');
 });
 
+test('lock screen and system media controls get the song duration and position', () => {
+  assert.match(music, /navigator\.mediaSession\.setPositionState\(\{ duration: length, playbackRate: media\.playbackRate \|\| 1, position: Math\.min\(Math\.max\(0, media\.currentTime \|\| 0\), length\) \}\);/);
+  assert.match(music, /!Number\.isFinite\(length\) \|\| length <= 0\) \{ navigator\.mediaSession\.setPositionState\(\); return; \}/, 'An unknown duration clears the position instead of showing a wrong bar');
+  assert.match(music, /<audio ref=\{audio\} onDurationChange=\{syncPositionState\} onSeeked=\{syncPositionState\} onRateChange=\{syncPositionState\}/, 'Updated when a song loads, after a seek and when the rate changes');
+  assert.match(music, /navigator\.mediaSession\.playbackState = playing \? 'playing' : 'paused';\s*\}\s*syncPositionState\(\);/, 'Pausing and resuming pin the position');
+});
+
 test('play history counts each song start once and syncs lazily', () => {
   const hook = readFileSync(new URL('../src/luri-music/useMusicLibrary.js', import.meta.url), 'utf8');
   assert.match(music, /if \(current && historyStartIdRef\.current === currentId\) \{ historyStartIdRef\.current = ''; recordHistory\(current\); \}/, 'Resume, seek and buffering fire playing again but do not count');
