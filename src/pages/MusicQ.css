@@ -42,8 +42,9 @@
 .music-app-home-copy li b, .music-app-home-copy li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .music-app-home-copy li span { color: var(--color-text-muted); }
 .music-app-home-copy > div { display: flex; gap: 10px; }
-.music-app-home-section-title { display: flex; justify-content: space-between; margin: 34px 0 16px; }
+.music-app-home-section-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 34px 0 16px; }
 .music-app-home-section-title h3 { margin: 0 0 4px; font-size: 1.25rem; }
+.music-app-home-section-title > button { flex: 0 0 auto; }
 .music-app-home-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 18px; }
 .music-app-home-cards > button { display: grid; min-width: 0; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; gap: 6px; cursor: pointer; }
 .music-app-home-cards img { width: 100%; aspect-ratio: 1; border-radius: 15px; object-fit: cover; }
@@ -177,6 +178,8 @@ html[data-theme="light"] .music-app-home-feature {
   .music-app-home-copy > div { gap: 8px; }
   .music-app-primary { min-width: 0; padding-inline: 14px; white-space: nowrap; }
   .music-app-home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Desktop shows 12 (two rows of 6); phones keep 8 (four rows of 2). */
+  .music-app-home-cards > button:nth-child(n + 9) { display: none; }
 
   .music-app-mobile-nav {
     height: calc(62px + env(safe-area-inset-bottom));

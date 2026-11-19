@@ -149,6 +149,18 @@ test('searching shows progress on phones, where the submit button is hidden', ()
   assert.match(music, /listView === 'search' && <div className=\{`music-app-empty\$\{isSearching \? ' is-searching' : ''\}`\} role="status"><strong>\{isSearching \? <><span className="music-spinner" \/> \{TEXT\.searching\}<\/> : resultPage > 0 \? TEXT\.noResult : TEXT\.searchHint\}/, 'The cleared list says it is searching, then no results, instead of 这里还没有歌曲');
 });
 
+test('home 最近发现 fills whole rows and links to every discovered song', () => {
+  const routes = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  assert.match(routes, /const MUSIC_ROUTES = new Set\(\['\/', '\/discover',/, '/discover is a real route, not normalised to the home page');
+  assert.match(music, /const HOME_DISCOVERED_DESKTOP = 12;\s*const HOME_DISCOVERED_PHONE = 8;/);
+  assert.match(music, /\{randomTracks\.length > HOME_DISCOVERED_PHONE && <button className="music-app-quiet" type="button" onClick=\{\(\) => navigate\('\/discover'\)\}>查看全部 \{randomTracks\.length\}<\/button>\}[\s\S]*?randomTracks\.slice\(0, HOME_DISCOVERED_DESKTOP\)/);
+  assert.match(layout, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-home-cards > button:nth-child\(n \+ 9\) \{ display: none; \}/, 'Phones keep four rows of two');
+  assert.match(layout, /@media \(min-width: 701px\) \{[\s\S]*?\.music-app-home-cards \{ grid-template-columns: repeat\(6, minmax\(0, 1fr\)\);/, 'Twelve is two full desktop rows');
+  assert.match(music, /path === '\/discover' \? 'discover'/);
+  assert.equal((music.match(/\['random', 'discover'\]\.includes\(listView\) \? randomTracks/g) || []).length, 2, 'The page lists and plays the discovered songs');
+  assert.match(music, /listView === 'discover' && <div className="music-app-toolbar music-app-library-back">[\s\S]*?navigate\('\/'\)[\s\S]*?返回首页/);
+});
+
 test('library sub-pages offer a way back to 音乐库 on phones', () => {
   assert.match(music, /\['likes', 'history', 'local'\]\.includes\(listView\) && <div className="music-app-toolbar music-app-library-back">[\s\S]*?navigate\('\/playlists'\)[\s\S]*?返回音乐库/);
   assert.match(layout, /\.music-app-library-back \{ display: none; \}[\s\S]*?@media \(max-width: 700px\) \{\s*\.music-app-library-back \{\s*display: flex;/);

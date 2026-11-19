@@ -8,7 +8,7 @@ import './styles/player.css';
 const Admin = lazy(() => import('./luri-music/Admin'));
 const Docs = lazy(() => import('./pages/Docs'));
 
-const MUSIC_ROUTES = new Set(['/', '/charts', '/search', '/favorites', '/playlists', '/history', '/local', '/settings']);
+const MUSIC_ROUTES = new Set(['/', '/discover', '/charts', '/search', '/favorites', '/playlists', '/history', '/local', '/settings']);
 const isMusicRoute = (pathname) => MUSIC_ROUTES.has(pathname) || /^\/playlists\/[^/]+$/.test(pathname);
 
 export default function App() {
