@@ -246,4 +246,5 @@ test('settings offer random play preferences that default to new Chinese songs a
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
   assert.match(settings, /\n\s*<section className="music-app-settings__random"/, 'Guests can set it too');
   assert.match(settings, /\[\['', '不限'\], \.\.\.RANDOM_LANGUAGE_OPTIONS\]/);
+  assert.match(music, /const RANDOM_ERA_OPTIONS = \[\['any', '不限'\], \['new', '新歌优先'\], \['classic', '经典老歌'\]\];/, '不限 leads both groups');
 });

@@ -193,7 +193,8 @@ const pressFeedback = (button) => {
 };
 const SYNC_STATE_LABELS = { synced: '音乐库已同步', syncing: '正在同步音乐库…', pending: '有更改尚未同步，稍后自动重试', local: '' };
 // Random play preferences are sent to the Provider as hints (era, languages) and synced with the library.
-const RANDOM_ERA_OPTIONS = [['new', '新歌优先'], ['any', '不限'], ['classic', '经典老歌']];
+// 不限 comes first in both groups; the defaults stay 新歌优先 and 华语.
+const RANDOM_ERA_OPTIONS = [['any', '不限'], ['new', '新歌优先'], ['classic', '经典老歌']];
 const RANDOM_LANGUAGE_OPTIONS = [['zh', '华语'], ['en', '欧美'], ['jk', '日韩'], ['yue', '粤语'], ['instrumental', '纯音乐']];
 const DEFAULT_RANDOM_PREFERENCES = { era: 'new', languages: ['zh'] };
 // A missing value means the defaults; an empty language list means no language preference.
