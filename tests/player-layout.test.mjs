@@ -235,6 +235,12 @@ test('lock screen and system media controls get the song duration and position',
   assert.match(music, /navigator\.mediaSession\.playbackState = playing \? 'playing' : 'paused';\s*\}\s*syncPositionState\(\);/, 'Pausing and resuming pin the position');
 });
 
+test('the first tap on the page unlocks the audio element for iOS Safari', () => {
+  assert.match(music, /const gestures = \['touchend', 'click', 'keydown'\];/, 'Only events that count as a user activation');
+  assert.match(music, /if \(!media\.getAttribute\('src'\)\) media\.load\(\);\s*release\(\);/, 'Loads the element only while it is still empty, then stops listening');
+  assert.match(music, /gestures\.forEach\(\(name\) => document\.addEventListener\(name, unlock, true\)\);/, 'Capture phase, so it runs before the tapped button starts a song');
+});
+
 test('play history counts each song start once and syncs lazily', () => {
   const hook = readFileSync(new URL('../src/luri-music/useMusicLibrary.js', import.meta.url), 'utf8');
   assert.match(music, /if \(current && historyStartIdRef\.current === currentId\) \{ historyStartIdRef\.current = ''; recordHistory\(current\); \}/, 'Resume, seek and buffering fire playing again but do not count');

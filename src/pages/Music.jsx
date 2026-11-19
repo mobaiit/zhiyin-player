@@ -376,6 +376,21 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     return () => { document.body.classList.remove('has-global-music-player'); resolveRequestRef.current?.abort(); chartRequestRef.current?.abort(); searchRequestRef.current?.abort(); if (mediaDeadlineRef.current) window.clearTimeout(mediaDeadlineRef.current); };
   }, [isMusicPage]);
   useEffect(() => () => { localUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)); localUrlsRef.current.clear(); if (randomBudgetRef.current.timer) window.clearTimeout(randomBudgetRef.current.timer); }, []);
+  // iOS Safari lets an audio element start by itself only after a tap has touched it. Random and
+  // list play call play() after network requests, outside the tap, so the first song stayed at
+  // 正在缓冲. Loading the still-empty element during the page's first tap unlocks it (howler.js
+  // does the same); with no src it fetches nothing and fires no events the player reacts to.
+  useEffect(() => {
+    const gestures = ['touchend', 'click', 'keydown'];
+    const release = () => gestures.forEach((name) => document.removeEventListener(name, unlock, true));
+    function unlock() {
+      const media = audio.current; if (!media) return;
+      if (!media.getAttribute('src')) media.load();
+      release();
+    }
+    gestures.forEach((name) => document.addEventListener(name, unlock, true));
+    return release;
+  }, []);
   useEffect(() => {
     if (activeSingerSuggestion >= 0) searchSuggestionsRef.current?.querySelector('.music-search-history__item.active')?.scrollIntoView({ block: 'nearest' });
   }, [activeSingerSuggestion]);
