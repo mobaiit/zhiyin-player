@@ -357,7 +357,7 @@ export default function Docs() {
         <section id="catalog">
           <h2>目录接口</h2>
           <Endpoint method="GET" path="/v1/catalog/search?q={keyword}&page={page}&limit={limit}">返回 {`{ tracks, page, hasMore }`}；无结果时 tracks 为空数组。</Endpoint>
-          <Endpoint method="GET" path="/v1/catalog/random?limit={limit}&exclude={artists}">返回 {`{ singer?, tracks }`}；exclude 是 URL 编码、逗号分隔的近期艺人列表。</Endpoint>
+          <Endpoint method="GET" path="/v1/catalog/random?limit={limit}&exclude={artists}&era={era}&languages={languages}">返回 {`{ singer?, tracks }`}；exclude 是 URL 编码、逗号分隔的近期艺人列表。era 与 languages 是可选的偏好提示：era 为 new（新歌优先）、any 或 classic（经典老歌）；languages 是逗号分隔的 zh、en、jk、yue、instrumental，表示优先的语言，不传表示不限。Provider 可以忽略不支持的提示，客户端会按批次播放返回的歌曲。</Endpoint>
           <Endpoint method="GET" path="/v1/catalog/charts?platform={platform}&chart={chart}&refresh={refresh}">返回 {`{ platform, chart, title, updatedAt, tracks }`}；refresh=1 表示用户主动刷新。</Endpoint>
           <SchemaTable title="通用目录规则" rows={[
             ['tracks', 'Track[]', '是', '每一项必须符合统一 Track 与 Binding 模型。'],

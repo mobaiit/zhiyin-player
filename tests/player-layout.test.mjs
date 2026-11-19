@@ -192,3 +192,18 @@ test('play history counts each song start once and syncs lazily', () => {
   assert.match(hook, /document\.addEventListener\('visibilitychange', flush\); window\.addEventListener\('pagehide', flush\);/, 'Deferred changes are flushed when the page is hidden or closed');
   assert.match(hook, /keepalive: leaving && body\.length < KEEPALIVE_LIMIT/);
 });
+
+test('settings offer random play preferences that default to new Chinese songs and reach the Provider', () => {
+  assert.match(music, /const DEFAULT_RANDOM_PREFERENCES = \{ era: 'new', languages: \['zh'\] \};/);
+  assert.match(music, /const RANDOM_LANGUAGE_OPTIONS = \[\['zh', '华语'\], \['en', '欧美'\], \['jk', '日韩'\], \['yue', '粤语'\], \['instrumental', '纯音乐'\]\];/);
+  const read = new Function(`const RANDOM_ERA_OPTIONS = [['new'], ['any'], ['classic']]; const RANDOM_LANGUAGE_OPTIONS = [['zh'], ['en'], ['jk'], ['yue'], ['instrumental']]; const DEFAULT_RANDOM_PREFERENCES = { era: 'new', languages: ['zh'] }; return ${music.match(/const readRandomPreferences = (\(value\) => \(\{[\s\S]*?\}\));/)[1]}`)();
+  assert.deepEqual(read(undefined), { era: 'new', languages: ['zh'] }, 'Defaults when nothing is saved');
+  assert.deepEqual(read({ era: 'classic', languages: [] }), { era: 'classic', languages: [] }, 'An empty list means no language preference');
+  assert.deepEqual(read({ era: 'x', languages: ['en', 'en', 'xx'] }), { era: 'new', languages: ['en'] });
+  assert.match(music, /function randomRequestParams\(\) \{ return \{ exclude: randomSingers\.current\.join\(','\), era: randomPreferences\.era, languages: randomPreferences\.languages\.join\(','\) \}; \}/);
+  assert.equal((music.match(/musicRequest\('random', randomRequestParams\(\), controller\.signal\)/g) || []).length, 2, 'The home button and the batch requested ahead both send the preferences');
+  assert.match(music, /updateLibrary\(\(value\) => \(\{ \.\.\.value, settings: \{ \.\.\.\(value\.settings \|\| \{\}\), randomPreferences: next \} \}\)\);\s*randomBatchRef\.current\.next = null;/, 'Saved in the synced library; a batch requested with old preferences is dropped');
+  const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
+  assert.match(settings, /\n\s*<section className="music-app-settings__random"/, 'Guests can set it too');
+  assert.match(settings, /\[\['', '不限'\], \.\.\.RANDOM_LANGUAGE_OPTIONS\]/);
+});

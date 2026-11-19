@@ -180,6 +180,15 @@ const QUALITY_META = {
   flac24bit: { label: 'Hi-Res', icon: 'hires', mark: 'Hi-Res' },
 };
 const SYNC_STATE_LABELS = { synced: '音乐库已同步', syncing: '正在同步音乐库…', pending: '有更改尚未同步，稍后自动重试', local: '' };
+// Random play preferences are sent to the Provider as hints (era, languages) and synced with the library.
+const RANDOM_ERA_OPTIONS = [['new', '新歌优先'], ['any', '不限'], ['classic', '经典老歌']];
+const RANDOM_LANGUAGE_OPTIONS = [['zh', '华语'], ['en', '欧美'], ['jk', '日韩'], ['yue', '粤语'], ['instrumental', '纯音乐']];
+const DEFAULT_RANDOM_PREFERENCES = { era: 'new', languages: ['zh'] };
+// A missing value means the defaults; an empty language list means no language preference.
+const readRandomPreferences = (value) => ({
+  era: RANDOM_ERA_OPTIONS.some(([key]) => key === value?.era) ? value.era : DEFAULT_RANDOM_PREFERENCES.era,
+  languages: Array.isArray(value?.languages) ? [...new Set(value.languages.filter((language) => RANDOM_LANGUAGE_OPTIONS.some(([key]) => key === language)))] : DEFAULT_RANDOM_PREFERENCES.languages,
+});
 const QUALITY_RANK = { '128k': 1, '192k': 2, '320k': 3, flac: 4, flac24bit: 5 };
 
 function QualityBadge({ track, fallbackQuality = '' }) {
@@ -279,6 +288,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const [volume, setVolume] = useState(0.8); const [muted, setMuted] = useState(false);
   const [lyrics, setLyrics] = useState(''); const [translation, setTranslation] = useState(''); const [lyricsState, setLyricsState] = useState('');
   const { library, updateLibrary, syncState } = useMusicLibrary(favoriteNamespace, favoriteSyncEnabled, notify);
+  const randomPreferences = readRandomPreferences(library.settings?.randomPreferences);
   const [artOverrides, setArtOverrides] = useState({}); const rowArtworkRef = useRef({ tried: new Set(), cacheTried: new Set(), queue: [], active: 0 });
   const [localTracks, setLocalTracks] = useState([]); const [libraryDialog, setLibraryDialog] = useState(''); const [dialogTrack, setDialogTrackState] = useState(null); const [playlistSelection, setPlaylistSelection] = useState([]); const [newPlaylistName, setNewPlaylistName] = useState(''); const [dialogPlaylist, setDialogPlaylist] = useState(null);
   const libraryDialogRef = useRef(null); const nowPanelRef = useRef(null);
@@ -902,8 +912,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     const controller = new AbortController(); randomRequest.current = controller;
     playMode.current = 'random'; setListView('random'); setMobileView('now'); setRandomLoading(true); setSearchState('');
     try {
-      const excluded = randomSingers.current.join(',');
-      const response = await musicRequest('random', { exclude: excluded }, controller.signal);
+      const response = await musicRequest('random', randomRequestParams(), controller.signal);
       const payload = await providerPayload(response);
       const tracks = canonicalTracks(payload.tracks).filter((track) => track.binding);
       if (!tracks.length) throw Error();
@@ -918,6 +927,20 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (session === randomSession.current) { randomRequest.current = null; setRandomLoading(false); }
     }
   };
+  // Recently played artists to avoid, plus the user's era and language hints. An empty
+  // language list is dropped by the proxy, which the Provider reads as no preference.
+  function randomRequestParams() { return { exclude: randomSingers.current.join(','), era: randomPreferences.era, languages: randomPreferences.languages.join(',') }; }
+  // The current batch keeps playing; only a batch requested ahead with the old preferences is dropped.
+  function saveRandomPreferences(change) {
+    const next = { ...randomPreferences, ...change };
+    updateLibrary((value) => ({ ...value, settings: { ...(value.settings || {}), randomPreferences: next } }));
+    randomBatchRef.current.next = null;
+  }
+  function toggleRandomLanguage(language) {
+    if (!language) { saveRandomPreferences({ languages: [] }); return; }
+    const languages = randomPreferences.languages.includes(language) ? randomPreferences.languages.filter((item) => item !== language) : [...randomPreferences.languages, language];
+    saveRandomPreferences({ languages });
+  }
   // One Provider request returns a batch; random play works through it before asking for another.
   // Songs heard recently (the last 50) count as played, so a batch never repeats them.
   function unplayedRandomTracks() { return randomBatchRef.current.tracks.filter((track) => !randomTrackKeys.current.includes(randomTrackKey(track))); }
@@ -938,7 +961,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     const batch = randomBatchRef.current;
     if (!batch.tracks.length || batch.next || batch.request || unplayedRandomTracks().length) return;
     const controller = new AbortController(); batch.request = controller;
-    musicRequest('random', { exclude: randomSingers.current.join(',') }, controller.signal).then(providerPayload).then((payload) => {
+    musicRequest('random', randomRequestParams(), controller.signal).then(providerPayload).then((payload) => {
       const tracks = canonicalTracks(payload.tracks).filter((track) => track.binding);
       if (randomBatchRef.current === batch && tracks.length) batch.next = { tracks, singer: payload.singer || '' };
     }).catch(() => { /* The batch is requested again when it runs out. */ }).finally(() => { if (batch.request === controller) batch.request = null; });
@@ -1325,6 +1348,11 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
               {user && <div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('password')}><b>修改密码</b><span>修改后其他设备需要重新登录</span></button><button className="danger" type="button" onClick={() => onLogout?.()}><b>退出登录</b><span>退出当前设备</span></button></div>}
             </section>
             {user && <section aria-labelledby="music-playback-title"><h2 id="music-playback-title">播放</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('quality')}><b>播放音质</b><span>{QUALITY_META[playbackQuality]?.label || playbackQuality}</span></button><button type="button" onClick={() => onOpenSettings?.('providers')}><b>Provider 配置</b><span>{activeProvider?.displayName || '未启用'}</span></button></div></section>}
+            <section className="music-app-settings__random" aria-labelledby="music-random-title">
+              <div><h2 id="music-random-title">随机播放偏好</h2><p>首页随机播放按这里的偏好挑歌，其他年代和语言的歌仍会少量出现。</p></div>
+              <div className="music-app-settings__choice"><b id="music-random-era">歌曲年代</b><div className="music-app-choice-group" role="group" aria-labelledby="music-random-era">{RANDOM_ERA_OPTIONS.map(([value, label]) => <button type="button" key={value} className={randomPreferences.era === value ? 'active' : ''} aria-pressed={randomPreferences.era === value} onClick={() => saveRandomPreferences({ era: value })}>{label}</button>)}</div></div>
+              <div className="music-app-settings__choice"><b id="music-random-languages">优先语言</b><div className="music-app-choice-group" role="group" aria-labelledby="music-random-languages">{[['', '不限'], ...RANDOM_LANGUAGE_OPTIONS].map(([value, label]) => { const active = value ? randomPreferences.languages.includes(value) : !randomPreferences.languages.length; return <button type="button" key={value || 'any'} className={active ? 'active' : ''} aria-pressed={active} onClick={() => toggleRandomLanguage(value)}>{label}</button>; })}</div></div>
+            </section>
             <section className="music-app-settings__themes" aria-labelledby="music-theme-title"><div><h2 id="music-theme-title">界面主题</h2><p>三套主题共用同一布局，切换后立即保存到当前浏览器。</p></div><div className="music-theme-options">{[['light', '白色', '明亮、清晰'], ['dark', '黑色', '高对比、低干扰'], ['glass', '透明模糊', '封面背景、轻度毛玻璃']].map(([value, label, description]) => <button className={theme === value ? 'active' : ''} type="button" key={value} aria-pressed={theme === value} onClick={() => setTheme(value)}><i className={`music-theme-preview is-${value}`} aria-hidden="true" /><span><b>{label}</b><small>{description}</small></span></button>)}</div></section>
             <section aria-labelledby="music-about-title"><h2 id="music-about-title">关于</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenAnnouncement?.()}><b>网站公告</b><span>查看最新公告</span></button><button type="button" onClick={() => onOpenSettings?.('terms')}><b>使用条款</b><span>服务与隐私说明</span></button>{docsEnabled && <button type="button" onClick={openDocs}><b>帮助与文档</b><span>在新标签页打开</span></button>}</div></section>
           </div>}

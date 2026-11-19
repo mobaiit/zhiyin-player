@@ -257,6 +257,28 @@ html[data-theme="light"] .music-app-home-feature {
   background: var(--app-accent);
   font-weight: 750;
 }
+.music-app-settings__random { display: grid; gap: 16px; }
+.music-app-settings__choice { display: grid; gap: 8px; }
+.music-app-settings__choice > b { font-size: .8rem; }
+.music-app-choice-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.music-app-choice-group > button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  color: inherit;
+  background: var(--zy-theme-surface-raised);
+  font: inherit;
+  font-size: .78rem;
+  cursor: pointer;
+}
+.music-app-choice-group > button:hover { border-color: color-mix(in srgb, var(--app-accent) 40%, var(--app-line)); }
+.music-app-choice-group > button.active {
+  border-color: color-mix(in srgb, var(--app-accent) 68%, transparent);
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 12%, var(--zy-theme-surface-raised));
+  font-weight: 700;
+}
 
 /* Full-screen player: keep light classic mode readable and controls circular. */
 

@@ -13,6 +13,15 @@ const sanitizeBinding = (value) => {
   return { source: text(value.source, 100), sourceId: text(value.sourceId, 500), meta: value.meta, art: text(value.art, 2000), ...(text(value.resolver, 100) ? { resolver: text(value.resolver, 100) } : {}) };
 };
 
+const RANDOM_ERAS = new Set(['new', 'any', 'classic']);
+const RANDOM_LANGUAGES = new Set(['zh', 'en', 'jk', 'yue', 'instrumental']);
+// Random play hints for the Provider; anything unknown is dropped rather than stored.
+export const sanitizeRandomPreferences = (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !RANDOM_ERAS.has(value.era)) return null;
+  const languages = Array.isArray(value.languages) ? [...new Set(value.languages.filter((language) => RANDOM_LANGUAGES.has(language)))] : [];
+  return { era: value.era, languages };
+};
+
 const sanitizeTrack = (item) => {
   const title = text(item?.title, 300); const artist = text(item?.artist, 300); const sourceBinding = sanitizeBinding(item?.binding);
   if (!title || !artist || !sourceBinding || item?.sourceType === 'local') return null;
@@ -43,6 +52,7 @@ export const sanitizeLibrary = (value, timestamp = null) => {
   const settings = value?.settings && typeof value.settings === 'object' && !Array.isArray(value.settings) ? {
     compactMode: Boolean(value.settings.compactMode),
     reduceTransparency: Boolean(value.settings.reduceTransparency),
+    ...(sanitizeRandomPreferences(value.settings.randomPreferences) ? { randomPreferences: sanitizeRandomPreferences(value.settings.randomPreferences) } : {}),
   } : {};
   return { playlists, history, settings, updatedAt: timestamp || text(value?.updatedAt, 40) || null };
 };

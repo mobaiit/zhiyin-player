@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseUserData, serializeUserData } from '../functions/luri-music/user-data.js';
-import { sanitizeLibrary } from '../functions/luri-music/library.js';
+import { sanitizeLibrary, sanitizeRandomPreferences } from '../functions/luri-music/library.js';
 import { sanitizeFavorites } from '../functions/luri-music/favorites.js';
 
 const providerTrack = (title = 'Song', artist = 'Artist') => ({
@@ -54,4 +54,13 @@ test('unknown client routes are normalized to the music app root', async () => {
   const source = await import('node:fs/promises').then((fs) => fs.readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'));
   assert.match(source, /replaceState\(null, '', '\/'\)/);
   assert.match(source, /pathname !== '\/admin'.*pathname !== '\/docs'/s);
+});
+
+test('random play preferences survive library sync and unknown values are dropped', () => {
+  const library = sanitizeLibrary({ playlists: [], history: [], settings: { randomPreferences: { era: 'new', languages: ['zh', 'instrumental', 'zh', 'xx'] }, other: 'dropped' } });
+  assert.deepEqual(library.settings.randomPreferences, { era: 'new', languages: ['zh', 'instrumental'] });
+  assert.equal(library.settings.other, undefined);
+  assert.deepEqual(sanitizeRandomPreferences({ era: 'any', languages: [] }), { era: 'any', languages: [] }, 'No language preference is a valid choice');
+  assert.equal(sanitizeRandomPreferences({ era: 'old', languages: ['zh'] }), null);
+  assert.equal(sanitizeLibrary({ settings: { randomPreferences: 'new' } }).settings.randomPreferences, undefined);
 });
