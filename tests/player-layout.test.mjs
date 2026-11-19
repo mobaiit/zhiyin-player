@@ -143,6 +143,12 @@ test('search loads the next page when the end of the results scrolls into view',
   assert.match(music, /const row = currentRowRef\.current; const list = scrollParentOf\(musicListRef\.current\);/, 'The playing row is located inside the element that actually scrolls');
 });
 
+test('searching shows progress on phones, where the submit button is hidden', () => {
+  assert.match(layout, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-search > \.music-app-search__submit \{ display: none; \}/, 'Phones submit with the keyboard');
+  assert.match(music, /<span className="music-app-search__icon" aria-hidden="true">\{isSearching \? <span className="music-spinner" \/> : <MusicIcon name="search" \/>\}<\/span>/, 'The search box itself shows a spinner');
+  assert.match(music, /listView === 'search' && <div className=\{`music-app-empty\$\{isSearching \? ' is-searching' : ''\}`\} role="status"><strong>\{isSearching \? <><span className="music-spinner" \/> \{TEXT\.searching\}<\/> : resultPage > 0 \? TEXT\.noResult : TEXT\.searchHint\}/, 'The cleared list says it is searching, then no results, instead of 这里还没有歌曲');
+});
+
 test('library sub-pages offer a way back to 音乐库 on phones', () => {
   assert.match(music, /\['likes', 'history', 'local'\]\.includes\(listView\) && <div className="music-app-toolbar music-app-library-back">[\s\S]*?navigate\('\/playlists'\)[\s\S]*?返回音乐库/);
   assert.match(layout, /\.music-app-library-back \{ display: none; \}[\s\S]*?@media \(max-width: 700px\) \{\s*\.music-app-library-back \{\s*display: flex;/);

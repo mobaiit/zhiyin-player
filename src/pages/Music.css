@@ -165,6 +165,7 @@
 .music-app-track__actions button:hover { color: var(--color-text); background: color-mix(in srgb, currentColor 8%, transparent); }
 .music-app-empty { display: grid; place-items: center; min-height: 200px; gap: 8px; padding: 30px; color: var(--color-text-muted); text-align: center; }
 .music-app-empty strong { color: var(--color-text); }
+.music-app-empty.is-searching strong { display: inline-flex; align-items: center; gap: 8px; color: var(--app-accent); }
 .music-app-empty button { padding: 0 16px; border: 1px solid var(--app-line); border-radius: 12px; color: inherit; background: transparent; }
 .music-app-playlists { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
 .music-app-playlists article { overflow: hidden; border: 1px solid var(--app-line); border-radius: 16px; background: color-mix(in srgb, currentColor 4%, transparent); }
