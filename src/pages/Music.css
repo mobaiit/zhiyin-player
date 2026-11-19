@@ -180,8 +180,6 @@
 .music-app-settings section { margin-bottom: 8px; padding: 22px; border: 1px solid var(--app-line); border-radius: 16px; background: color-mix(in srgb, currentColor 4%, transparent); }
 .music-app-settings h2 { margin: 0 0 8px; }
 .music-app-settings p { margin: 0; color: var(--color-text-muted); line-height: 1.6; }
-.music-app-settings > button { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; border: 1px solid var(--app-line); border-radius: 13px; color: inherit; background: transparent; text-align: left; }
-.music-app-settings > button span { color: var(--color-text-muted); font-size: .75rem; }
 .music-app-mobile-nav { display: none; }
 .music-app-modal { position: fixed; z-index: 90; inset: 0; display: grid; place-items: center; padding: 18px; }
 .music-app-modal__backdrop { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: rgba(0,0,0,.62); }

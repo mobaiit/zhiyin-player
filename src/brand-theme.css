@@ -735,8 +735,8 @@ html[data-theme="light"] .music-quality {
   color: #f5bd7f !important;
 }
 
-.lm-provider-list article button:not(.enable, .disable),
-.lm-provider-detail-actions button:not(.enable, .disable),
+.lm-provider-list article button:not(.enable),
+.lm-provider-detail-actions button:not(.enable),
 .lm-provider-back,
 .lm-provider-detail-actions .lm-provider-back,
 .lm-provider-form-actions .lm-provider-back,
@@ -748,14 +748,26 @@ html[data-theme="light"] .music-quality {
   color: var(--zy-text-secondary) !important;
 }
 
-.lm-provider-list article button:not(.enable, .disable):hover,
-.lm-provider-detail-actions button:not(.enable, .disable):hover,
+.lm-provider-list article button:not(.enable):hover,
+.lm-provider-detail-actions button:not(.enable):hover,
 .lm-provider-back:hover,
 .lm-provider-advanced-toggle:hover,
 .lm-provider-footer a:hover {
   border-color: color-mix(in srgb, var(--zy-red) 42%, transparent) !important;
   background: var(--zy-red-soft) !important;
   color: var(--zy-text) !important;
+}
+
+/* Deleting a Provider cannot be undone, so it is the only red action in the dialog. */
+.lm-provider-detail-actions button.danger,
+.lm-provider-danger-zone > button {
+  border-color: color-mix(in srgb, var(--zy-red) 48%, transparent) !important;
+  color: var(--zy-red) !important;
+}
+.lm-provider-detail-actions button.danger:hover,
+.lm-provider-danger-zone > button:hover {
+  background: var(--zy-red-soft) !important;
+  color: var(--zy-red) !important;
 }
 
 .lm-provider-form textarea {

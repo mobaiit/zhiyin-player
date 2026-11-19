@@ -206,7 +206,7 @@ function ProviderInfo({ provider, showProviderStatus = false, showConnection = f
 }
 
 function PasswordDialog({ close, notify }) {
-  const [loading, setLoading] = useState(false); const submit = async (event) => { event.preventDefault(); const form = new FormData(event.currentTarget); if (form.get('next') !== form.get('confirm')) return notify('两次密码不一致', '请检查确认密码后再提交', 'warning'); setLoading(true); try { await api('auth/password', { method: 'POST', body: JSON.stringify({ currentPassword: form.get('current'), password: form.get('next') }) }); close(); notify('修改成功', '密码已更新', 'success'); } catch (error) { notify('修改失败', error.message, 'error'); } finally { setLoading(false); } };
+  const [loading, setLoading] = useState(false); const submit = async (event) => { event.preventDefault(); const form = new FormData(event.currentTarget); if (form.get('next') !== form.get('confirm')) return notify('两次密码不一致', '请检查确认密码后再提交', 'warning'); setLoading(true); try { await api('auth/password', { method: 'POST', body: JSON.stringify({ currentPassword: form.get('current'), password: form.get('next') }) }); close(); notify('修改成功', '密码已更新，其他设备需要重新登录', 'success'); } catch (error) { notify('修改失败', error.message, 'error'); } finally { setLoading(false); } };
   return <Modal title="修改密码" close={close}><form onSubmit={submit}><PasswordField label="当前密码" name="current" required autoComplete="current-password" autoFocus /><PasswordField label="新密码" name="next" minLength="8" required autoComplete="new-password" /><PasswordField label="确认新密码" name="confirm" minLength="8" required autoComplete="new-password" /><button className="primary" disabled={loading}>{loading ? <><Spinner /> 保存中…</> : '保存修改'}</button></form></Modal>;
 }
 

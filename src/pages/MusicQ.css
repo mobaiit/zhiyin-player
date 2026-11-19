@@ -207,15 +207,48 @@ html[data-theme="light"] .music-app-home-feature {
   min-height: 100dvh;
   padding-top: 0 !important;
 }
-.music-app-settings__account {
+/* Settings: one card per group; rows inside a card share its surface. */
+.music-app-settings__account { display: grid; gap: 16px; }
+.music-app-settings__profile { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.music-app-settings__profile > div { min-width: 0; }
+.music-app-settings__profile h2 { margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-app-settings__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--app-accent-ink);
+  background: var(--app-accent);
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+.music-app-settings section > h2 { margin-bottom: 10px; }
+.music-app-settings__rows { display: grid; margin: 0 -10px; }
+.music-app-settings__account:has(> .music-app-settings__rows) { gap: 6px; }
+.music-app-settings__account:has(> .music-app-settings__rows) .music-app-settings__profile { padding-bottom: 16px; border-bottom: 1px solid var(--app-line); }
+.music-app-settings__rows > button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
+  min-height: 48px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-.music-app-settings__account > div { min-width: 0; }
+.music-app-settings__rows > button:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
+.music-app-settings__rows > button b { flex: 0 0 auto; }
+.music-app-settings__rows > button span { min-width: 0; overflow: hidden; color: var(--color-text-muted); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.music-app-settings__rows > button.danger b { color: #ef6269; }
 .music-app-settings__primary {
-  flex: 0 0 auto;
+  justify-self: start;
   min-height: 42px;
   padding: 0 16px;
   border: 0;
@@ -224,7 +257,6 @@ html[data-theme="light"] .music-app-home-feature {
   background: var(--app-accent);
   font-weight: 750;
 }
-.music-app-settings > button.danger { color: #ef6269; }
 
 /* Full-screen player: keep light classic mode readable and controls circular. */
 
@@ -269,8 +301,7 @@ html[data-theme="light"] .music-app-home-feature {
   .music-app-home-feature,
   .music-app-playlists article,
   .music-app-local-note,
-  .music-app-settings section,
-  .music-app-settings > button {
+  .music-app-settings section {
     border-color: color-mix(in srgb, currentColor 11%, transparent) !important;
     background: var(--mobile-surface) !important;
     box-shadow: none !important;
@@ -294,7 +325,6 @@ html[data-theme="light"] .music-app-home-feature {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
-  .music-app-settings__account { align-items: stretch; flex-direction: column; }
   .music-app-settings__primary { width: 100%; }
 }
 
@@ -680,7 +710,6 @@ html[data-theme="light"] .music-app-search .music-search-history {
 .music-app-topbar,
 .music-app-mobile-nav,
 .music-app-settings section,
-.music-app-settings > button,
 .music-app-home-feature,
 .music-app-local-note,
 .music-app-playlists article,
@@ -739,7 +768,6 @@ html[data-theme="glass"] :is(
   .music-app-topbar,
   .music-app-mobile-nav,
   .music-app-settings section,
-  .music-app-settings > button,
   .music-app-home-feature,
   .music-app-local-note,
   .music-app-playlists article,
@@ -785,8 +813,9 @@ html[data-theme="glass"] :is(
     min-height: 100dvh !important;
   }
   .music-app-topbar { min-height: 98px; padding-top: max(10px, env(safe-area-inset-top)); }
-  .music-theme-options { grid-template-columns: minmax(0, 1fr); }
-  .music-theme-options > button { min-height: 60px; }
+  .music-theme-options { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .music-theme-options > button { grid-template-columns: minmax(0, 1fr); justify-items: center; min-height: 0; gap: 8px; padding: 12px 6px; text-align: center; }
+  .music-theme-options > button small { display: none; }
 }
 
 /* Library hierarchy and compact mobile typography. */
@@ -871,7 +900,7 @@ html[data-theme="glass"] :is(
   }
 
   .music-app-settings p,
-  .music-app-settings > button {
+  .music-app-settings__rows > button {
     font-size: .78rem;
   }
 

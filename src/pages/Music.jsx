@@ -176,6 +176,7 @@ const QUALITY_META = {
   flac: { label: '无损 FLAC', icon: 'lossless', mark: 'SQ' },
   flac24bit: { label: 'Hi-Res', icon: 'hires', mark: 'Hi-Res' },
 };
+const SYNC_STATE_LABELS = { synced: '音乐库已同步', syncing: '正在同步音乐库…', pending: '有更改尚未同步，稍后自动重试', local: '' };
 const QUALITY_RANK = { '128k': 1, '192k': 2, '320k': 3, flac: 4, flac24bit: 5 };
 
 function QualityBadge({ track, fallbackQuality = '' }) {
@@ -1174,7 +1175,6 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const viewTitle = listView === 'random' ? '发现音乐' : isChartView ? '音乐榜单' : listView === 'search' ? '搜索' : listView === 'likes' ? '我的喜欢' : listView === 'playlists' ? '自定义歌单' : listView === 'playlist' ? selectedPlaylist?.name || '歌单' : listView === 'history' ? '播放历史' : listView === 'local' ? '本地音乐' : listView === 'settings' ? '设置' : '播放列表';
   const viewSubtitle = listView === 'random' ? '从现有曲库随机发现下一首喜欢的歌' : listView === 'local' ? '音频不会上传，关闭页面后需要重新选择' : listView === 'history' ? '最近成功播放的 200 首歌曲' : listView === 'playlists' ? '创建、导入并在多端同步你的歌单' : listView === 'settings' ? '账户、播放与 Provider 设置' : isChartView && chartData.updatedAt ? `${visibleTracks.length} 首歌曲 · 更新于 ${chartUpdatedLabel(chartData.updatedAt)}` : `${visibleTracks.length} 首歌曲`;
   const discoveredCount = Math.max(randomTracks.length, current ? 1 : 0);
-  const openAccountSetting = (name) => user ? onOpenSettings?.(name) : onOpenAuth?.();
   const openDocs = () => window.open('/docs', '_blank', 'noopener,noreferrer');
   const cyclePlayerStyle = () => setPlayerStyle((value) => value === 'classic' ? 'immersive' : 'classic');
   const isLiked = Boolean(current && likedTracks.some((track) => sameFavorite(track, current)));
@@ -1266,15 +1266,14 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
           {listView === 'playlist' && selectedPlaylist && <div className="music-app-toolbar music-app-playlist-toolbar"><button className="music-app-quiet music-app-back-button" type="button" onClick={() => navigate('/playlists')}><MusicIcon name="back" /><span>返回音乐库</span></button><button className="music-app-primary" type="button" disabled={!selectedPlaylist.tracks.length} onClick={() => selectTrack(selectedPlaylist.tracks[0]?.songId, selectedPlaylist.tracks)}>播放全部</button><button className="music-app-quiet" type="button" onClick={() => renamePlaylist(selectedPlaylist)}>重命名</button><button className="music-app-quiet danger" type="button" onClick={() => deletePlaylist(selectedPlaylist)}>删除</button></div>}
           {listView === 'local' && <div className="music-app-local-note"><div><b>播放此设备上的音乐</b><span>桌面端可选择整个文件夹；Android 建议选择一个或多个音频文件。不会上传、缓存或跨设备同步。</span></div><button className="music-app-primary" type="button" onClick={() => localFilesRef.current?.click()}>选择歌曲</button><button className="music-app-quiet music-app-folder-button" type="button" onClick={() => localFolderRef.current?.click()}>选择文件夹</button></div>}
           {listView === 'settings' && <div className="music-app-settings">
-            <section className="music-app-settings__account"><div><h2>账户与同步</h2><p>{accountBooting ? '正在同步账户状态…' : user ? `${user.name}${user.email ? ` · ${user.email}` : ''} · ${syncState === 'synced' ? '音乐库已同步' : '音乐库将在联网后同步'}` : '当前为访客，本机数据不会同步到其他设备。'}</p></div>{!accountBooting && !user && <button className="music-app-settings__primary" type="button" onClick={() => onOpenAuth?.()}>登录 / 注册</button>}</section>
+            <section className="music-app-settings__account" aria-labelledby="music-account-title">
+              <div className="music-app-settings__profile"><span className="music-app-settings__avatar" aria-hidden="true">{user ? Array.from(user.name || '?')[0] : '访'}</span><div><h2 id="music-account-title">{accountBooting ? '正在恢复账户…' : user ? user.name : '访客模式'}</h2><p>{accountBooting ? '账户状态同步完成后即可使用在线功能' : user ? [user.email, SYNC_STATE_LABELS[syncState]].filter(Boolean).join(' · ') : '登录后可同步音乐库，并配置 Provider 与播放音质。本机数据不会同步到其他设备。'}</p></div></div>
+              {!accountBooting && !user && <button className="music-app-settings__primary" type="button" onClick={() => onOpenAuth?.()}>登录 / 注册</button>}
+              {user && <div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('password')}><b>修改密码</b><span>修改后其他设备需要重新登录</span></button><button className="danger" type="button" onClick={() => onLogout?.()}><b>退出登录</b><span>退出当前设备</span></button></div>}
+            </section>
+            {user && <section aria-labelledby="music-playback-title"><h2 id="music-playback-title">播放</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('quality')}><b>播放音质</b><span>{QUALITY_META[playbackQuality]?.label || playbackQuality}</span></button><button type="button" onClick={() => onOpenSettings?.('providers')}><b>Provider 配置</b><span>{activeProvider?.displayName || '未启用'}</span></button></div></section>}
             <section className="music-app-settings__themes" aria-labelledby="music-theme-title"><div><h2 id="music-theme-title">界面主题</h2><p>三套主题共用同一布局，切换后立即保存到当前浏览器。</p></div><div className="music-theme-options">{[['light', '白色', '明亮、清晰'], ['dark', '黑色', '高对比、低干扰'], ['glass', '透明模糊', '封面背景、轻度毛玻璃']].map(([value, label, description]) => <button className={theme === value ? 'active' : ''} type="button" key={value} aria-pressed={theme === value} onClick={() => setTheme(value)}><i className={`music-theme-preview is-${value}`} aria-hidden="true" /><span><b>{label}</b><small>{description}</small></span></button>)}</div></section>
-            <button type="button" onClick={() => onOpenAnnouncement?.()}><b>网站公告</b><span>查看最新公告</span></button>
-            <button type="button" onClick={() => openAccountSetting('quality')}><b>播放音质</b><span>{user ? playbackQuality : '登录后设置'}</span></button>
-            <button type="button" onClick={() => openAccountSetting('providers')}><b>Provider 配置</b><span>{user ? activeProvider?.name || '未配置' : '登录后配置'}</span></button>
-            <button type="button" onClick={() => openAccountSetting('password')}><b>修改密码</b><span>{user ? '账户安全' : '请先登录'}</span></button>
-            <button type="button" onClick={() => onOpenSettings?.('terms')}><b>使用条款</b><span>服务与隐私说明</span></button>
-            {docsEnabled && <button type="button" onClick={openDocs}><b>帮助与文档</b><span>在新标签页打开</span></button>}
-            {user && <button className="danger" type="button" onClick={() => onLogout?.()}><b>退出登录</b><span>退出当前账户</span></button>}
+            <section aria-labelledby="music-about-title"><h2 id="music-about-title">关于</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenAnnouncement?.()}><b>网站公告</b><span>查看最新公告</span></button><button type="button" onClick={() => onOpenSettings?.('terms')}><b>使用条款</b><span>服务与隐私说明</span></button>{docsEnabled && <button type="button" onClick={openDocs}><b>帮助与文档</b><span>在新标签页打开</span></button>}</div></section>
           </div>}
           {!['playlists', 'settings', 'random'].includes(listView) && renderTrackList()}
           {listView === 'playlist' && !selectedPlaylist && <div className="music-app-empty"><strong>歌单不存在</strong><button type="button" onClick={() => navigate('/playlists')}>返回歌单</button></div>}

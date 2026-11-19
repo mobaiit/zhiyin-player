@@ -140,7 +140,12 @@ export async function handleLuriMusic(request, env) {
     return json({ ok: true });
   }
 
-  if (action === 'auth/logout') return json({ ok: true }, 200, { 'set-cookie': sessionCookie(USER_COOKIE, '', 0) });
+  if (action === 'auth/logout') {
+    // Clearing the cookie alone would leave a copied session token valid until it expires.
+    const value = cookie(request, USER_COOKIE);
+    if (value) await env.LURI_MUSIC_DB.prepare('DELETE FROM luri_music_sessions WHERE token_hash=?').bind(await hash(value)).run();
+    return json({ ok: true }, 200, { 'set-cookie': sessionCookie(USER_COOKIE, '', 0) });
+  }
   if (action === 'admin/logout') return json({ ok: true }, 200, { 'set-cookie': sessionCookie(ADMIN_COOKIE, '', 0) });
   if (action === 'auth/password' && request.method === 'POST') {
     const user = await currentUser(request, env); const data = await body(request);
@@ -148,7 +153,11 @@ export async function handleLuriMusic(request, env) {
     const row = await env.LURI_MUSIC_DB.prepare('SELECT password_hash FROM luri_music_users WHERE id=?').bind(user.id).first();
     if (!await verifyPassword(data.currentPassword || '', row.password_hash)) return json({ error: '旧密码错误' }, 400);
     if (!validPassword(data.password)) return json({ error: '新密码至少需要 8 位' }, 400);
-    await env.LURI_MUSIC_DB.prepare('UPDATE luri_music_users SET password_hash=?,updated_at=? WHERE id=?').bind(await passwordHash(data.password), now(), user.id).run();
+    // Keep this device signed in and sign out every other session.
+    await env.LURI_MUSIC_DB.batch([
+      env.LURI_MUSIC_DB.prepare('UPDATE luri_music_users SET password_hash=?,updated_at=? WHERE id=?').bind(await passwordHash(data.password), now(), user.id),
+      env.LURI_MUSIC_DB.prepare('DELETE FROM luri_music_sessions WHERE user_id=? AND token_hash<>?').bind(user.id, await hash(cookie(request, USER_COOKIE))),
+    ]);
     return json({ ok: true });
   }
 

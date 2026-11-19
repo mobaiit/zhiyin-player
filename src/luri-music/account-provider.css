@@ -256,26 +256,14 @@
   border-color: #166534;
   background: #166534;
 }
-.lm-provider-list article button.disable,
-.lm-provider-detail-actions .disable {
-  border-color: #b91c1c;
-  background: #b91c1c;
-  color: #fff;
-}
-.lm-provider-list article button.disable:hover,
-.lm-provider-detail-actions .disable:hover {
-  border-color: #991b1b;
-  background: #991b1b;
-}
-.lm-provider-list article button:not(.enable, .disable):hover,
-.lm-provider-detail-actions button:not(.enable, .disable, .danger, .lm-provider-back):hover {
+/* Disabling is reversible, so it looks like any other action; only deleting is red. */
+.lm-provider-list article button:not(.enable):hover,
+.lm-provider-detail-actions button:not(.enable, .danger, .lm-provider-back):hover {
   border-color: #bdbdbd;
   background: #f6f6f6;
 }
 .lm-provider-list article button.enable .ui-spinner,
-.lm-provider-list article button.disable .ui-spinner,
-.lm-provider-detail-actions .enable .ui-spinner,
-.lm-provider-detail-actions .disable .ui-spinner {
+.lm-provider-detail-actions .enable .ui-spinner {
   border-color: rgba(255, 255, 255, 0.45);
   border-top-color: #fff;
 }
