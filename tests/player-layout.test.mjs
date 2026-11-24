@@ -80,7 +80,7 @@ test('song rows show a known duration after the artist and nothing when it is un
   assert.match(layout, /\.music-app-track__meta small\.music-app-track__duration \{[^}]*flex: 0 0 auto;/, 'A long album truncates before the duration');
 });
 
-test('song rows offer favourite, add to playlist, play and download, revealed on hover with a mouse', () => {
+test('song rows always offer favourite, add to playlist, play and download', () => {
   const list = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
   const actions = music.slice(music.indexOf('<div className="music-app-track__actions">'), music.indexOf('</div>', music.indexOf('<div className="music-app-track__actions">')));
   const order = ['music-app-track__like', 'openAddToPlaylist(track)', 'music-app-track__play', 'music-app-track__download'].map((marker) => actions.indexOf(marker));
@@ -89,10 +89,50 @@ test('song rows offer favourite, add to playlist, play and download, revealed on
   assert.match(music, /const like = \(song\) => \{\s*if \(!song\) return;/, 'like() no longer falls back to the current song');
   assert.match(actions, /<MusicIcon name=\{state === 'playing' \? 'pause' : 'play'\} \/>/, 'The playing row shows pause');
   assert.match(music, /const downloadTrack = async \(track\) => \{[\s\S]*?const tab = window\.open\('', '_blank'\);[\s\S]*?musicRequest\('resolve'/, 'Download opens its tab during the click, then resolves the URL');
-  assert.match(list, /@media \(min-width: 701px\) and \(hover: hover\) \{\s*\.music-app-track__actions > button \{ opacity: 0;/);
-  assert.match(list, /\.music-app-track:is\(:hover, :focus-within, \.is-current\) \.music-app-track__actions > button,\s*\.music-app-track__actions > \.music-app-track__like\.is-liked \{ opacity: 1; \}/);
+  assert.doesNotMatch(list, /\.music-app-track__actions > button \{ opacity: 0;/, 'Actions stay visible');
+  assert.match(actions, /openAddToPlaylist\(track\)\} aria-label=\{`将 \$\{track\.title\} 加入歌单`\} title="加入歌单"><MusicIcon name="add" \/>/, 'Adding uses the plus icon');
+  assert.match(actions, /title="从歌单移除"><MusicIcon name="remove" \/><\/button>/, 'Removing from a playlist is an icon');
   assert.match(list, /@media \(max-width: 700px\) \{\s*\.music-app-track__actions :is\(\.music-app-track__play, \.music-app-track__download\) \{ display: none; \}/, 'Phones keep favourite and add to playlist');
   assert.doesNotMatch(music, /music-app-track--head/, 'Rows are two lines again, with no column header');
+});
+
+test('chosen search results, up to 30, go into playlists without duplicates or removals', () => {
+  assert.match(music, /const SEARCH_SELECTION_LIMIT = 30;/);
+  assert.match(music, /if \(selectedSongIds\.length >= SEARCH_SELECTION_LIMIT\) \{ showToast\(`一次最多选择 \$\{SEARCH_SELECTION_LIMIT\} 首`, 'warning'\); return; \}/);
+  assert.match(music, /onClick=\{\(\) => setSelectedSongIds\(results\.slice\(0, SEARCH_SELECTION_LIMIT\)\.map\(\(track\) => track\.songId\)\)\}>选择前/);
+  assert.match(music, /onClick=\{\(\) => selecting \? toggleSongSelection\(track\) : handleTrackAction\(track\)\}/, 'In selection mode a row click selects');
+  assert.match(music, /const snapshots = canonicalTracks\(selectedSongs\)\.slice\(0, SEARCH_SELECTION_LIMIT\);/);
+  assert.match(music, /if \(!append\) setSelectedSongIds\(\[\]\);/, 'A new search starts with nothing chosen');
+  assert.match(music, /const missing = snapshots\.filter\(\(track\) => !playlist\.tracks\.some\(\(item\) => samePlaylistTrack\(item, track\)\)\);\s*const room = Math\.max\(0, 200 - playlist\.tracks\.length\);/, 'Songs already there are skipped and a playlist stops at 200');
+  assert.match(music, /if \(!selected\.has\(playlist\.id\)\) return playlist;/, 'Unselected playlists keep every song');
+  assert.match(music, /dialogBatch\.length \? <button className="music-app-primary music-app-modal__save" type="button" disabled=\{!playlistSelection\.length\} onClick=\{saveBatchToPlaylists\}>/);
+});
+
+test('an idle player shows the last song played, else the first discovered one, without playing it', () => {
+  assert.match(music, /const idleTrack = current \? null : library\.history\[0\] \|\| randomTracks\[0\] \|\| null;/);
+  assert.match(music, /if \(!current && idleTrack\) return selectTrack\(idleTrack\.songId, library\.history\[0\] \? library\.history : randomTracks\);/, 'Play starts the song shown');
+  const footer = music.slice(music.indexOf('<footer className="music-player music-app-player">'), music.indexOf('</footer>', music.indexOf('<footer className="music-player music-app-player">')));
+  assert.match(footer, /src=\{usableArt\(shownTrack\?\.art\)\}/);
+  assert.match(footer, /<div className="music-controls"><button className=\{`music-icon-button music-player__like[\s\S]*?onClick=\{\(\) => like\(shownTrack\)\}[\s\S]*?music-player__add" type="button"[\s\S]*?onClick=\{\(\) => openAddToPlaylist\(shownTrack\)\}[\s\S]*?<MusicIcon name="add" \/><\/button><button className="music-icon-button music-player__previous"/, 'Favourite and add sit left of previous');
+  assert.match(footer, /title="歌词"><MusicIcon name="lyrics" \/><\/button>/);
+  assert.match(player, /\.music-app-player \.music-controls :is\(\.music-player__like, \.music-player__add, \.music-player__previous\),/, 'Phones hide them with previous');
+});
+
+test('desktop list pages float in a card over a gradient canvas, with labelled navigation', () => {
+  const desktop = layout.slice(layout.indexOf('/* Desktop surfaces.'));
+  assert.match(desktop, /html\[data-theme="light"\] \{\s*--zy-app-backdrop:/);
+  assert.match(desktop, /html\[data-theme="dark"\] \{\s*--zy-app-backdrop:/);
+  assert.match(desktop, /\.luri-music-clone\.is-standalone:has\(\.music-app-shell\) \{ background: var\(--zy-app-backdrop\) !important; \}/, 'Overrides the flat canvas painted with !important');
+  assert.match(desktop, /:is\(\.music-app-sidebar, \.music-app-topbar\) \{\s*border-color: transparent !important;\s*background: transparent !important;/);
+  assert.match(desktop, /\.music-app-shell:not\(\.view-random\):not\(\.view-playlists\):not\(\.view-settings\) \.music-app-page \{[^}]*border-radius: 22px;[^}]*box-shadow: var\(--zy-theme-shadow\);/);
+  assert.match(desktop, /\.music-app-sidebar nav button\.active \{[^}]*background: var\(--app-accent\) !important;/, 'The selected item is a solid red pill');
+  assert.match(music, /const NAV_SECTIONS = \{ 0: '在线发现', 3: '我的音乐' \};/);
+  assert.match(music, /\{NAV_SECTIONS\[index\] && <span className="music-app-sidebar__label">\{NAV_SECTIONS\[index\]\}<\/span>\}/);
+});
+
+test('the top bar cycles the three themes with one button', () => {
+  assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
+  assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);
 });
 
 test('wide screens centre the app at 1320px on the theme canvas', () => {
@@ -259,7 +299,7 @@ test('switching songs shows its state, slides the new song in and answers every 
   assert.match(music, /const playbackStatus = playbackState === 'resolving' \? \(recoveringId === currentId \? '音源失效，正在重新获取…' : '正在获取音源…'\)/);
   assert.match(music, /playbackState === 'loading' \? '正在缓冲…'/);
   assert.match(music, /playbackState === 'error' \? '无法播放，点击播放按钮重试'/);
-  assert.match(music, /const shownTitle = randomLoading \? '正在挑选下一首…' : current\?\.title;/, 'Waiting for a random batch does not keep the previous title');
+  assert.match(music, /const shownTitle = randomLoading \? '正在挑选下一首…' : shownTrack\?\.title;/, 'Waiting for a random batch does not keep the previous title');
   assert.match(music, /<span className="music-visually-hidden" role="status">\{playbackAnnouncement\}<\/span>/, 'Screen readers hear the state');
   assert.match(music, /className=\{`music-player__progress\$\{isPlaybackBusy \? ' is-pending' : ''\}`\}/);
   assert.match(music, /className=\{`music-app-now__seek\$\{isPlaybackBusy \? ' is-pending' : ''\}`\}/, 'The full-screen seek bar shows the same loading sweep');

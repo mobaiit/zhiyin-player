@@ -896,6 +896,49 @@ html[data-theme="glass"] :is(
   height: 17px;
 }
 
+.music-app-search-toolbar .music-app-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.music-app-search-toolbar .music-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.music-app-search-toolbar__count {
+  color: var(--color-text-muted);
+  font-size: .8rem;
+  white-space: nowrap;
+}
+
+/* Choosing search results: the index becomes a check box and row actions step aside. */
+.music-app-track__check {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 5px;
+  font-size: .68rem;
+  font-style: normal;
+  line-height: 1;
+}
+
+.music-app-track__check.is-checked {
+  border-color: var(--app-accent);
+  color: var(--app-accent-ink, #fff);
+  background: var(--app-accent);
+}
+
+.music-app-track.is-selected { background: color-mix(in srgb, var(--app-accent) 8%, transparent); }
+.music-app-track-list.is-selecting .music-app-track__actions { visibility: hidden; }
+
+/* The theme button cycles light, dark and glass from the top bar, beside the search box. */
+.music-app-topbar .music-app-theme-toggle { flex: 0 0 auto; }
+.music-app-topbar > .music-app-search { margin-left: auto; }
+
 /* Let the badge follow the actual title width instead of the copy column edge. */
 
 @media (max-width: 700px) {
@@ -1047,6 +1090,10 @@ html[data-theme="glass"] :is(
   /* The bottom navigation already has a search tab; other views keep the list taller. */
   .music-app-shell:not(.view-search) .music-app-topbar > .music-app-search { display: none !important; }
   .music-app-shell:not(.view-search) .music-app-topbar { min-height: 0; padding-bottom: 10px; }
+  /* The theme button stays on the title row; search, when shown, takes the row below. */
+  .music-app-topbar { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .music-app-topbar > .music-app-search { grid-column: 1 / -1; grid-row: 2; margin-left: 0; }
+  .music-app-topbar .music-app-theme-toggle { grid-column: 2; grid-row: 1; }
 
   /* The transparent blur theme needs the artwork layer behind its glass surfaces. */
   html[data-theme="glass"] .music-page.music-app-shell .music-artwork-backdrop { display: block !important; }
@@ -1065,5 +1112,69 @@ html[data-theme="glass"] :is(
     min-height: 40px;
     padding-inline: 4px 10px;
     border-color: transparent;
+  }
+}
+
+/* Desktop surfaces. Light and dark sit on a soft gradient canvas (glass keeps its artwork
+   backdrop); navigation and the top bar sit directly on it, and list pages float in a card.
+   Phones keep their own layout. */
+html[data-theme="light"] {
+  --zy-app-backdrop:
+    radial-gradient(circle at 8% 0%, rgba(122, 176, 255, 0.2), transparent 34rem),
+    radial-gradient(circle at 96% 100%, rgba(229, 72, 77, 0.12), transparent 36rem),
+    linear-gradient(135deg, #eef3f9, #f5f2f6);
+}
+html[data-theme="dark"] {
+  --zy-app-backdrop:
+    radial-gradient(circle at 8% 0%, rgba(96, 126, 210, 0.16), transparent 34rem),
+    radial-gradient(circle at 96% 100%, rgba(229, 72, 77, 0.11), transparent 36rem),
+    linear-gradient(135deg, #0e1116, #141117);
+}
+
+@media (min-width: 701px) {
+  /* brand-theme.css paints html, body and this container with the flat canvas using !important. */
+  html:is([data-theme="light"], [data-theme="dark"]) .luri-music-clone.is-standalone:has(.music-app-shell) { background: var(--zy-app-backdrop) !important; }
+  html:is([data-theme="light"], [data-theme="dark"]) .luri-music-clone.is-standalone > .music-page.music-app-shell { background: transparent !important; }
+  html[data-theme] .music-page.music-app-shell :is(.music-app-sidebar, .music-app-topbar) {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .music-app-sidebar__label {
+    display: block;
+    margin: 16px 12px 4px;
+    color: var(--color-text-muted);
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+  .music-app-sidebar nav > .music-app-sidebar__label:first-child { margin-top: 2px; }
+  .music-app-sidebar nav .music-app-sidebar__label + button.is-section-start { margin-top: 0; }
+  html[data-theme] .music-app-sidebar nav button.active {
+    border-color: transparent !important;
+    color: var(--app-accent-ink, #fff) !important;
+    background: var(--app-accent) !important;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--app-accent) 26%, transparent);
+  }
+  html[data-theme] .music-app-sidebar nav button.active :is(i, em) { color: inherit !important; }
+  html[data-theme] .music-app-sidebar nav button.active em { background: color-mix(in srgb, currentColor 18%, transparent); }
+
+  /* List pages: the toolbar and songs share one floating card that scrolls inside. */
+  .music-app-shell:not(.view-random):not(.view-playlists):not(.view-settings) .music-app-body { padding: 2px 28px 14px; }
+  html[data-theme] .music-app-shell:not(.view-random):not(.view-playlists):not(.view-settings) .music-app-page {
+    padding: 22px 26px;
+    border: 1px solid var(--zy-theme-border);
+    border-radius: 22px;
+    background: var(--zy-theme-surface) !important;
+    box-shadow: var(--zy-theme-shadow);
+    -webkit-backdrop-filter: blur(var(--zy-theme-blur));
+    backdrop-filter: blur(var(--zy-theme-blur));
+  }
+  .music-app-track { border-bottom-color: color-mix(in srgb, currentColor 7%, transparent); }
+  .music-app-track:hover { background: color-mix(in srgb, currentColor 4%, transparent); }
+  .music-app-track.is-current {
+    background: color-mix(in srgb, var(--app-accent) 9%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-accent) 22%, transparent);
   }
 }

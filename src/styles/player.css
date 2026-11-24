@@ -251,7 +251,7 @@ html[data-theme="glass"] .music-app-player {
   font-variant-numeric: tabular-nums;
 }
 
-/* Transport: previous, play, next. */
+/* Transport: favourite and add to playlist, then previous, play, next. */
 .music-app-player .music-controls {
   grid-column: 2;
   grid-row: 1;
@@ -289,7 +289,7 @@ html[data-theme="glass"] .music-app-player {
   border: 1px solid transparent;
   border-radius: 10px;
   color: var(--zy-text-secondary);
-  background: var(--zy-control-glass);
+  background: transparent;
   line-height: 0;
   cursor: pointer;
   transition: color var(--transition), border-color var(--transition), background var(--transition), box-shadow var(--transition), transform var(--transition);
@@ -300,6 +300,12 @@ html[data-theme="glass"] .music-app-player {
   width: 20px;
   height: 20px;
 }
+
+.music-app-player .music-controls :is(.music-player__like, .music-player__add) .music-icon { width: 18px; height: 18px; }
+.music-app-player .music-controls .music-player__like.liked { color: var(--zy-active-red, var(--zy-red)); }
+.music-app-player .music-controls .music-player__like.liked .music-icon { fill: currentColor; }
+.music-app-player .music-controls .music-icon-button:disabled { opacity: 0.4; cursor: default; }
+.music-app-player .music-controls .music-player__add { margin-right: 6px; }
 
 .music-app-player .music-controls .music-icon-button:hover {
   border-color: rgba(229, 72, 77, 0.55);
@@ -399,7 +405,8 @@ html[data-theme="glass"] .music-app-player {
   transition: color var(--transition);
 }
 
-.music-app-player .music-player__utilities .music-download-button .music-icon { width: 1rem; height: 1rem; }
+/* Every utility icon has one size and stroke. */
+.music-app-player .music-player__utilities .music-icon { width: 18px; height: 18px; }
 .music-app-player .music-player__utilities .music-download-button:hover { color: var(--zy-text); }
 
 .music-app-player .music-player__utilities .music-download-button:disabled {
@@ -412,7 +419,7 @@ html[data-theme="glass"] .music-app-player {
 .music-app-player .music-player__utilities .music-player__lyrics-button {
   justify-self: end;
   color: var(--zy-text-secondary);
-  background: var(--zy-control-glass);
+  background: transparent;
   transition: color var(--transition), border-color var(--transition), background var(--transition);
 }
 
@@ -585,7 +592,7 @@ html[data-theme="glass"] .music-app-player {
 
   .music-app-player .music-player__mode .music-icon { width: 18px; height: 18px; }
 
-  .music-app-player .music-controls .music-player__previous,
+  .music-app-player .music-controls :is(.music-player__like, .music-player__add, .music-player__previous),
   .music-app-player .music-player__utilities :is(.music-volume, .music-download-button, .music-player__lyrics-button) { display: none; }
 }
 
