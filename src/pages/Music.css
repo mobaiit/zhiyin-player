@@ -161,6 +161,28 @@
 .music-app-track__copy b { font-size: .84rem; }
 .music-app-track__copy small, .music-app-track time { color: var(--color-text-muted); font-size: .7rem; }
 .music-app-track__actions { padding-right: 8px; }
+/* Wide screens lay rows out as columns: title, artist, album, duration and, in history, the play date. */
+.music-app-track--head, .music-app-track__main > :is(.music-app-track__artist, .music-app-track__album, .music-app-track__length) { display: none; }
+@media (min-width: 1101px) {
+  .music-app-track { grid-template-columns: minmax(0, 1fr) 64px; }
+  .music-app-track__actions { justify-self: end; }
+  .music-app-track__main { grid-template-columns: 38px 44px minmax(0, 4fr) minmax(0, 3fr) minmax(0, 3fr) 48px; }
+  .music-app-track-list.has-date .music-app-track__main { grid-template-columns: 38px 44px minmax(0, 4fr) minmax(0, 3fr) minmax(0, 3fr) 48px 44px; }
+  .music-app-track__main > .music-app-track__index { grid-column: 1; }
+  .music-app-track__main > img { grid-column: 2; }
+  .music-app-track__main > .music-app-track__copy { grid-column: 3; }
+  .music-app-track__copy .music-app-track__meta { display: none; }
+  .music-app-track__main > :is(.music-app-track__artist, .music-app-track__album, .music-app-track__length) { display: block; min-width: 0; overflow: hidden; color: var(--color-text-muted); font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }
+  .music-app-track__main > .music-app-track__artist { grid-column: 4; }
+  .music-app-track__main > .music-app-track__album { grid-column: 5; }
+  .music-app-track__main > .music-app-track__length { grid-column: 6; font-variant-numeric: tabular-nums; text-align: right; }
+  .music-app-track__main > .music-app-track__date { grid-column: 7; text-align: right; }
+  .music-app-track--head { display: grid; min-height: 36px; }
+  .music-app-track--head:hover { background: transparent; }
+  .music-app-track--head .music-app-track__main { padding-block: 4px; cursor: default; }
+  .music-app-track--head .music-app-track__main > span { color: var(--color-text-muted); font-size: .7rem; font-weight: 600; }
+  .music-app-track--head .music-app-track__head-title { grid-column: 2 / 4; }
+}
 .music-app-track__actions button { min-width: 44px; padding: 0 10px; border: 0; border-radius: 10px; color: var(--color-text-muted); background: transparent; }
 .music-app-track__actions button:hover { color: var(--color-text); background: color-mix(in srgb, currentColor 8%, transparent); }
 .music-app-empty { display: grid; place-items: center; min-height: 200px; gap: 8px; padding: 30px; color: var(--color-text-muted); text-align: center; }

@@ -80,6 +80,17 @@ test('song rows show a known duration after the artist and nothing when it is un
   assert.match(layout, /\.music-app-track__meta small\.music-app-track__duration \{[^}]*flex: 0 0 auto;/, 'A long album truncates before the duration');
 });
 
+test('wide screens list songs in title, artist, album and duration columns under a header', () => {
+  const list = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
+  const wide = list.slice(list.indexOf('@media (min-width: 1101px) {'));
+  assert.match(music, /<div className="music-app-track music-app-track--head" aria-hidden="true">[\s\S]*?>歌手<[\s\S]*?>专辑<[\s\S]*?\{hasDuration \? '时长' : ''\}/);
+  assert.match(music, /<span className="music-app-track__artist">\{track\.artist\}<\/span><span className="music-app-track__album">\{track\.album\}<\/span>\{Number\(track\.duration\) > 0 && <span className="music-app-track__length">/);
+  assert.match(list, /\.music-app-track--head, \.music-app-track__main > :is\(\.music-app-track__artist, \.music-app-track__album, \.music-app-track__length\) \{ display: none; \}/, 'Narrow screens keep the two-line rows');
+  assert.match(wide, /\.music-app-track__main \{ grid-template-columns: 38px 44px minmax\(0, 4fr\) minmax\(0, 3fr\) minmax\(0, 3fr\) 48px; \}/);
+  assert.match(wide, /\.music-app-track \{ grid-template-columns: minmax\(0, 1fr\) 64px; \}/, 'A fixed action column keeps the header aligned with the rows');
+  assert.match(wide, /\.music-app-track__copy \.music-app-track__meta \{ display: none; \}/);
+});
+
 test('desktop and mobile players use independent progress rows and non-overlapping lanes', () => {
   assert.match(player, /\.music-app-player \{[^}]*grid-template-columns: 310px minmax\(360px, 1fr\) 260px;[^}]*grid-template-rows: minmax\(0, 1fr\) 10px;/);
   assert.match(player, /\.music-app-player \.music-player__progress \{[^}]*grid-column: 1 \/ -1;[^}]*grid-row: 2;/);
