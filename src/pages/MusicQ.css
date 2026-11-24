@@ -375,6 +375,13 @@ html[data-theme="light"] .music-app-home-feature {
   min-width: 0;
   gap: 7px;
 }
+/* The duration never truncates; artist and album give way first. */
+.music-app-track__meta small.music-app-track__duration {
+  flex: 0 0 auto;
+  margin-left: calc(0.3em - 7px);
+  overflow: visible;
+  font-variant-numeric: tabular-nums;
+}
 .music-app-track__meta small {
   min-width: 0;
   overflow: hidden;

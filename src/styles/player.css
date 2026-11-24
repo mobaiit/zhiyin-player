@@ -53,6 +53,20 @@
   animation: music-progress-pending 1.2s linear infinite;
 }
 
+/* The full-screen seek bar drops its native track and thumb while loading so the same sweep shows. */
+.music-app-now__seek.is-pending input {
+  height: 16px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--now-subtle) 40%, transparent) 0 38%, var(--app-accent) 50%, color-mix(in srgb, var(--now-subtle) 40%, transparent) 62% 100%) 100% 50% / 300% 4px no-repeat;
+  animation: music-progress-pending 1.2s linear infinite;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.music-app-now__seek.is-pending input::-webkit-slider-thumb { width: 0; height: 0; -webkit-appearance: none; }
+.music-app-now__seek.is-pending input::-moz-range-thumb { width: 0; height: 0; border: 0; background: transparent; }
+.music-app-now__seek.is-pending input::-moz-range-track { background: transparent; }
+.music-app-now__seek.is-pending input::-moz-range-progress { background: transparent; }
+
 /* Status text replaces the artist while a song is fetched, buffered or cannot play. */
 .music-app-player .music-player__copy small.is-status { color: var(--zy-red); }
 .music-app-now__meta p.is-status,
@@ -219,12 +233,22 @@ html[data-theme="glass"] .music-app-player {
 }
 
 .music-app-player .music-player__copy small {
-  display: block;
+  display: flex;
+  gap: 0.3em;
+  min-width: 0;
   overflow: hidden;
   color: var(--zy-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
+}
+
+.music-app-player .music-player__artist { min-width: 0; }
+
+.music-app-player .music-player__copy .music-player__subtitle-time {
+  flex: 0 0 auto;
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Transport: previous, play, next. */
@@ -243,7 +267,7 @@ html[data-theme="glass"] .music-app-player {
 }
 
 .music-app-player .music-player__time {
-  display: flex;
+  display: none;
   flex: 0 0 auto;
   align-items: center;
   gap: 3px;
@@ -502,7 +526,10 @@ html[data-theme="glass"] .music-app-player {
 
   .music-app-player .music-controls { gap: 0; }
 
+  .music-app-player .music-player__copy .music-player__subtitle-time { display: none; }
+
   .music-app-player .music-player__time {
+    display: flex;
     flex-direction: column;
     gap: 3px;
     min-width: 38px;
@@ -574,7 +601,7 @@ html[data-theme="glass"] .music-app-player {
   .music-app-player .music-controls .music-icon-button.is-control-feedback,
   .music-app-now__controls button.is-control-feedback { animation-duration: 0.01ms; }
   :is(.music-app-player, .music-app-now) [data-switch] { animation: none; }
-  .music-app-player .music-player__progress.is-pending input { animation: none; background-position: 50% 50%; }
+  :is(.music-app-player .music-player__progress, .music-app-now__seek).is-pending input { animation: none; background-position: 50% 50%; }
   .music-app-player .play-button .music-spinner { animation: none; }
   .music-app-player .music-player__title[data-overflow="true"] { text-overflow: ellipsis; }
   .music-app-player .music-player__title[data-overflow="true"] .music-player__title-text { animation: none; }

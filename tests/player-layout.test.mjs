@@ -53,14 +53,16 @@ test('both players live in one stylesheet that loads last and needs no !importan
   assert.deepEqual([...breakpoints].sort(), ['1040', '1180', '359', '390', '700', '701'], 'Players share the app breakpoints');
 });
 
-test('bottom player places elapsed and total time right after the song info', () => {
+test('bottom player shows time after the artist on desktop and as its own column on phones', () => {
   const footer = music.slice(music.indexOf('<footer className="music-player music-app-player">'));
   const info = footer.slice(footer.indexOf('<div className="music-player__info">'), footer.indexOf('<div className="music-controls">'));
+  assert.match(info, /<span className="music-player__artist">\{shownSubtitle \|\| '知音'\}<\/span>\{current && <span className="music-player__subtitle-time">· \{time\(progress\)\} \/ \{Number\.isFinite\(duration\) && duration > 0 \? time\(duration\) : '--:--'\}<\/span>\}<\/small>/);
   assert.match(info, /<\/button>\{current && <span className="music-player__time"/);
-  assert.ok(info.indexOf('music-player__song') < info.indexOf('music-player__time'));
-  assert.match(info, /\{time\(progress\)\}/);
-  assert.match(info, /Number\.isFinite\(duration\) && duration > 0 \? time\(duration\) : '--:--'/);
+  assert.match(info, /Number\.isFinite\(duration\) && duration > 0 \? time\(duration\) : '--:--'\}<\/span><\/span>\}<\/div>/);
   assert.match(player, /\.music-app-player \.music-player__info \{[^}]*grid-column: 1;[^}]*display: flex;/);
+  assert.match(player, /\.music-app-player \.music-player__copy \.music-player__subtitle-time \{[^}]*flex: 0 0 auto;/, 'A long artist name truncates before the time');
+  assert.match(player, /\.music-app-player \.music-player__time \{\s*display: none;/, 'Desktop has no separate time column');
+  assert.match(player, /@media \(max-width: 700px\)[\s\S]*?\.music-app-player \.music-player__copy \.music-player__subtitle-time \{ display: none; \}[\s\S]*?\.music-app-player \.music-player__time \{\s*display: flex;/);
   assert.match(player, /@media \(max-width: 700px\)[\s\S]*?\.music-app-player \.music-player__time \{[^}]*flex-direction: column;/);
   assert.match(player, /@media \(max-width: 359px\) \{\s*\.music-app-player \.music-player__time \{ display: none; \}/);
 });
@@ -71,6 +73,11 @@ test('the random card names the song playing in random mode and pans a long name
   assert.match(music, /\{randomMode && current \? <p className="music-app-home-now"><span>正在播放：<\/span><PlayerTitle className="music-app-home-now__title">\{\[current\.title, current\.artist\]\.filter\(Boolean\)\.join\(' - '\)\}<\/PlayerTitle><\/p>/);
   assert.match(layout, /\.music-app-home-now__title\[data-overflow="true"\] \.music-app-home-now__title-text \{ animation: music-home-now-pan/);
   assert.match(layout, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-home-copy > \.music-app-home-now \{ display: flex;/, 'Phones hide the description but keep the song line');
+});
+
+test('song rows show a known duration after the artist and nothing when it is unknown', () => {
+  assert.match(music, /<small>\{track\.artist\}\{track\.album \? ` · \$\{track\.album\}` : ''\}<\/small>\{Number\(track\.duration\) > 0 && <small className="music-app-track__duration">· \{time\(Number\(track\.duration\)\)\}<\/small>\}/);
+  assert.match(layout, /\.music-app-track__meta small\.music-app-track__duration \{[^}]*flex: 0 0 auto;/, 'A long album truncates before the duration');
 });
 
 test('desktop and mobile players use independent progress rows and non-overlapping lanes', () => {
@@ -235,6 +242,9 @@ test('switching songs shows its state, slides the new song in and answers every 
   assert.match(music, /const shownTitle = randomLoading \? '正在挑选下一首…' : current\?\.title;/, 'Waiting for a random batch does not keep the previous title');
   assert.match(music, /<span className="music-visually-hidden" role="status">\{playbackAnnouncement\}<\/span>/, 'Screen readers hear the state');
   assert.match(music, /className=\{`music-player__progress\$\{isPlaybackBusy \? ' is-pending' : ''\}`\}/);
+  assert.match(music, /className=\{`music-app-now__seek\$\{isPlaybackBusy \? ' is-pending' : ''\}`\}/, 'The full-screen seek bar shows the same loading sweep');
+  assert.match(player, /\.music-app-now__seek\.is-pending input \{[^}]*animation: music-progress-pending/);
+  assert.match(player, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?:is\(\.music-app-player \.music-player__progress, \.music-app-now__seek\)\.is-pending input \{ animation: none;/);
   for (const key of ['art', 'copy', 'cover', 'meta']) assert.match(music, new RegExp(`key=\\{\`${key}:\\$\\{currentId\\}\`\\} data-switch=\\{switchDirection\\}`), key);
   assert.equal((music.match(/data-control="(?:previous|play|next)" onClick=\{\(event\) => \{ pressFeedback\(event\.currentTarget\);/g) || []).length, 6, 'Both players animate previous, play and next on every press');
   assert.match(music, /const pulseControl = useCallback\(\(name\) => \{ document\.querySelectorAll\(`\[data-control="\$\{name\}"\]`\)\.forEach\(pressFeedback\); \}, \[\]\);/, 'Media keys reach the same buttons');
