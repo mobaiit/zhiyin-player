@@ -30,7 +30,7 @@ test('spacing budget leaves room for a short title and a Hi-Res badge at phone w
   const songGap = px(block('.music-app-player .music-player__song'), 'gap');
   const cover = px(block('.music-app-player .music-player__song img'), 'width');
   const timeWidth = px(block('.music-app-player .music-player__time'), 'min-width');
-  const timeGap = px(block('.music-app-player .music-player__time'), 'margin-right');
+  const timeGap = px(block('.music-app-player .music-player__info'), 'gap');
   for (const width of [320, 360, 375, 390, 414]) {
     const timeSpace = width < 360 ? 0 : timeWidth + timeGap;
     const available = width - 16 - 2 * padding - 2 - 2 * columnGap - cover - songGap - 2 * 44 - 44 - timeSpace;

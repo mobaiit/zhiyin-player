@@ -53,13 +53,14 @@ test('both players live in one stylesheet that loads last and needs no !importan
   assert.deepEqual([...breakpoints].sort(), ['1040', '1180', '359', '390', '700', '701'], 'Players share the app breakpoints');
 });
 
-test('bottom player places elapsed and total time before its transport buttons', () => {
+test('bottom player places elapsed and total time right after the song info', () => {
   const footer = music.slice(music.indexOf('<footer className="music-player music-app-player">'));
-  const controls = footer.slice(footer.indexOf('<div className="music-controls">'), footer.indexOf('<div className="music-player__utilities">'));
-  assert.match(controls, /\{current && <span className="music-player__time"/);
-  assert.ok(controls.indexOf('music-player__time') < controls.indexOf('music-player__previous'));
-  assert.match(controls, /\{time\(progress\)\}/);
-  assert.match(controls, /Number\.isFinite\(duration\) && duration > 0 \? time\(duration\) : '--:--'/);
+  const info = footer.slice(footer.indexOf('<div className="music-player__info">'), footer.indexOf('<div className="music-controls">'));
+  assert.match(info, /<\/button>\{current && <span className="music-player__time"/);
+  assert.ok(info.indexOf('music-player__song') < info.indexOf('music-player__time'));
+  assert.match(info, /\{time\(progress\)\}/);
+  assert.match(info, /Number\.isFinite\(duration\) && duration > 0 \? time\(duration\) : '--:--'/);
+  assert.match(player, /\.music-app-player \.music-player__info \{[^}]*grid-column: 1;[^}]*display: flex;/);
   assert.match(player, /@media \(max-width: 700px\)[\s\S]*?\.music-app-player \.music-player__time \{[^}]*flex-direction: column;/);
   assert.match(player, /@media \(max-width: 359px\) \{\s*\.music-app-player \.music-player__time \{ display: none; \}/);
 });
