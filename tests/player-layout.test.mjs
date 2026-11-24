@@ -50,7 +50,18 @@ test('both players live in one stylesheet that loads last and needs no !importan
     assert.doesNotMatch(css, /\.(?:music-app-player|music-app-now|music-player__[\w-]+|music-controls|music-volume)\b/, `${name} must not style the players`);
   }
   const breakpoints = new Set([...player.matchAll(/\((?:max|min)-width: (\d+)px\)/g)].map((match) => match[1]));
-  assert.deepEqual([...breakpoints].sort(), ['1040', '1180', '390', '700', '701'], 'Players share the app breakpoints');
+  assert.deepEqual([...breakpoints].sort(), ['1040', '1180', '359', '390', '700', '701'], 'Players share the app breakpoints');
+});
+
+test('bottom player places elapsed and total time before its transport buttons', () => {
+  const footer = music.slice(music.indexOf('<footer className="music-player music-app-player">'));
+  const controls = footer.slice(footer.indexOf('<div className="music-controls">'), footer.indexOf('<div className="music-player__utilities">'));
+  assert.match(controls, /\{current && <span className="music-player__time"/);
+  assert.ok(controls.indexOf('music-player__time') < controls.indexOf('music-player__previous'));
+  assert.match(controls, /\{time\(progress\)\}/);
+  assert.match(controls, /Number\.isFinite\(duration\) && duration > 0 \? time\(duration\) : '--:--'/);
+  assert.match(player, /@media \(max-width: 700px\)[\s\S]*?\.music-app-player \.music-player__time \{[^}]*flex-direction: column;/);
+  assert.match(player, /@media \(max-width: 359px\) \{\s*\.music-app-player \.music-player__time \{ display: none; \}/);
 });
 
 test('desktop and mobile players use independent progress rows and non-overlapping lanes', () => {

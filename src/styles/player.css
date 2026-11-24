@@ -234,6 +234,20 @@ html[data-theme="glass"] .music-app-player {
   white-space: nowrap;
 }
 
+.music-app-player .music-player__time {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 82px;
+  margin-right: 8px;
+  color: var(--zy-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
 .music-app-player .music-controls .music-icon-button {
   display: grid;
   place-items: center;
@@ -480,6 +494,17 @@ html[data-theme="glass"] .music-app-player {
 
   .music-app-player .music-controls { gap: 0; }
 
+  .music-app-player .music-player__time {
+    flex-direction: column;
+    gap: 3px;
+    min-width: 38px;
+    margin-right: 2px;
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  .music-app-player .music-player__time-separator { display: none; }
+
   .music-app-player .music-controls .music-icon-button {
     width: 44px;
     height: 44px;
@@ -528,6 +553,10 @@ html[data-theme="glass"] .music-app-player {
 
   .music-app-player .music-controls .music-player__previous,
   .music-app-player .music-player__utilities :is(.music-volume, .music-download-button, .music-player__lyrics-button) { display: none; }
+}
+
+@media (max-width: 359px) {
+  .music-app-player .music-player__time { display: none; }
 }
 
 @media (max-width: 700px) and (hover: hover) {

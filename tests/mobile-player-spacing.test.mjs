@@ -29,8 +29,11 @@ test('spacing budget leaves room for a short title and a Hi-Res badge at phone w
   const columnGap = px(card, 'column-gap');
   const songGap = px(block('.music-app-player .music-player__song'), 'gap');
   const cover = px(block('.music-app-player .music-player__song img'), 'width');
+  const timeWidth = px(block('.music-app-player .music-player__time'), 'min-width');
+  const timeGap = px(block('.music-app-player .music-player__time'), 'margin-right');
   for (const width of [320, 360, 375, 390, 414]) {
-    const available = width - 16 - 2 * padding - 2 - 2 * columnGap - cover - songGap - 2 * 44 - 44;
+    const timeSpace = width < 360 ? 0 : timeWidth + timeGap;
+    const available = width - 16 - 2 * padding - 2 - 2 * columnGap - cover - songGap - 2 * 44 - 44 - timeSpace;
     assert.ok(available >= 4 * 12 + 48, `${width}: four glyphs and a Hi-Res badge fit (${available}px)`);
   }
 });
