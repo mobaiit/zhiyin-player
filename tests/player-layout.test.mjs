@@ -299,9 +299,11 @@ test('settings offer random play preferences that default to new Chinese songs a
   assert.deepEqual(read(undefined), { era: 'new', languages: ['zh'] }, 'Defaults when nothing is saved');
   assert.deepEqual(read({ era: 'classic', languages: [] }), { era: 'classic', languages: [] }, 'An empty list means no language preference');
   assert.deepEqual(read({ era: 'x', languages: ['en', 'en', 'xx'] }), { era: 'new', languages: ['en'] });
-  assert.match(music, /function randomRequestParams\(\) \{ return \{ exclude: randomSingers\.current\.join\(','\), era: randomPreferences\.era, languages: randomPreferences\.languages\.join\(','\) \}; \}/);
-  assert.equal((music.match(/musicRequest\('random', randomRequestParams\(\), controller\.signal\)/g) || []).length, 2, 'The home button and the batch requested ahead both send the preferences');
-  assert.match(music, /updateLibrary\(\(value\) => \(\{ \.\.\.value, settings: \{ \.\.\.\(value\.settings \|\| \{\}\), randomPreferences: next \} \}\)\);\s*randomBatchRef\.current\.next = null;/, 'Saved in the synced library; a batch requested with old preferences is dropped');
+  assert.match(music, /function randomRequestParams\(preferences = randomPreferences\) \{ return \{ exclude: randomSingers\.current\.join\(','\), era: preferences\.era, languages: preferences\.languages\.join\(','\) \}; \}/);
+  assert.match(music, /musicRequest\('random', randomRequestParams\(\), controller\.signal\)/, 'The home button sends the preferences');
+  assert.match(music, /function requestNextRandomBatch\(preferences = randomPreferences\) \{[\s\S]*?musicRequest\('random', randomRequestParams\(preferences\), controller\.signal\)/, 'So does the batch requested ahead');
+  assert.match(music, /updateLibrary\(\(value\) => \(\{ \.\.\.value, settings: \{ \.\.\.\(value\.settings \|\| \{\}\), randomPreferences: next \} \}\)\);\s*const batch = randomBatchRef\.current;\s*batch\.request\?\.abort\(\); batch\.request = null; batch\.next = null;/, 'Saved in the synced library; a batch requested with old preferences is dropped');
+  assert.match(music, /if \(playMode\.current !== 'random'\) return;\s*batch\.tracks = batch\.tracks\.filter\(\(track\) => track\.songId === currentId\);\s*requestNextRandomBatch\(next\);/, 'During random play the next song already follows the new preferences');
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
   assert.match(settings, /\n\s*<section className="music-app-settings__random"/, 'Guests can set it too');
   assert.match(settings, /\[\['', '不限'\], \.\.\.RANDOM_LANGUAGE_OPTIONS\]/);

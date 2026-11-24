@@ -980,12 +980,17 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   };
   // Recently played artists to avoid, plus the user's era and language hints. An empty
   // language list is dropped by the proxy, which the Provider reads as no preference.
-  function randomRequestParams() { return { exclude: randomSingers.current.join(','), era: randomPreferences.era, languages: randomPreferences.languages.join(',') }; }
-  // The current batch keeps playing; only a batch requested ahead with the old preferences is dropped.
+  function randomRequestParams(preferences = randomPreferences) { return { exclude: randomSingers.current.join(','), era: preferences.era, languages: preferences.languages.join(',') }; }
+  // The song playing finishes; the rest of its batch was picked with the old preferences, so the
+  // next song comes from a batch requested now with the new ones.
   function saveRandomPreferences(change) {
     const next = { ...randomPreferences, ...change };
     updateLibrary((value) => ({ ...value, settings: { ...(value.settings || {}), randomPreferences: next } }));
-    randomBatchRef.current.next = null;
+    const batch = randomBatchRef.current;
+    batch.request?.abort(); batch.request = null; batch.next = null;
+    if (playMode.current !== 'random') return;
+    batch.tracks = batch.tracks.filter((track) => track.songId === currentId);
+    requestNextRandomBatch(next);
   }
   function toggleRandomLanguage(language) {
     if (!language) { saveRandomPreferences({ languages: [] }); return; }
@@ -1008,11 +1013,11 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     playbackListRef.current = 'random'; clearMediaDeadline(); setPlaybackQueue(tracks); historyStartIdRef.current = selected.songId; setCurrentId(selected.songId); beginRandomBudget(selected.songId); setPlaybackTrackId(selected.songId); setPlaybackState('resolving');
   }
   // Ask for the next batch while its last song plays, so the switch does not wait for the Provider.
-  function requestNextRandomBatch() {
+  function requestNextRandomBatch(preferences = randomPreferences) {
     const batch = randomBatchRef.current;
     if (!batch.tracks.length || batch.next || batch.request || unplayedRandomTracks().length) return;
     const controller = new AbortController(); batch.request = controller;
-    musicRequest('random', randomRequestParams(), controller.signal).then(providerPayload).then((payload) => {
+    musicRequest('random', randomRequestParams(preferences), controller.signal).then(providerPayload).then((payload) => {
       const tracks = canonicalTracks(payload.tracks).filter((track) => track.binding);
       if (randomBatchRef.current === batch && tracks.length) batch.next = { tracks, singer: payload.singer || '' };
     }).catch(() => { /* The batch is requested again when it runs out. */ }).finally(() => { if (batch.request === controller) batch.request = null; });
@@ -1413,7 +1418,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
             </section>
             {user && <section aria-labelledby="music-playback-title"><h2 id="music-playback-title">播放</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('quality')}><b>播放音质</b><span>{QUALITY_META[playbackQuality]?.label || playbackQuality}</span></button><button type="button" onClick={() => onOpenSettings?.('providers')}><b>Provider 配置</b><span>{activeProvider?.displayName || '未启用'}</span></button></div></section>}
             <section className="music-app-settings__random" aria-labelledby="music-random-title">
-              <div><h2 id="music-random-title">随机播放偏好</h2><p>首页随机播放按这里的偏好挑歌，其他年代和语言的歌仍会少量出现。</p></div>
+              <div><h2 id="music-random-title">随机播放偏好</h2><p>首页随机播放按这里的偏好挑歌，至少九成符合偏好。修改后从下一首开始生效。</p></div>
               <div className="music-app-settings__choice"><b id="music-random-era">歌曲年代</b><div className="music-app-choice-group" role="group" aria-labelledby="music-random-era">{RANDOM_ERA_OPTIONS.map(([value, label]) => <button type="button" key={value} className={randomPreferences.era === value ? 'active' : ''} aria-pressed={randomPreferences.era === value} onClick={() => saveRandomPreferences({ era: value })}>{label}</button>)}</div></div>
               <div className="music-app-settings__choice"><b id="music-random-languages">优先语言</b><div className="music-app-choice-group" role="group" aria-labelledby="music-random-languages">{[['', '不限'], ...RANDOM_LANGUAGE_OPTIONS].map(([value, label]) => { const active = value ? randomPreferences.languages.includes(value) : !randomPreferences.languages.length; return <button type="button" key={value || 'any'} className={active ? 'active' : ''} aria-pressed={active} onClick={() => toggleRandomLanguage(value)}>{label}</button>; })}</div></div>
             </section>
