@@ -339,6 +339,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   }, [searchFocused]);
   const randomBatchRef = useRef({ tracks: [], next: null, request: null }); const randomFailuresRef = useRef(0); const randomSingers = useRef(Array.isArray(storedRandomHistory.current.singers) ? storedRandomHistory.current.singers : []); const randomTrackKeys = useRef(Array.isArray(storedRandomHistory.current.tracks) ? storedRandomHistory.current.tracks : []);
   const [randomLoading, setRandomLoading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState('');
   // The ref drives playback logic; the state lets the home card show the random track.
   const [randomMode, setRandomMode] = useState(false);
   const setPlayMode = (mode) => { playMode.current = mode; setRandomMode(mode === 'random'); };
@@ -845,12 +846,29 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (!favoriteSyncRef.current.dirtySince) { let dirtySince = Date.now(); try { dirtySince = Number(localStorage.getItem(favoriteDirtyKey)) || dirtySince; localStorage.setItem(favoriteDirtyKey, String(dirtySince)); } catch { /* Storage is unavailable in private browsing. */ } favoriteSyncRef.current.dirtySince = dirtySince; }
     favoriteSyncRef.current.schedule?.();
   };
-  const like = (id) => {
-    const song = current || tracks.find((track) => track.songId === id) || results.find((track) => track.songId === id); if (!song) return;
+  const like = (song) => {
+    if (!song) return;
     if (song.sourceType === 'local') { showToast('本地歌曲只在当前设备与当前页面会话中可用', 'warning'); return; }
     const favorite = { songId: song.songId, title: song.title, artist: song.artist, album: song.album, binding: song.binding, art: artworkFor(song) };
     const saved = likedTracksRef.current; const next = saved.some((track) => sameFavorite(track, song)) ? saved.filter((track) => !sameFavorite(track, song)) : [...saved.filter((track) => !sameFavorite(track, song)), favorite];
     likedTracksRef.current = next; setLikedTracks(next); markFavoritesDirty();
+  };
+  // A listed song has no playback URL until it plays, so download asks the Provider for one. The tab
+  // opens during the click itself, or the browser would block it as a pop-up.
+  const downloadTrack = async (track) => {
+    if (!track || track.sourceType === 'local' || downloadingId || !hasAccess()) return;
+    const known = track.songId === current?.songId ? current : track;
+    if (known.url && !playbackUrlExpired(known)) { window.open(known.url, '_blank', 'noopener'); return; }
+    const tab = window.open('', '_blank');
+    setDownloadingId(track.songId);
+    try {
+      const payload = await providerPayload(await musicRequest('resolve', { songId: track.songId, title: track.title, artist: track.artist, album: track.album, quality: playbackQuality, binding: track.binding }));
+      if (!payload.url) throw Error('暂时没有可下载的音频');
+      if (tab) { tab.opener = null; tab.location.href = payload.url; } else window.open(payload.url, '_blank', 'noopener');
+    } catch (error) {
+      tab?.close();
+      showToast(error?.message || '获取下载地址失败，请稍后重试', 'warning');
+    } finally { setDownloadingId(''); }
   };
   function showToast(message, type = 'error') { setToast({ title: type === 'warning' ? '需要处理' : '播放服务异常', message, type }); }
   function handlePlayRejection(error) {
@@ -1318,7 +1336,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const openDocs = () => window.open('/docs', '_blank', 'noopener,noreferrer');
   const cyclePlayerStyle = () => setPlayerStyle((value) => value === 'classic' ? 'immersive' : 'classic');
   const isLiked = Boolean(current && likedTracks.some((track) => sameFavorite(track, current)));
-  const likeButton = (placement) => <button className={`${placement}${isLiked ? ' liked' : ''}`} type="button" disabled={!current || current.sourceType === 'local'} aria-label={isLiked ? '取消收藏' : '收藏歌曲'} aria-pressed={isLiked} onClick={() => current && like(current.songId)}><MusicIcon name="heart" /><span>收藏</span></button>;
+  const likeButton = (placement) => <button className={`${placement}${isLiked ? ' liked' : ''}`} type="button" disabled={!current || current.sourceType === 'local'} aria-label={isLiked ? '取消收藏' : '收藏歌曲'} aria-pressed={isLiked} onClick={() => like(current)}><MusicIcon name="heart" /><span>收藏</span></button>;
   const previewLyric = Math.max(activeLyric, 0);
   // On the cover panel a right swipe drags the whole player away, revealing the
   // list behind it; released far or fast enough it closes, otherwise it springs back.
@@ -1368,25 +1386,25 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     ['/favorites', '我的喜欢', 'heart'], ['/playlists', '我的歌单', 'playlist'], ['/history', '播放历史', 'history'], ['/local', '本地音乐', 'folder'],
     ['/settings', '设置', 'settings'],
   ];
-  // Wide screens lay rows out as columns; the header only names a duration or date column that has values.
-  const renderTrackList = () => { const hasDuration = visibleTracks.some((track) => Number(track.duration) > 0); const hasPlayedAt = visibleTracks.some((track) => track.playedAt); return <div className={`music-app-track-list${hasPlayedAt ? ' has-date' : ''}`} ref={musicListRef}>
-    {visibleTracks.length > 0 && <div className="music-app-track music-app-track--head" aria-hidden="true"><div className="music-app-track__main"><span className="music-app-track__index">#</span><span className="music-app-track__head-title">歌名</span><span className="music-app-track__artist">歌手</span><span className="music-app-track__album">专辑</span><span className="music-app-track__length">{hasDuration ? '时长' : ''}</span>{hasPlayedAt && <span className="music-app-track__date">日期</span>}</div><span className="music-app-track__actions" /></div>}
-    {visibleTracks.map((track, index) => { const state = rowPlaybackState(track.songId); const isCurrent = track.songId === currentId; const busy = isCurrent && isPlaybackBusy; return <div ref={isCurrent ? currentRowRef : null} key={`${track.songId}:${index}`} className={`music-app-track${isCurrent ? ' is-current' : ''}`}>
+  const renderTrackList = () => <div className="music-app-track-list" ref={musicListRef}>
+    {visibleTracks.map((track, index) => { const state = rowPlaybackState(track.songId); const isCurrent = track.songId === currentId; const busy = isCurrent && isPlaybackBusy; const local = track.sourceType === 'local'; const liked = likedTracks.some((item) => sameFavorite(item, track)); return <div ref={isCurrent ? currentRowRef : null} key={`${track.songId}:${index}`} className={`music-app-track${isCurrent ? ' is-current' : ''}`}>
       <button className="music-app-track__main" type="button" onClick={() => handleTrackAction(track)} disabled={busy} aria-label={`${track.title}，${state === 'playing' ? '暂停' : '播放'}`}>
         <span className="music-app-track__index">{state === 'loading' || state === 'resolving' ? <span className="music-spinner" /> : state === 'playing' ? <MusicIcon name="pause" /> : String(isChartView ? track.rank || index + 1 : index + 1).padStart(2, '0')}</span>
         <Artwork src={rowArt(track)} loading="lazy" onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><span className="music-app-track__copy"><span className="music-app-track__title"><b>{track.title}</b>{isCurrent && <QualityBadge track={current} fallbackQuality={playbackQuality} />}</span><span className="music-app-track__meta"><small>{track.artist}{track.album ? ` · ${track.album}` : ''}</small>{Number(track.duration) > 0 && <small className="music-app-track__duration">· {time(Number(track.duration))}</small>}</span></span>
-        <span className="music-app-track__artist">{track.artist}</span><span className="music-app-track__album">{track.album}</span>{Number(track.duration) > 0 && <span className="music-app-track__length">{time(Number(track.duration))}</span>}
-        {track.playedAt && <time className="music-app-track__date">{new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(track.playedAt))}</time>}
+        {track.playedAt && <time>{new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(track.playedAt))}</time>}
       </button>
       <div className="music-app-track__actions">
-        {listView === 'playlist' ? <button type="button" onClick={() => removeTrackFromPlaylist(selectedPlaylist.id, track.songId)} aria-label="从歌单移除">移除</button> : track.sourceType !== 'local' && <button type="button" onClick={() => openAddToPlaylist(track)} aria-label={`将 ${track.title} 加入歌单`} title="加入歌单"><MusicIcon name="playlist" /></button>}
+        {!local && <button className={`music-app-track__like${liked ? ' is-liked' : ''}`} type="button" onClick={() => like(track)} aria-pressed={liked} aria-label={`${liked ? '取消收藏' : '收藏'} ${track.title}`} title={liked ? '取消收藏' : '收藏'}><MusicIcon name="heart" /></button>}
+        {listView === 'playlist' ? <button type="button" onClick={() => removeTrackFromPlaylist(selectedPlaylist.id, track.songId)} aria-label="从歌单移除">移除</button> : !local && <button type="button" onClick={() => openAddToPlaylist(track)} aria-label={`将 ${track.title} 加入歌单`} title="加入歌单"><MusicIcon name="playlist" /></button>}
+        <button className="music-app-track__play" type="button" onClick={() => handleTrackAction(track)} disabled={busy} aria-label={`${state === 'playing' ? '暂停' : '播放'} ${track.title}`} title={state === 'playing' ? '暂停' : '播放'}><MusicIcon name={state === 'playing' ? 'pause' : 'play'} /></button>
+        {!local && <button className="music-app-track__download" type="button" onClick={() => downloadTrack(track)} disabled={downloadingId === track.songId} aria-label={`下载 ${track.title}`} title="下载">{downloadingId === track.songId ? <span className="music-spinner" /> : <MusicIcon name="download" />}</button>}
       </div>
     </div>; })}
     {listView === 'search' && hasMoreResults && <div ref={listEndRef} className="music-app-list-end" aria-hidden="true" />}
     {loadingMore && <p className="music-list-status">正在加载更多…</p>}
     {!visibleTracks.length && listView === 'search' && <div className={`music-app-empty${isSearching ? ' is-searching' : ''}`} role="status"><strong>{isSearching ? <><span className="music-spinner" /> {TEXT.searching}</> : resultPage > 0 ? TEXT.noResult : TEXT.searchHint}</strong><span>{isSearching ? '结果返回后会显示在这里' : resultPage > 0 ? '换个关键词再试试' : '输入关键词后，按回车或键盘上的搜索键'}</span></div>}
     {!visibleTracks.length && listView !== 'search' && <div className="music-app-empty"><strong>{isChartView ? chartState || (chartLoading ? '正在加载榜单…' : '暂无榜单数据') : listView === 'discover' ? '还没有发现记录' : '这里还没有歌曲'}</strong><span>{isChartView ? '可以切换榜单或点击刷新' : listView === 'discover' ? '在首页点击随机播放开始探索' : listView === 'local' ? '选择本地音频即可开始播放' : listView === 'playlist' ? '可以从搜索、榜单或历史中加入歌曲' : '播放或添加歌曲后会显示在这里'}</span></div>}
-  </div>; };
+  </div>;
   return <main className={`music-page music-app-shell view-${listView} mobile-view-${mobileView}${playing ? ' is-playing' : ''}${isSearching ? ' is-searching' : ''}`}>
     <audio ref={audio} onDurationChange={syncPositionState} onSeeked={syncPositionState} onRateChange={syncPositionState} onPlay={() => { setPlaying(true); setPlaybackTrackId(currentId); setPlaybackState('playing'); }} onPause={() => { setPlaying(false); setPlaybackState((state) => state === 'loading' || state === 'resolving' ? state : 'paused'); }} onLoadStart={() => setPlaybackState('loading')} onWaiting={() => { setPlaybackState('loading'); beginMediaDeadline(currentId); }} onPlaying={() => { clearMediaDeadline(); clearRandomBudget(); setRecoveringId(''); failedPlaybackIdsRef.current.clear(); playbackRefreshModesRef.current.delete(currentId); setPlaybackState('playing'); if (current && historyStartIdRef.current === currentId) { historyStartIdRef.current = ''; recordHistory(current); } if (randomListWriteIdRef.current === currentId && current) { rememberRandomListTrack(current); randomListWriteIdRef.current = ''; } if (randomSwitchRef.current?.targetId === currentId) randomSwitchRef.current = null; if (playMode.current === 'random') { randomFailuresRef.current = 0; requestNextRandomBatch(); } }} onError={(event) => { if (ignoreAudioErrorRef.current) { ignoreAudioErrorRef.current = false; return; } clearMediaDeadline(); const mediaError = event.currentTarget.error?.code; handlePlaybackFailure('播放地址无法加载，已自动播放下一首', mediaError === 3 || mediaError === 4 ? 'decode' : 'url'); }} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onLoadedMetadata={handleLoadedMetadata} onEnded={() => { clearMediaDeadline(); next(true); }} />
     <Toast toast={toast} onClose={() => setToast(null)} />

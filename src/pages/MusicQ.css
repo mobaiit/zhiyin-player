@@ -747,6 +747,15 @@ html[data-theme="light"] .music-app-search .music-search-history {
   background: var(--zy-theme-canvas) !important;
 }
 
+/* Wide screens centre the app, player included, on the same canvas instead of stretching it edge to edge. */
+@media (min-width: 701px) {
+  .luri-music-clone.is-standalone:has(.music-app-shell) { background: var(--zy-theme-canvas); }
+  .luri-music-clone.is-standalone > .music-page.music-app-shell {
+    max-width: 1320px;
+    margin-inline: auto !important;
+  }
+}
+
 .music-page.music-app-shell {
   --app-panel: var(--zy-theme-surface);
   --app-panel-strong: var(--zy-theme-surface-raised);

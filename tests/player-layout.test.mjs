@@ -80,15 +80,24 @@ test('song rows show a known duration after the artist and nothing when it is un
   assert.match(layout, /\.music-app-track__meta small\.music-app-track__duration \{[^}]*flex: 0 0 auto;/, 'A long album truncates before the duration');
 });
 
-test('wide screens list songs in title, artist, album and duration columns under a header', () => {
+test('song rows offer favourite, add to playlist, play and download, revealed on hover with a mouse', () => {
   const list = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
-  const wide = list.slice(list.indexOf('@media (min-width: 1101px) {'));
-  assert.match(music, /<div className="music-app-track music-app-track--head" aria-hidden="true">[\s\S]*?>歌手<[\s\S]*?>专辑<[\s\S]*?\{hasDuration \? '时长' : ''\}/);
-  assert.match(music, /<span className="music-app-track__artist">\{track\.artist\}<\/span><span className="music-app-track__album">\{track\.album\}<\/span>\{Number\(track\.duration\) > 0 && <span className="music-app-track__length">/);
-  assert.match(list, /\.music-app-track--head, \.music-app-track__main > :is\(\.music-app-track__artist, \.music-app-track__album, \.music-app-track__length\) \{ display: none; \}/, 'Narrow screens keep the two-line rows');
-  assert.match(wide, /\.music-app-track__main \{ grid-template-columns: 38px 44px minmax\(0, 4fr\) minmax\(0, 3fr\) minmax\(0, 3fr\) 48px; \}/);
-  assert.match(wide, /\.music-app-track \{ grid-template-columns: minmax\(0, 1fr\) 64px; \}/, 'A fixed action column keeps the header aligned with the rows');
-  assert.match(wide, /\.music-app-track__copy \.music-app-track__meta \{ display: none; \}/);
+  const actions = music.slice(music.indexOf('<div className="music-app-track__actions">'), music.indexOf('</div>', music.indexOf('<div className="music-app-track__actions">')));
+  const order = ['music-app-track__like', 'openAddToPlaylist(track)', 'music-app-track__play', 'music-app-track__download'].map((marker) => actions.indexOf(marker));
+  assert.ok(order.every((position, index) => position > 0 && (index === 0 || position > order[index - 1])), 'Favourite, add to playlist, play, download');
+  assert.match(actions, /onClick=\{\(\) => like\(track\)\}/, 'A row favourites its own song');
+  assert.match(music, /const like = \(song\) => \{\s*if \(!song\) return;/, 'like() no longer falls back to the current song');
+  assert.match(actions, /<MusicIcon name=\{state === 'playing' \? 'pause' : 'play'\} \/>/, 'The playing row shows pause');
+  assert.match(music, /const downloadTrack = async \(track\) => \{[\s\S]*?const tab = window\.open\('', '_blank'\);[\s\S]*?musicRequest\('resolve'/, 'Download opens its tab during the click, then resolves the URL');
+  assert.match(list, /@media \(min-width: 701px\) and \(hover: hover\) \{\s*\.music-app-track__actions > button \{ opacity: 0;/);
+  assert.match(list, /\.music-app-track:is\(:hover, :focus-within, \.is-current\) \.music-app-track__actions > button,\s*\.music-app-track__actions > \.music-app-track__like\.is-liked \{ opacity: 1; \}/);
+  assert.match(list, /@media \(max-width: 700px\) \{\s*\.music-app-track__actions :is\(\.music-app-track__play, \.music-app-track__download\) \{ display: none; \}/, 'Phones keep favourite and add to playlist');
+  assert.doesNotMatch(music, /music-app-track--head/, 'Rows are two lines again, with no column header');
+});
+
+test('wide screens centre the app at 1320px on the theme canvas', () => {
+  assert.match(layout, /@media \(min-width: 701px\) \{\s*\.luri-music-clone\.is-standalone:has\(\.music-app-shell\) \{ background: var\(--zy-theme-canvas\); \}\s*\.luri-music-clone\.is-standalone > \.music-page\.music-app-shell \{\s*max-width: 1320px;\s*margin-inline: auto !important;/);
+  assert.ok(layout.indexOf('max-width: 1320px') > layout.indexOf('.luri-music-clone.is-standalone > .music-page.music-app-shell {\n  width: 100% !important;'), 'Comes after the full-width standalone rule it overrides');
 });
 
 test('desktop and mobile players use independent progress rows and non-overlapping lanes', () => {
