@@ -42,6 +42,20 @@
 .music-app-home-copy li b, .music-app-home-copy li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .music-app-home-copy li span { color: var(--color-text-muted); }
 .music-app-home-copy > div { display: flex; gap: 10px; }
+/* While random playback runs, the card shows the current song; a long name pans back and forth. */
+@keyframes music-home-now-pan {
+  0%, 20% { transform: translateX(0); }
+  80%, 100% { transform: translateX(var(--player-title-offset)); }
+}
+.music-app-home-copy > .music-app-home-now { display: flex; align-items: baseline; min-width: 0; max-width: 520px; }
+.music-app-home-now > span { flex: 0 0 auto; }
+.music-app-home-now__title { display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; color: var(--color-text); font-weight: 600; white-space: nowrap; }
+.music-app-home-now__title-text { display: inline-block; white-space: nowrap; }
+.music-app-home-now__title[data-overflow="true"] .music-app-home-now__title-text { animation: music-home-now-pan var(--player-title-duration) linear infinite alternate; }
+@media (prefers-reduced-motion: reduce) {
+  .music-app-home-now__title { text-overflow: ellipsis; }
+  .music-app-home-now__title[data-overflow="true"] .music-app-home-now__title-text { animation: none; }
+}
 .music-app-home-section-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 34px 0 16px; }
 .music-app-home-section-title h3 { margin: 0 0 4px; font-size: 1.25rem; }
 .music-app-home-section-title > button { flex: 0 0 auto; }
@@ -58,6 +72,7 @@
   .music-app-home-feature { border-radius: 18px; }
   .music-app-cover-mosaic { width: 112px; border-radius: 14px; }
   .music-app-home-copy > p, .music-app-home-copy ul { display: none; }
+  .music-app-home-copy > .music-app-home-now { display: flex; margin: 0; font-size: .78rem; }
   .music-app-home-copy > div { margin-top: 14px; }
   .music-app-home-copy .music-app-quiet { display: none; }
   .music-app-home-section-title { margin: 26px 2px 12px; }

@@ -339,6 +339,9 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   }, [searchFocused]);
   const randomBatchRef = useRef({ tracks: [], next: null, request: null }); const randomFailuresRef = useRef(0); const randomSingers = useRef(Array.isArray(storedRandomHistory.current.singers) ? storedRandomHistory.current.singers : []); const randomTrackKeys = useRef(Array.isArray(storedRandomHistory.current.tracks) ? storedRandomHistory.current.tracks : []);
   const [randomLoading, setRandomLoading] = useState(false);
+  // The ref drives playback logic; the state lets the home card show the random track.
+  const [randomMode, setRandomMode] = useState(false);
+  const setPlayMode = (mode) => { playMode.current = mode; setRandomMode(mode === 'random'); };
   // Which way the last switch went (the incoming song slides in from that side), and the song whose URL is being refreshed.
   const [switchDirection, setSwitchDirection] = useState('next'); const [recoveringId, setRecoveringId] = useState('');
   const [toast, setToast] = useState(null);
@@ -443,7 +446,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (loginExpired(error)) { setPlaying(false); setPlaybackState('paused'); clearMediaDeadline(); clearRandomBudget(); return; }
       if (providerDenied(error)) {
         setPlaying(false); setPlaybackTrackId(resolvingTrack.songId); setPlaybackState('error'); clearMediaDeadline();
-        if (!restoreRandomSwitch('Provider 认证失败，已恢复上一首')) { playMode.current = 'manual'; showToast('Provider 认证失败，请重新配置认证信息', 'warning'); }
+        if (!restoreRandomSwitch('Provider 认证失败，已恢复上一首')) { setPlayMode('manual'); showToast('Provider 认证失败，请重新配置认证信息', 'warning'); }
         return;
       }
       if (['no_candidate', 'all_resolvers_failed', 'quality_unavailable'].includes(error?.code)) {
@@ -690,7 +693,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     randomSession.current += 1;
     if (randomRequest.current) randomRequest.current.abort();
     randomRequest.current = null; randomSwitchRef.current = null; randomListWriteIdRef.current = ''; pendingRestoreRef.current = null;
-    playMode.current = 'manual'; setRandomLoading(false); clearRandomBudget();
+    setPlayMode('manual'); setRandomLoading(false); clearRandomBudget();
     randomBatchRef.current.request?.abort(); randomBatchRef.current = { tracks: [], next: null, request: null }; randomFailuresRef.current = 0;
   };
   const rememberRandomTrack = (track, singer = '') => {
@@ -709,7 +712,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     const snapshot = randomSwitchRef.current;
     if (!snapshot) return false;
     clearRandomBudget(); randomSwitchRef.current = null; randomListWriteIdRef.current = ''; randomSession.current += 1; randomRequest.current?.abort(); randomRequest.current = null;
-    playMode.current = snapshot.mode; pendingRestoreRef.current = { songId: snapshot.songId, currentTime: snapshot.currentTime, wasPlaying: snapshot.wasPlaying };
+    setPlayMode(snapshot.mode); pendingRestoreRef.current = { songId: snapshot.songId, currentTime: snapshot.currentTime, wasPlaying: snapshot.wasPlaying };
     setPlaybackQueue(snapshot.queue); setCurrentId(snapshot.songId); setPlaybackTrackId(snapshot.songId); setProgress(snapshot.currentTime); setPlaybackState(snapshot.wasPlaying ? 'loading' : 'paused'); setRandomLoading(false);
     if (currentId === snapshot.songId && audio.current) {
       audio.current.currentTime = snapshot.currentTime; pendingRestoreRef.current = null;
@@ -957,7 +960,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     randomSession.current = session;
     if (randomRequest.current) randomRequest.current.abort();
     const controller = new AbortController(); randomRequest.current = controller;
-    playMode.current = 'random'; setListView('random'); setMobileView('now'); setRandomLoading(true); setSearchState('');
+    setPlayMode('random'); setListView('random'); setMobileView('now'); setRandomLoading(true); setSearchState('');
     try {
       const response = await musicRequest('random', randomRequestParams(), controller.signal);
       const payload = await providerPayload(response);
@@ -969,7 +972,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       if (loginExpired(error)) { stopRandom(); setPlaybackState('paused'); }
       else if (!controller.signal.aborted && session === randomSession.current) {
         const accessDenied = providerDenied(error);
-        if (!restoreRandomSwitch(accessDenied ? 'Provider 没有访问权限，已恢复上一首' : '下一首加载失败，已恢复上一首')) { playMode.current = 'manual'; showToast(accessDenied ? 'Provider 没有访问权限，请重新配置或联系服务提供方' : '暂时没有可播放的随机歌曲，请重试', accessDenied ? 'warning' : 'error'); }
+        if (!restoreRandomSwitch(accessDenied ? 'Provider 没有访问权限，已恢复上一首' : '下一首加载失败，已恢复上一首')) { setPlayMode('manual'); showToast(accessDenied ? 'Provider 没有访问权限，请重新配置或联系服务提供方' : '暂时没有可播放的随机歌曲，请重试', accessDenied ? 'warning' : 'error'); }
       }
     } finally {
       if (session === randomSession.current) { randomRequest.current = null; setRandomLoading(false); }
@@ -1392,7 +1395,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       </header>
       <section className="music-app-body">
         <div className="music-app-page">
-          {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <Artwork src={rowArt(track)} key={`${track?.songId || 'empty'}:${index}`} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} />)}{!randomTracks.length && !current && <Artwork src="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3><p>每次点击都会从曲库中随机挑选一首歌开始播放。</p><ul>{randomTracks.slice(0, 3).map((track) => <li key={track.songId}><b>{track.title}</b><span>{track.artist}</span></li>)}</ul><div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div></section><div className="music-app-home-section-title"><div><h3>最近发现</h3><p>随机播放成功的歌曲会保留在这里</p></div>{randomTracks.length > HOME_DISCOVERED_PHONE && <button className="music-app-quiet" type="button" onClick={() => navigate('/discover')}>查看全部 {randomTracks.length}</button>}</div><div className="music-app-home-cards">{randomTracks.slice(0, HOME_DISCOVERED_DESKTOP).map((track) => <button type="button" key={track.songId} onClick={() => handleTrackAction(track)}><Artwork src={rowArt(track)} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><b>{track.title}</b><span>{track.artist}</span></button>)}{!randomTracks.length && <div className="music-app-empty"><strong>还没有发现记录</strong><span>点击“随机播放”开始探索。</span></div>}</div></section>}
+          {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <Artwork src={rowArt(track)} key={`${track?.songId || 'empty'}:${index}`} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} />)}{!randomTracks.length && !current && <Artwork src="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3>{randomMode && current ? <p className="music-app-home-now"><span>正在播放：</span><PlayerTitle className="music-app-home-now__title">{[current.title, current.artist].filter(Boolean).join(' - ')}</PlayerTitle></p> : <p>每次点击都会从曲库中随机挑选一首歌开始播放。</p>}<ul>{randomTracks.slice(0, 3).map((track) => <li key={track.songId}><b>{track.title}</b><span>{track.artist}</span></li>)}</ul><div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div></section><div className="music-app-home-section-title"><div><h3>最近发现</h3><p>随机播放成功的歌曲会保留在这里</p></div>{randomTracks.length > HOME_DISCOVERED_PHONE && <button className="music-app-quiet" type="button" onClick={() => navigate('/discover')}>查看全部 {randomTracks.length}</button>}</div><div className="music-app-home-cards">{randomTracks.slice(0, HOME_DISCOVERED_DESKTOP).map((track) => <button type="button" key={track.songId} onClick={() => handleTrackAction(track)}><Artwork src={rowArt(track)} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><b>{track.title}</b><span>{track.artist}</span></button>)}{!randomTracks.length && <div className="music-app-empty"><strong>还没有发现记录</strong><span>点击“随机播放”开始探索。</span></div>}</div></section>}
           {isChartView && <div className="music-app-toolbar"><div className="music-app-segment"><button className={chartPlatform === 'netease' ? 'active' : ''} type="button" onClick={openNetease}>网易</button><button className={chartPlatform === 'qq' ? 'active' : ''} type="button" onClick={openQQ}>QQ</button></div><div className="music-app-segment">{CHART_TYPES.map((chart) => <button className={chartType === chart.value ? 'active' : ''} type="button" onClick={() => selectChartType(chart.value)} key={chart.value}>{chart.label}</button>)}</div><button className="music-app-quiet" type="button" onClick={() => loadChart(chartPlatform, chartType, true)} disabled={chartLoading}>刷新</button></div>}
           {listView === 'playlists' && <><div className="music-app-toolbar"><button className="music-app-primary" type="button" onClick={() => createPlaylist()}>新建歌单</button><button className="music-app-quiet" type="button" onClick={() => importRef.current?.click()}>导入</button><span className="music-app-sync">{syncState === 'synced' ? '已同步' : syncState === 'syncing' ? '同步中' : syncState === 'pending' ? '等待同步' : '仅本机'}</span></div><div className="music-app-playlists"><article className="music-app-playlist-pinned"><button type="button" onClick={() => navigate('/favorites')}><span><MusicIcon name="heart" /></span><b>我的喜欢</b><small>{likedTracks.length} 首歌曲</small></button></article>{library.playlists.map((playlist) => <article key={playlist.id}><button type="button" onClick={() => navigate(`/playlists/${encodeURIComponent(playlist.id)}`)}><span><MusicIcon name="playlist" /></span><b>{playlist.name}</b><small>{playlist.tracks.length} 首歌曲</small></button><div><button type="button" onClick={() => renamePlaylist(playlist)}>重命名</button><button type="button" onClick={() => deletePlaylist(playlist)}>删除</button></div></article>)}{!library.playlists.length && <div className="music-app-empty"><strong>创建你的第一张歌单</strong><span>歌单会随账户在多端同步，音频文件本身不会上传。</span></div>}</div></>}
           {listView === 'discover' && <div className="music-app-toolbar music-app-library-back"><button className="music-app-quiet music-app-back-button" type="button" onClick={() => navigate('/')}><MusicIcon name="back" /><span>返回首页</span></button></div>}

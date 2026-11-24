@@ -32,7 +32,7 @@ export function observePlayerTitle(title, text, { ResizeObserver, fonts, eventTa
   };
 }
 
-export default function PlayerTitle({ children }) {
+export default function PlayerTitle({ children, className = 'music-player__title' }) {
   const titleRef = useRef(null);
   const textRef = useRef(null);
   useEffect(() => observePlayerTitle(titleRef.current, textRef.current, {
@@ -40,5 +40,5 @@ export default function PlayerTitle({ children }) {
     fonts: document.fonts,
     eventTarget: window,
   }), [children]);
-  return <b key={children} ref={titleRef} className="music-player__title" title={children}><span ref={textRef} className="music-player__title-text">{children}</span></b>;
+  return <b key={children} ref={titleRef} className={className} title={children}><span ref={textRef} className={`${className}-text`}>{children}</span></b>;
 }

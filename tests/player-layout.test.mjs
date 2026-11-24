@@ -65,6 +65,14 @@ test('bottom player places elapsed and total time right after the song info', ()
   assert.match(player, /@media \(max-width: 359px\) \{\s*\.music-app-player \.music-player__time \{ display: none; \}/);
 });
 
+test('the random card names the song playing in random mode and pans a long name', () => {
+  assert.match(music, /const setPlayMode = \(mode\) => \{ playMode\.current = mode; setRandomMode\(mode === 'random'\); \};/);
+  assert.doesNotMatch(music.replace('playMode.current = mode;', ''), /playMode\.current = /, 'Every mode change goes through setPlayMode');
+  assert.match(music, /\{randomMode && current \? <p className="music-app-home-now"><span>正在播放：<\/span><PlayerTitle className="music-app-home-now__title">\{\[current\.title, current\.artist\]\.filter\(Boolean\)\.join\(' - '\)\}<\/PlayerTitle><\/p>/);
+  assert.match(layout, /\.music-app-home-now__title\[data-overflow="true"\] \.music-app-home-now__title-text \{ animation: music-home-now-pan/);
+  assert.match(layout, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-home-copy > \.music-app-home-now \{ display: flex;/, 'Phones hide the description but keep the song line');
+});
+
 test('desktop and mobile players use independent progress rows and non-overlapping lanes', () => {
   assert.match(player, /\.music-app-player \{[^}]*grid-template-columns: 310px minmax\(360px, 1fr\) 260px;[^}]*grid-template-rows: minmax\(0, 1fr\) 10px;/);
   assert.match(player, /\.music-app-player \.music-player__progress \{[^}]*grid-column: 1 \/ -1;[^}]*grid-row: 2;/);
