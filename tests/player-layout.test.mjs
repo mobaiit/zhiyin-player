@@ -103,7 +103,7 @@ test('chosen search results, up to 30, go into playlists without duplicates or r
   assert.match(music, /onClick=\{\(\) => setSelectedSongIds\(results\.slice\(0, SEARCH_SELECTION_LIMIT\)\.map\(\(track\) => track\.songId\)\)\}>选择前/);
   assert.match(music, /onClick=\{\(\) => selecting \? toggleSongSelection\(track\) : handleTrackAction\(track\)\}/, 'In selection mode a row click selects');
   assert.match(music, /const snapshots = canonicalTracks\(selectedSongs\)\.slice\(0, SEARCH_SELECTION_LIMIT\);/);
-  assert.match(music, /if \(!append\) setSelectedSongIds\(\[\]\);/, 'A new search starts with nothing chosen');
+  assert.match(music, /if \(!append\) \{ setSelectedSongIds\(\[\]\);/, 'A new search starts with nothing chosen');
   assert.match(music, /const missing = snapshots\.filter\(\(track\) => !playlist\.tracks\.some\(\(item\) => samePlaylistTrack\(item, track\)\)\);\s*const room = Math\.max\(0, 200 - playlist\.tracks\.length\);/, 'Songs already there are skipped and a playlist stops at 200');
   assert.match(music, /if \(!selected\.has\(playlist\.id\)\) return playlist;/, 'Unselected playlists keep every song');
   assert.match(music, /dialogBatch\.length \? <button className="music-app-primary music-app-modal__save" type="button" disabled=\{!playlistSelection\.length\} onClick=\{saveBatchToPlaylists\}>/);
@@ -156,6 +156,14 @@ test('phone text follows one scale too', () => {
   assert.match(scale, /\.music-app-track__copy b \{ font-size: 14px; font-weight: 600; \}/);
   assert.match(scale, /\.music-app-track__meta small \{ font-size: 12px; \}/);
   assert.match(player, /\/\* Phone text matches the app's type scale[\s\S]*?\.music-app-player \.music-player__title \{ font-size: 14px; font-weight: 600; \}[\s\S]*?\.music-app-now \.music-app-now__meta h2 span \{ font-size: 22px; font-weight: 600; \}/);
+});
+
+test('each list page keeps its own scroll position', () => {
+  assert.match(music, /const pageScrollKey = listView === 'playlist' \? `playlist:\$\{selectedPlaylistId\}` : isChartView \? `\$\{listView\}:\$\{chartType\}` : listView;/);
+  assert.match(music, /useLayoutEffect\(\(\) => \{\s*const page = pageRef\.current; if \(!page\) return;\s*const saved = scrollPositionsRef\.current\[pageScrollKey\];\s*page\.scrollTop = saved \|\| 0;/, 'A page comes back where it was left, or starts at the top');
+  assert.match(music, /<div className="music-app-page" ref=\{pageRef\} onScroll=\{\(event\) => \{ scrollPositionsRef\.current\[pageScrollKey\] = event\.currentTarget\.scrollTop; \}\}>/);
+  assert.match(music, /if \(restoredScrollRef\.current === pageScrollKey\) \{ restoredScrollRef\.current = ''; locatedTrackRef\.current = locationKey; return; \}/, 'A restored page is not pulled to the playing song');
+  assert.match(music, /delete scrollPositionsRef\.current\.search;/, 'A new search starts at the top');
 });
 
 test('the top bar cycles the three themes with one button', () => {

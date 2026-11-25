@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ConfirmDialog, Toast } from '../luri-music/UiFeedback';
 import { SINGERS } from '../data/singers';
 import { songIdFor } from '../../shared/song-identity';
@@ -324,6 +324,8 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     setNewPlaylistName('');
   };
   const lyricsRef = useRef(null); const musicListRef = useRef(null); const listEndRef = useRef(null); const currentRowRef = useRef(null); const searchFormRef = useRef(null); const searchSuggestionsRef = useRef(null); const locatedTrackRef = useRef('');
+  // Every list page shares one scroller, so each page's own position is kept here by page key.
+  const pageRef = useRef(null); const scrollPositionsRef = useRef({}); const restoredScrollRef = useRef('');
   const localFilesRef = useRef(null); const localFolderRef = useRef(null); const importRef = useRef(null); const localUrlsRef = useRef(new Set());
   const searchInputRef = useRef(null); const mobileNowSwipeRef = useRef(null);
   const resolveRequestRef = useRef(null); const chartRequestRef = useRef(null); const mediaDeadlineRef = useRef(null); const mediaDeadlineTrackRef = useRef(''); const ignoreAudioErrorRef = useRef(false); const failedPlaybackIdsRef = useRef(new Set()); const playbackRefreshModesRef = useRef(new Map()); const artworkRefreshIdsRef = useRef(new Set());
@@ -670,9 +672,11 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     if (window.matchMedia('(max-width: 700px)').matches && mobileView !== 'playlist') return undefined;
     const frame = window.requestAnimationFrame(() => {
       const row = currentRowRef.current; const list = scrollParentOf(musicListRef.current);
-      // Leaving the list forgets where it was located, so returning finds the song again.
+      // Leaving the list forgets where it was located, so returning finds the song again,
+      // unless the page was put back where the user left it.
       if (!list || !row) { locatedTrackRef.current = ''; return; }
       const locationKey = `${listView}:${activeSearchRef.current}:${currentId}:${mobileView}`;
+      if (restoredScrollRef.current === pageScrollKey) { restoredScrollRef.current = ''; locatedTrackRef.current = locationKey; return; }
       if (locatedTrackRef.current === locationKey) return;
       locatedTrackRef.current = locationKey;
       const listBounds = list.getBoundingClientRect(); const rowBounds = row.getBoundingClientRect();
@@ -1105,7 +1109,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   }, [routePath]);
 
   const loadResults = async (keyword, page, append = false) => {
-    if (!append) setSelectedSongIds([]);
+    if (!append) { setSelectedSongIds([]); delete scrollPositionsRef.current.search; if (listView === 'search' && pageRef.current) pageRef.current.scrollTop = 0; }
     searchRequestRef.current?.abort();
     const controller = new AbortController(); searchRequestRef.current = controller;
     if (append) { loadingMoreRef.current = true; setLoadingMore(true); } else { loadingMoreRef.current = false; setLoadingMore(false); setSearchState(TEXT.searching); }
@@ -1436,6 +1440,14 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     ['/settings', '设置', 'settings'],
   ];
   const selecting = listView === 'search' && selectingSongs;
+  // A page comes back where it was left; one not visited yet starts at the top.
+  const pageScrollKey = listView === 'playlist' ? `playlist:${selectedPlaylistId}` : isChartView ? `${listView}:${chartType}` : listView;
+  useLayoutEffect(() => {
+    const page = pageRef.current; if (!page) return;
+    const saved = scrollPositionsRef.current[pageScrollKey];
+    page.scrollTop = saved || 0;
+    restoredScrollRef.current = saved ? pageScrollKey : '';
+  }, [pageScrollKey]);
   const renderTrackList = () => <div className={`music-app-track-list${selecting ? ' is-selecting' : ''}`} ref={musicListRef}>
     {visibleTracks.map((track, index) => { const state = rowPlaybackState(track.songId); const isCurrent = track.songId === currentId; const busy = isCurrent && isPlaybackBusy; const local = track.sourceType === 'local'; const liked = likedTracks.some((item) => sameFavorite(item, track)); const selected = selecting && selectedSongIds.includes(track.songId); return <div ref={isCurrent ? currentRowRef : null} key={`${track.songId}:${index}`} className={`music-app-track${isCurrent ? ' is-current' : ''}${selected ? ' is-selected' : ''}`}>
       <button className="music-app-track__main" type="button" onClick={() => selecting ? toggleSongSelection(track) : handleTrackAction(track)} disabled={busy && !selecting} aria-pressed={selecting ? selected : undefined} aria-label={selecting ? `${selected ? '取消选择' : '选择'} ${track.title}` : `${track.title}，${state === 'playing' ? '暂停' : '播放'}`}>
@@ -1470,7 +1482,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
         <form ref={searchFormRef} className="music-app-search" onSubmit={search}><button className="music-app-search__icon" type="submit" disabled={isSearching} aria-label="搜索" title="搜索">{isSearching ? <span className="music-spinner" /> : <MusicIcon name="search" />}</button><input ref={searchInputRef} value={query} onFocus={() => setSearchFocused(true)} onChange={(event) => { setQuery(event.target.value); setActiveSingerSuggestion(-1); }} onKeyDown={handleSearchKeyDown} placeholder={TEXT.searchHint} enterKeyHint="search" autoComplete="off" role="combobox" aria-autocomplete="list" aria-expanded={searchHistoryOpen} aria-controls="music-app-search-suggestions" aria-activedescendant={activeSingerSuggestion >= 0 ? `music-app-search-option-${activeSingerSuggestion}` : undefined} />{query && <button className="music-app-search__clear" type="button" onMouseDown={(event) => event.preventDefault()} onClick={clearSearchInput} aria-label="清空搜索内容" title="清空"><MusicIcon name="close" /></button>}{searchHistoryOpen && <div className="music-search-history" id="music-app-search-suggestions" ref={searchSuggestionsRef} role="listbox" aria-label={singerSuggestions.length ? '歌手建议' : '最近搜索'} onMouseDown={(event) => event.preventDefault()}><div className="music-search-history__head"><span>{singerSuggestions.length ? '歌手建议' : '最近搜索'}</span>{!singerSuggestions.length && <button type="button" onClick={() => { setRecentSearches([]); setActiveSingerSuggestion(-1); }}>清除记录</button>}</div><div className="music-search-history__list">{searchSuggestions.map((item, index) => <button className={`music-search-history__item${index === activeSingerSuggestion ? ' active' : ''}`} id={`music-app-search-option-${index}`} role="option" aria-selected={index === activeSingerSuggestion} type="button" key={item} onClick={() => chooseSearchSuggestion(item)}><i aria-hidden="true"><MusicIcon name={singerSuggestions.length ? 'search' : 'history'} /></i><span>{item}</span></button>)}</div></div>}</form><ThemeToggle className="music-app-theme-toggle" />
       </header>
       <section className="music-app-body">
-        <div className="music-app-page">
+        <div className="music-app-page" ref={pageRef} onScroll={(event) => { scrollPositionsRef.current[pageScrollKey] = event.currentTarget.scrollTop; }}>
           {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <Artwork src={rowArt(track)} key={`${track?.songId || 'empty'}:${index}`} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} />)}{!randomTracks.length && !current && <Artwork src="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3>{randomMode && current ? <p className="music-app-home-now"><span>正在播放：</span><PlayerTitle className="music-app-home-now__title">{[current.title, current.artist].filter(Boolean).join(' - ')}</PlayerTitle></p> : <p>每次点击都会从曲库中随机挑选一首歌开始播放。</p>}<ul>{randomTracks.slice(0, 3).map((track) => <li key={track.songId}><b>{track.title}</b><span>{track.artist}</span></li>)}</ul><div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div></section><div className="music-app-home-section-title"><div><h3>最近发现</h3><p>随机播放成功的歌曲会保留在这里</p></div>{randomTracks.length > HOME_DISCOVERED_PHONE && <button className="music-app-quiet" type="button" onClick={() => navigate('/discover')}>查看全部 {randomTracks.length}</button>}</div><div className="music-app-home-cards">{randomTracks.slice(0, HOME_DISCOVERED_DESKTOP).map((track) => <button type="button" key={track.songId} onClick={() => handleTrackAction(track)}><Artwork src={rowArt(track)} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><b>{track.title}</b><span>{track.artist}</span></button>)}{!randomTracks.length && <div className="music-app-empty"><strong>还没有发现记录</strong><span>点击“随机播放”开始探索。</span></div>}</div></section>}
           {isChartView && <div className="music-app-toolbar"><div className="music-app-segment"><button className={chartPlatform === 'netease' ? 'active' : ''} type="button" onClick={openNetease}>网易</button><button className={chartPlatform === 'qq' ? 'active' : ''} type="button" onClick={openQQ}>QQ</button></div><div className="music-app-segment">{CHART_TYPES.map((chart) => <button className={chartType === chart.value ? 'active' : ''} type="button" onClick={() => selectChartType(chart.value)} key={chart.value}>{chart.label}</button>)}</div><button className="music-app-quiet" type="button" onClick={() => loadChart(chartPlatform, chartType, true)} disabled={chartLoading}>刷新</button></div>}
           {listView === 'playlists' && <><div className="music-app-toolbar"><button className="music-app-primary" type="button" onClick={() => createPlaylist()}>新建歌单</button><button className="music-app-quiet" type="button" onClick={() => importRef.current?.click()}>导入</button><span className="music-app-sync">{syncState === 'synced' ? '已同步' : syncState === 'syncing' ? '同步中' : syncState === 'pending' ? '等待同步' : '仅本机'}</span></div><div className="music-app-playlists"><article className="music-app-playlist-pinned"><button type="button" onClick={() => navigate('/favorites')}>{playlistCover(likedTracks[0])}<b>我的喜欢</b><small>{likedTracks.length} 首歌曲</small></button></article>{library.playlists.map((playlist) => <article key={playlist.id}><button type="button" onClick={() => navigate(`/playlists/${encodeURIComponent(playlist.id)}`)}>{playlistCover(playlist.tracks[0])}<b>{playlist.name}</b><small>{playlist.tracks.length} 首歌曲</small></button><div><button type="button" onClick={() => renamePlaylist(playlist)}>重命名</button><button type="button" onClick={() => deletePlaylist(playlist)}>删除</button></div></article>)}{!library.playlists.length && <div className="music-app-empty"><strong>创建你的第一张歌单</strong><span>歌单会随账户在多端同步，音频文件本身不会上传。</span></div>}</div></>}
