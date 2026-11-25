@@ -1191,3 +1191,20 @@ html[data-theme="dark"] {
   html[data-theme] .music-app-shell .music-app-track__copy b { font-size: 14px; font-weight: 600; }
   html[data-theme] .music-app-shell .music-app-track__meta small { font-size: 12px; }
 }
+
+/* Phone type scale: controls no larger than the songs, songs readable at arm's length. */
+@media (max-width: 700px) {
+  /* The title size (1.08rem) comes from the compact phone typography rule above. */
+  html[data-theme] .music-app-shell .music-app-topbar h1 { font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-topbar p { font-size: 12px; }
+  html[data-theme] .music-app-shell :is(.music-app-toolbar :is(.music-app-segment button, .music-app-quiet), .music-app-primary) { font-size: 14px; }
+  html[data-theme] .music-app-shell .music-app-segment button.active { font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-track__index { font-size: 12px; }
+  html[data-theme] .music-app-shell .music-app-track__copy b { font-size: 14px; font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-track__meta small { font-size: 12px; }
+  html[data-theme] .music-app-shell .music-app-home > header h2 { font-size: 24px; font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-home > header p { font-size: 12.5px; }
+  html[data-theme] .music-app-shell :is(.music-app-home-copy h3, .music-app-home-section-title h3) { font-size: 17px; font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-home-cards b { font-size: 13px; font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-home-cards span { font-size: 12px; }
+}

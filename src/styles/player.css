@@ -444,6 +444,17 @@ html[data-theme="glass"] .music-app-player {
   background: var(--zy-red-soft);
 }
 
+/* Phone text matches the app's type scale: mini player and full-screen player. */
+@media (max-width: 700px) {
+  .music-app-player .music-player__title { font-size: 14px; font-weight: 600; }
+  .music-app-player .music-player__copy small { font-size: 12px; }
+  .music-app-now .music-app-now__title { font-size: 15px; }
+  .music-app-now .music-app-now__meta h2 span { font-size: 22px; font-weight: 600; }
+  .music-app-now .music-app-now__meta p { font-size: 14px; }
+  .music-app-now .music-app-now__meta small { font-size: 12px; }
+  .music-app-now .music-app-now__lyric-preview span { font-size: 15px; }
+}
+
 /* Desktop text matches the app's type scale. */
 @media (min-width: 701px) {
   .music-app-player .music-player__title { font-size: 15px; font-weight: 600; }
@@ -1365,6 +1376,7 @@ html[data-theme="light"] .music-app-now.is-classic {
   }
 
   .music-app-now__controls .music-app-now__like--controls { display: inline-flex; }
+  /* Favourite lives in the transport, so the actions row holds copy link and add to playlist, right-aligned. */
   .music-app-now__like--controls span,
   .music-app-now__actions .music-app-now__like--actions { display: none; }
 
@@ -1372,12 +1384,12 @@ html[data-theme="light"] .music-app-now.is-classic {
     position: relative;
     z-index: 6;
     grid-area: actions;
-    justify-self: center;
+    justify-self: end;
     display: grid;
     grid-auto-columns: 44px;
     grid-auto-flow: column;
     align-items: center;
-    justify-content: center;
+    justify-content: end;
     gap: 10px;
     min-height: 44px;
   }

@@ -149,6 +149,15 @@ test('the default cover is the Zhiyin icon and playlists show their first song',
   assert.match(music, /\{playlistCover\(playlist\.tracks\[0\]\)\}<b>\{playlist\.name\}<\/b>/);
 });
 
+test('phone text follows one scale too', () => {
+  const scale = layout.slice(layout.indexOf('/* Phone type scale'));
+  assert.match(scale, /@media \(max-width: 700px\) \{/);
+  assert.match(scale, /:is\(\.music-app-toolbar :is\(\.music-app-segment button, \.music-app-quiet\), \.music-app-primary\) \{ font-size: 14px; \}/, 'Controls no larger than the songs');
+  assert.match(scale, /\.music-app-track__copy b \{ font-size: 14px; font-weight: 600; \}/);
+  assert.match(scale, /\.music-app-track__meta small \{ font-size: 12px; \}/);
+  assert.match(player, /\/\* Phone text matches the app's type scale[\s\S]*?\.music-app-player \.music-player__title \{ font-size: 14px; font-weight: 600; \}[\s\S]*?\.music-app-now \.music-app-now__meta h2 span \{ font-size: 22px; font-weight: 600; \}/);
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);
@@ -207,6 +216,13 @@ test('the full-screen player owns a history entry so system back closes it', () 
 test('phone transport centres play between four equal slots', () => {
   const controls = music.slice(music.indexOf('<div className="music-app-now__controls">'), music.indexOf('<div className="music-app-now__actions">'));
   assert.equal((controls.match(/<button /g) || []).length + (controls.match(/likeButton\(/g) || []).length, 5, 'mode, previous, play, next, favourite');
+  assert.match(controls, /\{likeButton\('music-app-now__like--controls'\)\}<\/div>/, 'Favourite keeps the rightmost slot');
+  assert.match(music, /className="music-app-now__add--actions" type="button" disabled=\{!shownTrack\} aria-label="加入歌单" onClick=\{\(\) => openAddToPlaylist\(shownTrack\)\}>/);
+  assert.match(player, /\.music-app-now__like--controls span,\s*\.music-app-now__actions \.music-app-now__like--actions \{ display: none; \}/, 'An icon-only favourite; copy link and add share the actions row');
+  assert.match(player, /\.music-app-now__actions \{[^}]*grid-area: actions;\s*justify-self: end;[^}]*justify-content: end;/, 'Right-aligned');
+  const list = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
+  assert.match(list, /\.music-app-modal \{ position: fixed; z-index: 110;/, 'The dialog opens above the full-screen player (z-index 100)');
+  assert.match(player, /\.music-app-now \{[^}]*z-index: 100;/);
   assert.match(player, /\.music-app-now__controls \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\);/);
 });
 
