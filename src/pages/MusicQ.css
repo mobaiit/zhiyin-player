@@ -522,6 +522,7 @@ html[data-theme="light"] .music-app-home-feature {
     margin: 0;
     place-items: center;
     border-radius: 12px;
+    overflow: hidden;
     color: var(--app-accent);
     background: color-mix(in srgb, var(--app-accent) 12%, var(--mobile-surface-raised));
     font-size: 1.35rem;

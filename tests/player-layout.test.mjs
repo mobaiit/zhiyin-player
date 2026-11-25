@@ -139,6 +139,16 @@ test('desktop text follows one scale: navigation and toolbars no larger than the
   assert.match(scale, /\.music-app-track__meta small \{ font-size: 12px; \}/);
 });
 
+test('the default cover is the Zhiyin icon and playlists show their first song', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(music, /const EMPTY_ART = 'data:image\/svg\+xml,%3Csvg[^']*%23dc1a2b[^']*%23f7f6f7[^']*';/, 'Red icon with a white note');
+  assert.match(html, /<link rel="icon" type="image\/png" href="\/zhiyin-logo\.png" \/>/);
+  assert.match(html, /<link rel="apple-touch-icon" href="\/zhiyin-touch-icon\.png" \/>/, 'iOS gets a square icon without transparent corners');
+  assert.match(music, /const playlistCover = \(first\) => <span className="music-app-playlist-cover"><Artwork src=\{first \? rowArt\(first\) : ''\}/, 'An empty playlist shows the default cover');
+  assert.match(music, /onClick=\{\(\) => navigate\('\/favorites'\)\}>\{playlistCover\(likedTracks\[0\]\)\}<b>我的喜欢<\/b>/);
+  assert.match(music, /\{playlistCover\(playlist\.tracks\[0\]\)\}<b>\{playlist\.name\}<\/b>/);
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);
