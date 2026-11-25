@@ -166,6 +166,9 @@
 .music-app-track__actions .music-app-track__like.is-liked { color: var(--zy-active-red, var(--app-accent)); }
 .music-app-track__actions .music-app-track__like.is-liked .music-icon { fill: currentColor; }
 .music-app-track__actions .music-spinner { width: 16px; height: 16px; }
+/* The play button carries the row's playback state: spinner while loading, pause while playing. */
+.music-app-track__actions .music-app-track__play.is-active { color: var(--app-accent); }
+.music-app-track__actions .music-app-track__play:disabled { opacity: 1; cursor: wait; }
 @media (min-width: 701px) {
   .music-app-track__actions button { min-width: 38px; padding: 0 8px; }
 }

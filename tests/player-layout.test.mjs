@@ -87,7 +87,8 @@ test('song rows always offer favourite, add to playlist, play and download', () 
   assert.ok(order.every((position, index) => position > 0 && (index === 0 || position > order[index - 1])), 'Favourite, add to playlist, play, download');
   assert.match(actions, /onClick=\{\(\) => like\(track\)\}/, 'A row favourites its own song');
   assert.match(music, /const like = \(song\) => \{\s*if \(!song\) return;/, 'like() no longer falls back to the current song');
-  assert.match(actions, /<MusicIcon name=\{state === 'playing' \? 'pause' : 'play'\} \/>/, 'The playing row shows pause');
+  assert.match(actions, /\{busy \? <span className="music-spinner" \/> : <MusicIcon name=\{state === 'playing' \? 'pause' : 'play'\} \/>\}/, 'The play button shows loading and pause');
+  assert.match(music, /<span className="music-app-track__index">\{selecting \? [\s\S]*? : String\(isChartView \? track\.rank \|\| index \+ 1 : index \+ 1\)\.padStart\(2, '0'\)\}<\/span>/, 'The index stays a number');
   assert.match(music, /const downloadTrack = async \(track\) => \{[\s\S]*?const tab = window\.open\('', '_blank'\);[\s\S]*?musicRequest\('resolve'/, 'Download opens its tab during the click, then resolves the URL');
   assert.doesNotMatch(list, /\.music-app-track__actions > button \{ opacity: 0;/, 'Actions stay visible');
   assert.match(actions, /openAddToPlaylist\(track\)\} aria-label=\{`将 \$\{track\.title\} 加入歌单`\} title="加入歌单"><MusicIcon name="add" \/>/, 'Adding uses the plus icon');
@@ -113,7 +114,7 @@ test('an idle player shows the last song played, else the first discovered one, 
   assert.match(music, /if \(!current && idleTrack\) return selectTrack\(idleTrack\.songId, library\.history\[0\] \? library\.history : randomTracks\);/, 'Play starts the song shown');
   const footer = music.slice(music.indexOf('<footer className="music-player music-app-player">'), music.indexOf('</footer>', music.indexOf('<footer className="music-player music-app-player">')));
   assert.match(footer, /src=\{usableArt\(shownTrack\?\.art\)\}/);
-  assert.match(footer, /<div className="music-controls"><button className=\{`music-icon-button music-player__like[\s\S]*?onClick=\{\(\) => like\(shownTrack\)\}[\s\S]*?music-player__add" type="button"[\s\S]*?onClick=\{\(\) => openAddToPlaylist\(shownTrack\)\}[\s\S]*?<MusicIcon name="add" \/><\/button><button className="music-icon-button music-player__previous"/, 'Favourite and add sit left of previous');
+  assert.match(footer, /<div className="music-controls"><span className="music-controls__side music-controls__side--start"><button className=\{`music-icon-button music-player__like[\s\S]*?onClick=\{\(\) => like\(shownTrack\)\}[\s\S]*?music-player__add" type="button"[\s\S]*?onClick=\{\(\) => openAddToPlaylist\(shownTrack\)\}[\s\S]*?<MusicIcon name="add" \/><\/button><button className="music-icon-button music-player__previous"/, 'Favourite and add sit left of previous');
   assert.match(footer, /title="歌词"><MusicIcon name="lyrics" \/><\/button>/);
   assert.match(player, /\.music-app-player \.music-controls :is\(\.music-player__like, \.music-player__add, \.music-player__previous\),/, 'Phones hide them with previous');
 });
@@ -130,6 +131,14 @@ test('desktop list pages float in a card over a gradient canvas, with labelled n
   assert.match(music, /\{NAV_SECTIONS\[index\] && <span className="music-app-sidebar__label">\{NAV_SECTIONS\[index\]\}<\/span>\}/);
 });
 
+test('desktop text follows one scale: navigation and toolbars no larger than the songs', () => {
+  const scale = layout.slice(layout.indexOf('/* Desktop type scale'));
+  assert.match(scale, /\.music-app-sidebar nav button \{ font-size: 14px; font-weight: 500; \}/);
+  assert.match(scale, /\.music-app-toolbar :is\(\.music-app-segment button, \.music-app-quiet, \.music-app-primary\) \{ font-size: 13px; \}/);
+  assert.match(scale, /\.music-app-track__copy b \{ font-size: 14px; font-weight: 600; \}/);
+  assert.match(scale, /\.music-app-track__meta small \{ font-size: 12px; \}/);
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);
@@ -141,7 +150,12 @@ test('wide screens centre the app at 1320px on the theme canvas', () => {
 });
 
 test('desktop and mobile players use independent progress rows and non-overlapping lanes', () => {
-  assert.match(player, /\.music-app-player \{[^}]*grid-template-columns: 310px minmax\(360px, 1fr\) 260px;[^}]*grid-template-rows: minmax\(0, 1fr\) 10px;/);
+  assert.match(player, /\.music-app-player \{[^}]*grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\);[^}]*grid-template-rows: minmax\(0, 1fr\) 10px;/, 'Equal outer columns centre the transport');
+  assert.match(player, /\.music-app-player \.music-controls \{[^}]*grid-template-columns: 1fr auto 1fr;/, 'Equal sides centre play within the transport');
+  assert.match(music, /<MusicIcon name="previous" \/><\/button><\/span><button className="music-icon-button play-button"[\s\S]*?<span className="music-controls__side music-controls__side--end"><button className="music-icon-button music-player__next"/);
+  assert.match(player, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-player \.music-controls__side \{ display: contents; \}/, 'Phones keep the flat mini transport');
+  assert.match(music, /style=\{\{ '--music-volume': `\$\{\(muted \? 0 : volume\) \* 100\}%` \}\} aria-label="音量"/);
+  assert.match(player, /\.music-app-player \.music-volume input \{[^}]*background: linear-gradient\(to right, var\(--zy-red\) 0 var\(--music-volume\), var\(--zy-border\) var\(--music-volume\) 100%\) center \/ 100% 3px no-repeat;/, 'A thin volume track in the theme red');
   assert.match(player, /\.music-app-player \.music-player__progress \{[^}]*grid-column: 1 \/ -1;[^}]*grid-row: 2;/);
   assert.match(player, /@media \(max-width: 700px\) \{\s*\.music-app-player \{[^}]*grid-template-columns: minmax\(0, 1fr\) auto 44px;[^}]*grid-template-rows: 5px minmax\(0, 1fr\);/);
   assert.match(player, /\.music-app-player \.music-player__progress \{\s*grid-row: 1;/);
@@ -231,8 +245,9 @@ test('search loads the next page when the end of the results scrolls into view',
 });
 
 test('searching shows progress on phones, where the submit button is hidden', () => {
-  assert.match(layout, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-search > \.music-app-search__submit \{ display: none; \}/, 'Phones submit with the keyboard');
-  assert.match(music, /<span className="music-app-search__icon" aria-hidden="true">\{isSearching \? <span className="music-spinner" \/> : <MusicIcon name="search" \/>\}<\/span>/, 'The search box itself shows a spinner');
+  assert.doesNotMatch(music, /music-app-search__submit/, 'No text search button');
+  assert.match(music, /<button className="music-app-search__icon" type="submit" disabled=\{isSearching\} aria-label="搜索" title="搜索">\{isSearching \? <span className="music-spinner" \/> : <MusicIcon name="search" \/>\}<\/button>/, 'The magnifier submits and shows the spinner');
+  assert.match(music, /enterKeyHint="search"/, 'Phone keyboards offer a search key');
   assert.match(music, /listView === 'search' && <div className=\{`music-app-empty\$\{isSearching \? ' is-searching' : ''\}`\} role="status"><strong>\{isSearching \? <><span className="music-spinner" \/> \{TEXT\.searching\}<\/> : resultPage > 0 \? TEXT\.noResult : TEXT\.searchHint\}/, 'The cleared list says it is searching, then no results, instead of 这里还没有歌曲');
 });
 

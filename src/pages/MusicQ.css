@@ -560,11 +560,11 @@ html[data-theme="light"] .music-app-home-feature {
 
 /* App search: a single calm field with an opaque, keyboard-friendly history menu. */
 .music-app-search {
-  grid-template-columns: 24px minmax(160px, 1fr) 34px auto;
+  grid-template-columns: 30px minmax(160px, 1fr) 34px;
   width: min(560px, 50vw);
-  min-height: 48px;
+  min-height: 44px;
   gap: 4px;
-  padding: 4px 5px 4px 13px;
+  padding: 3px 6px 3px 8px;
   border-radius: 15px;
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
@@ -573,13 +573,21 @@ html[data-theme="light"] .music-app-home-feature {
   background: color-mix(in srgb, currentColor 8%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-accent) 14%, transparent);
 }
-.music-app-search__icon {
+.music-app-search > .music-app-search__icon {
   display: grid;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
   place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
   color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
 }
+.music-app-search > .music-app-search__icon:hover { color: var(--app-accent); }
+.music-app-search > .music-app-search__icon:disabled { cursor: default; }
 .music-app-search__icon .music-icon { width: 18px; height: 18px; }
 .music-app-search input {
   min-width: 0;
@@ -592,8 +600,7 @@ html[data-theme="light"] .music-app-home-feature {
   font-size: 0.88rem;
 }
 .music-app-search input::placeholder { color: color-mix(in srgb, var(--color-text-muted) 82%, transparent); }
-.music-app-search > .music-app-search__clear,
-.music-app-search > .music-app-search__submit {
+.music-app-search > .music-app-search__clear {
   display: inline-grid;
   min-width: 34px;
   height: 38px;
@@ -610,16 +617,6 @@ html[data-theme="light"] .music-app-home-feature {
 }
 .music-app-search > .music-app-search__clear:hover { color: var(--color-text); background: color-mix(in srgb, currentColor 8%, transparent); }
 .music-app-search > .music-app-search__clear .music-icon { width: 16px; height: 16px; }
-.music-app-search > .music-app-search__submit {
-  grid-column: 4;
-  min-width: 62px;
-  padding-inline: 15px;
-  border-radius: 11px;
-  color: var(--app-accent-ink);
-  background: var(--app-accent);
-  font-weight: 750;
-}
-.music-app-search > .music-app-search__submit:disabled { opacity: 0.62; }
 .music-app-search .music-search-history {
   top: calc(100% + 9px);
   right: 0;
@@ -708,12 +705,11 @@ html[data-theme="light"] .music-app-search .music-search-history {
 
 @media (max-width: 700px) {
   .music-app-search {
-    grid-template-columns: 22px minmax(0, 1fr) 34px;
+    grid-template-columns: 30px minmax(0, 1fr) 34px;
     width: 100%;
     max-width: none;
     min-height: 46px;
   }
-  .music-app-search > .music-app-search__submit { display: none; }
   .music-app-search > .music-app-search__clear { display: inline-grid; grid-column: 3; }
   .music-app-search .music-search-history {
     top: calc(100% + 7px);
@@ -1177,4 +1173,20 @@ html[data-theme="dark"] {
     background: color-mix(in srgb, var(--app-accent) 9%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-accent) 22%, transparent);
   }
+}
+
+/* Desktop type scale: navigation and toolbars no longer outsize the songs they lead to. */
+@media (min-width: 701px) {
+  html[data-theme] .music-app-shell .music-app-brand b { font-size: 15px; }
+  html[data-theme] .music-app-shell .music-app-sidebar nav button { font-size: 14px; font-weight: 500; }
+  html[data-theme] .music-app-shell .music-app-sidebar nav button.active { font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-sidebar__label { font-size: 11px; }
+  html[data-theme] .music-app-shell .music-app-topbar h1 { font-size: 20px; font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-topbar p { font-size: 12px; }
+  html[data-theme] .music-app-shell .music-app-search input { font-size: 14px; }
+  html[data-theme] .music-app-shell .music-app-toolbar :is(.music-app-segment button, .music-app-quiet, .music-app-primary) { font-size: 13px; }
+  html[data-theme] .music-app-shell .music-app-segment button.active { font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-track__index { font-size: 12px; }
+  html[data-theme] .music-app-shell .music-app-track__copy b { font-size: 14px; font-weight: 600; }
+  html[data-theme] .music-app-shell .music-app-track__meta small { font-size: 12px; }
 }
