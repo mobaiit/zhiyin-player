@@ -1114,25 +1114,25 @@ html[data-theme="light"] .music-app-now.is-classic {
   gap: 8px;
 }
 
+/* Icon-only actions: the name is the tooltip and the accessible label. */
 .music-app-now__actions :is(button, a) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: auto;
+  width: 48px;
   height: 48px;
   min-width: 48px;
   min-height: 48px;
-  padding: 0 12px;
+  padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 50%;
   color: var(--now-action);
   background: transparent;
   text-decoration: none;
 }
 
-.music-app-now__actions span { font-size: 0.72rem; }
-.music-app-now__actions .music-download-button .music-icon { width: 1rem; height: 1rem; }
+.music-app-now__actions .music-icon { width: 20px; height: 20px; }
+.music-app-now__actions :is(button, a):not(:disabled):hover { color: var(--now-text); background: var(--now-button-bg); }
 .music-app-now__actions .music-download-button--mobile { display: none; }
 
 .music-app-now__actions :is(button, a):disabled {

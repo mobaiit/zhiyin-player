@@ -225,7 +225,9 @@ test('phone transport centres play between four equal slots', () => {
   const controls = music.slice(music.indexOf('<div className="music-app-now__controls">'), music.indexOf('<div className="music-app-now__actions">'));
   assert.equal((controls.match(/<button /g) || []).length + (controls.match(/likeButton\(/g) || []).length, 5, 'mode, previous, play, next, favourite');
   assert.match(controls, /\{likeButton\('music-app-now__like--controls'\)\}<\/div>/, 'Favourite keeps the rightmost slot');
-  assert.match(music, /className="music-app-now__add--actions" type="button" disabled=\{!shownTrack\} aria-label="加入歌单" onClick=\{\(\) => openAddToPlaylist\(shownTrack\)\}>/);
+  assert.match(music, /className="music-app-now__add--actions" type="button" disabled=\{!shownTrack\} aria-label="加入歌单" title="加入歌单" onClick=\{\(\) => openAddToPlaylist\(shownTrack\)\}><MusicIcon name="add" \/><\/button>/, 'Icon only, named by its label and tooltip');
+  assert.match(music, /title=\{isLiked \? '取消收藏' : '收藏'\} aria-pressed=\{isLiked\} onClick=\{\(\) => like\(current\)\}><MusicIcon name="heart" \/><\/button>;/, 'The favourite has no text label');
+  assert.match(player, /\.music-app-now__actions :is\(button, a\) \{[^}]*width: 48px;[^}]*padding: 0;[^}]*border-radius: 50%;/, 'Round icon buttons on desktop');
   assert.match(player, /\.music-app-now__like--controls span,\s*\.music-app-now__actions \.music-app-now__like--actions \{ display: none; \}/, 'An icon-only favourite; copy link and add share the actions row');
   assert.match(player, /\.music-app-now__actions \{[^}]*grid-area: actions;\s*justify-self: end;[^}]*justify-content: end;/, 'Right-aligned');
   const list = readFileSync(new URL('../src/pages/Music.css', import.meta.url), 'utf8');
