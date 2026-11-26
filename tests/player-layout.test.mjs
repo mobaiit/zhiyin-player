@@ -177,6 +177,13 @@ test('the browser tab names the song while it plays', () => {
   assert.match(music, /return \(\) => \{ document\.title = '知音'; \};\s*\}, \[playing, current\?\.title, current\?\.artist\]\);/, 'Pausing, switching or leaving puts the title back');
 });
 
+test('library sync is silent and retries on its own', () => {
+  const hook = readFileSync(new URL('../src/luri-music/useMusicLibrary.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(hook, /notify/, 'No sync notices');
+  assert.match(hook, /\} catch \{ setSyncState\('pending'\); window\.setTimeout\(\(\) => setSyncRetry\(\(value\) => value \+ 1\), FAILED_SYNC_RETRY_MS\); \}/, 'A failed sync tries again by itself');
+  assert.doesNotMatch(music, /music-app-sync|SYNC_STATE_LABELS/, 'No sync status on any page');
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);

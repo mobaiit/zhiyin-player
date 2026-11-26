@@ -494,7 +494,6 @@ html[data-theme="light"] .music-app-home-feature {
     gap: 8px;
   }
   .music-app-shell.view-playlists .music-app-toolbar > button { min-height: 42px; padding-inline: 14px; }
-  .music-app-shell.view-playlists .music-app-sync { justify-self: end; margin: 0; white-space: nowrap; }
   .music-app-playlists { grid-template-columns: minmax(0, 1fr) !important; gap: 10px; }
   .music-app-playlists article {
     display: grid;

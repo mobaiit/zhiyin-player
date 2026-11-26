@@ -148,7 +148,6 @@
 .music-app-segment button.active { color: var(--color-text); background: color-mix(in srgb, currentColor 9%, transparent); }
 .music-app-quiet { min-height: 44px; border: 1px solid var(--app-line); color: var(--color-text); }
 .music-app-quiet.danger { color: #ff8585; }
-.music-app-sync { margin-left: auto; color: var(--color-text-muted); font-size: .72rem; }
 .music-app-track-list { min-height: 0; padding-bottom: 12px; }
 .music-app-track { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-height: 64px; border-bottom: 1px solid var(--app-line); border-radius: 12px; }
 .music-app-track:hover, .music-app-track.is-current { background: color-mix(in srgb, currentColor 5%, transparent); }

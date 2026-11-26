@@ -6,6 +6,8 @@ const MAX_HISTORY = 200;
 // Playlist edits sync almost at once; play history and artwork write-backs wait and share one request.
 const EDIT_SYNC_DELAY_MS = 1800;
 const DEFERRED_SYNC_DELAY_MS = 30 * 1000;
+// A failed sync tries again on its own after this long; nothing is shown to the user.
+const FAILED_SYNC_RETRY_MS = 30 * 1000;
 // Browsers reject keepalive bodies over 64 KB.
 const KEEPALIVE_LIMIT = 60 * 1024;
 const storageKey = (namespace) => `luri.music.library.v1.${namespace || 'guest'}`;
@@ -45,7 +47,7 @@ const mergeLibraries = (local, remote) => {
   };
 };
 
-export default function useMusicLibrary(namespace, syncEnabled, notify) {
+export default function useMusicLibrary(namespace, syncEnabled) {
   const [library, setLibrary] = useState(() => readLibrary(namespace));
   const [syncState, setSyncState] = useState('local'); const [syncRetry, setSyncRetry] = useState(0);
   const namespaceRef = useRef(namespace); const dirtyRef = useRef(false); const serverUpdatedAtRef = useRef(null); const syncTimerRef = useRef(null);
@@ -80,9 +82,9 @@ export default function useMusicLibrary(namespace, syncEnabled, notify) {
       serverUpdatedAtRef.current = data.updatedAt || null;
       // A change made while the request was in flight still needs its own sync.
       if (version === versionRef.current) { dirtyRef.current = false; urgentRef.current = false; setSyncState('synced'); } else { setSyncState('pending'); setSyncRetry((value) => value + 1); }
-    } catch (error) { setSyncState('pending'); if (!leaving) notify?.('同步稍后重试', error.message, 'warning'); }
+    } catch { setSyncState('pending'); window.setTimeout(() => setSyncRetry((value) => value + 1), FAILED_SYNC_RETRY_MS); }
     finally { syncingRef.current = false; }
-  }, [notify, saveLocal, syncEnabled]);
+  }, [saveLocal, syncEnabled]);
 
   useEffect(() => {
     namespaceRef.current = namespace; dirtyRef.current = false; urgentRef.current = false; serverUpdatedAtRef.current = null;
@@ -96,9 +98,9 @@ export default function useMusicLibrary(namespace, syncEnabled, notify) {
       serverUpdatedAtRef.current = data.updatedAt || data.library?.updatedAt || null;
       const merged = mergeLibraries(local, data.library || EMPTY_LIBRARY); const localHasChanges = newer(local.updatedAt, data.updatedAt) && Boolean(local.updatedAt);
       dirtyRef.current = localHasChanges; setLibrary(merged); saveLocal(merged); setSyncState(localHasChanges ? 'pending' : 'synced');
-    }).catch((error) => { if (!controller.signal.aborted) { setSyncState('pending'); notify?.('音乐库暂时离线', error.message, 'warning'); } });
+    }).catch(() => { if (!controller.signal.aborted) setSyncState('pending'); /* Silent: the local library stays usable offline. */ });
     return () => controller.abort();
-  }, [namespace, notify, saveLocal, syncEnabled]);
+  }, [namespace, saveLocal, syncEnabled]);
 
   useEffect(() => {
     libraryRef.current = library;

@@ -83,11 +83,19 @@ test('admin login rejects invalid verification through the real server-side chec
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test('failed checks retry after 2, 4, 8, 16 seconds and then every 30 seconds', async () => {
+  const source = await readFile(new URL('../src/luri-music/Turnstile.jsx', import.meta.url), 'utf8');
+  const retryDelay = new Function(`return ${source.match(/export const retryDelay = (\(failures\) => [^;]*);/)[1]}`)();
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 20].map(retryDelay), [2000, 4000, 8000, 16000, 30000, 30000, 30000]);
+});
+
 test('login shows a persistent widget and cannot silently treat failed config as disabled', async () => {
   const widget = await readFile(new URL('../src/luri-music/Turnstile.jsx', import.meta.url), 'utf8');
   const admin = await readFile(new URL('../src/luri-music/Admin.jsx', import.meta.url), 'utf8');
   assert.match(widget, /appearance: 'always'/);
-  assert.match(widget, /重新加载验证/);
+  assert.match(widget, /人机验证加载失败，正在自动重试…/);
+  assert.doesNotMatch(widget, /onClick=\{retry\}/, 'No manual retry button');
+  assert.match(widget, /if \(state !== 'error'\) return undefined;\s*const timer = window\.setTimeout\(\(\) => \{ setState\('loading'\); setAttempt\(\(value\) => value \+ 1\); \}, retryDelay\(failures\)\);/, 'A failure reloads the widget by itself');
   assert.match(widget, /theme,\s*size: 'flexible'/);
   assert.match(widget, /'timeout-callback': fail/);
   assert.match(admin, /if \(configError\) return notify/);

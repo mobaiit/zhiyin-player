@@ -3,12 +3,16 @@ import { getTheme, subscribeToTheme } from '../components/theme';
 import { loadTurnstile } from './turnstile-loader';
 import './turnstile.css';
 
+// A failed check reloads itself after 2, 4, 8 and 16 seconds, then every 30 seconds, until it passes.
+export const retryDelay = (failures) => Math.min(30000, 2000 * 2 ** Math.max(0, Math.min(failures - 1, 4)));
+
 export default function Turnstile({ siteKey, onVerify, onExpire, resetSignal }) {
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
   const callbacksRef = useRef({ onVerify, onExpire });
   const [state, setState] = useState('loading');
   const [attempt, setAttempt] = useState(0);
+  const [failures, setFailures] = useState(0);
   const theme = useSyncExternalStore(subscribeToTheme, getTheme, () => 'dark');
   useEffect(() => { callbacksRef.current = { onVerify, onExpire }; }, [onVerify, onExpire]);
   useEffect(() => {
@@ -21,11 +25,13 @@ export default function Turnstile({ siteKey, onVerify, onExpire, resetSignal }) 
       if (cancelled) return;
       window.clearTimeout(timer);
       callbacksRef.current.onVerify('');
+      setFailures((value) => value + 1);
       setState('error');
     };
     const ready = () => {
       if (cancelled) return;
       window.clearTimeout(timer);
+      setFailures(0);
       setState('ready');
     };
     loadTurnstile().then((loaded) => {
@@ -60,10 +66,14 @@ export default function Turnstile({ siteKey, onVerify, onExpire, resetSignal }) 
     }
     callbacksRef.current.onVerify('');
   }, [resetSignal]);
-  const retry = () => { setState('loading'); setAttempt((value) => value + 1); };
+  useEffect(() => {
+    if (state !== 'error') return undefined;
+    const timer = window.setTimeout(() => { setState('loading'); setAttempt((value) => value + 1); }, retryDelay(failures));
+    return () => window.clearTimeout(timer);
+  }, [state, failures]);
   return <div className="luri-turnstile-wrap" aria-label="人机验证">
     <div ref={containerRef} />
     {state === 'loading' && <small role="status">正在加载人机验证…</small>}
-    {state === 'error' && <div className="luri-turnstile-error" role="alert"><small>人机验证未完成，请检查网络后重试。</small><button type="button" onClick={retry}>重新加载验证</button></div>}
+    {state === 'error' && <div className="luri-turnstile-error" role="status"><small>人机验证加载失败，正在自动重试…</small></div>}
   </div>;
 }
