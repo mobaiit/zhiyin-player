@@ -172,6 +172,11 @@ test('the idle song tells how to get lyrics instead of asking for a search', () 
   assert.match(music, /<span className="is-placeholder">\{lyricsHint \|\| '暂无歌词'\}<\/span>/, 'Phone lyric preview');
 });
 
+test('the browser tab names the song while it plays', () => {
+  assert.match(music, /document\.title = playing && current \? `▶ \$\{current\.title\} - \$\{current\.artist\}` : '知音';/);
+  assert.match(music, /return \(\) => \{ document\.title = '知音'; \};\s*\}, \[playing, current\?\.title, current\?\.artist\]\);/, 'Pausing, switching or leaving puts the title back');
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);

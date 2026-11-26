@@ -19,8 +19,9 @@ export default function App() {
   }
   const isAdmin = pathname === '/admin' || new URLSearchParams(search).get('admin') === '1';
 
+  // Music pages own the title: it names the song while one plays.
   useEffect(() => {
-    document.title = isAdmin ? '知音后台' : pathname === '/docs' ? '知音文档' : '知音';
+    if (isAdmin || pathname === '/docs') document.title = isAdmin ? '知音后台' : '知音文档';
   }, [isAdmin, pathname]);
 
   if (isAdmin) return <Suspense fallback={<RouteLoading />}><Admin /></Suspense>;

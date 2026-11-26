@@ -666,6 +666,11 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   }, [favoriteSyncEnabled, favoriteBackupUpdatedAt, favoriteDirtyKey, favoriteNamespace, favoriteSyncedKey]);
   useEffect(() => { if (listView === 'likes') void favoriteSyncRef.current.pull?.(); }, [favoriteSyncEnabled, listView]);
   useEffect(() => { if (!audio.current) return; audio.current.volume = volume; audio.current.muted = muted; }, [volume, muted]);
+  // The tab names the song while it plays, so it can be found among other tabs; paused or idle it is just 知音.
+  useEffect(() => {
+    document.title = playing && current ? `▶ ${current.title} - ${current.artist}` : '知音';
+    return () => { document.title = '知音'; };
+  }, [playing, current?.title, current?.artist]);
   useEffect(() => { document.documentElement.style.setProperty('--music-progress', `${duration ? Math.min(100, Math.max(0, progress / duration * 100)) : 0}%`); }, [duration, progress]);
   useEffect(() => {
     if (!currentId) return undefined;
