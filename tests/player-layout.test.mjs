@@ -166,6 +166,12 @@ test('each list page keeps its own scroll position', () => {
   assert.match(music, /delete scrollPositionsRef\.current\.search;/, 'A new search starts at the top');
 });
 
+test('the idle song tells how to get lyrics instead of asking for a search', () => {
+  assert.match(music, /const lyricsHint = lyricsState \|\| \(idleTrack \? '点击播放后加载歌词' : ''\);/);
+  assert.match(music, /<p className="lyrics-empty">\{lyricsHint \|\| TEXT\.choose\}<\/p>/, 'Desktop lyrics panel');
+  assert.match(music, /<span className="is-placeholder">\{lyricsHint \|\| '暂无歌词'\}<\/span>/, 'Phone lyric preview');
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);
@@ -239,7 +245,7 @@ test('phone transport centres play between four equal slots', () => {
 test('the phone lyric preview always takes two lines, so switching songs never moves the cover', () => {
   const preview = music.slice(music.indexOf('className="music-app-now__lyric-preview"'), music.indexOf('</button>', music.indexOf('className="music-app-now__lyric-preview"')));
   assert.match(preview, /lyricLines\[previewLyric \+ 1\]\?\.text \|\| '\\u00a0'/, 'The last line keeps an empty second line');
-  assert.match(preview, /<span className="is-placeholder">\{lyricsState \|\| '暂无歌词'\}<\/span><span aria-hidden="true">\{'\\u00a0'\}<\/span>/, 'Loading and no-lyrics messages keep two lines');
+  assert.match(preview, /<span className="is-placeholder">\{lyricsHint \|\| '暂无歌词'\}<\/span><span aria-hidden="true">\{'\\u00a0'\}<\/span>/, 'Loading and no-lyrics messages keep two lines');
   assert.match(player, /\.music-app-now__lyric-preview \.is-placeholder \{ font-size: 1rem; \}/, 'The message line is as tall as the playing line');
 });
 
