@@ -207,15 +207,27 @@ function accessHeaders(authType, credential, token) {
   return { accept: 'application/json', authorization: `Bearer ${token}` };
 }
 
-const PROVIDER_CAPABILITIES = new Set(['search', 'random', 'charts', 'resolve', 'lyrics', 'artwork']);
+const PROVIDER_CAPABILITIES = new Set(['search', 'random', 'charts', 'playlists', 'resolve', 'lyrics', 'artwork']);
 const PROVIDER_CAPABILITY_LABELS = {
   search: '搜索',
   random: '随机推荐',
   charts: '榜单',
+  playlists: '歌单',
   resolve: '播放地址解析',
   lyrics: '歌词',
   artwork: '封面',
 };
+
+// Current manifests by Provider config, so a missing capability costs at most one discovery per ten minutes.
+const currentManifestCache = new Map();
+async function currentManifest(config, credential) {
+  const key = `${config.id}:${config.updated_at}`;
+  const cached = currentManifestCache.get(key);
+  if (cached?.expiresAt > Date.now()) return cached.manifest;
+  const { manifest } = await refreshManifest(config, credential);
+  currentManifestCache.set(key, { manifest, expiresAt: Date.now() + 10 * 60 * 1000 });
+  return manifest;
+}
 
 async function proxyProviderRequest(config, credential, user, kind, params = {}) {
   if (!PROVIDER_CAPABILITIES.has(kind)) {
@@ -269,7 +281,9 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
     throw failure;
   }
 
-  const endpoint = manifest?.endpoints?.[kind];
+  let endpoint = manifest?.endpoints?.[kind];
+  // A Provider saved before it offered a capability keeps its old manifest; read the current one.
+  if (!endpoint) endpoint = (await currentManifest(config, credential))?.endpoints?.[kind];
   if (!endpoint) {
     const failure = new Error(`当前 Provider 不支持 ${kind} 能力`);
     failure.status = 501;
@@ -283,7 +297,7 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
     options.method = 'POST';
     options.headers = { ...headers, 'content-type': 'application/json' };
     options.body = JSON.stringify(params);
-  } else if (kind === 'search' || kind === 'random' || kind === 'charts') {
+  } else if (kind === 'search' || kind === 'random' || kind === 'charts' || kind === 'playlists') {
     Object.entries(params)
       .filter(([, value]) => value !== undefined && value !== '')
       .forEach(([key, value]) => target.searchParams.set(key, String(value)));

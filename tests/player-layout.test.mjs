@@ -159,7 +159,7 @@ test('phone text follows one scale too', () => {
 });
 
 test('each list page keeps its own scroll position', () => {
-  assert.match(music, /const pageScrollKey = listView === 'playlist' \? `playlist:\$\{selectedPlaylistId\}` : isChartView \? `\$\{listView\}:\$\{chartType\}` : listView;/);
+  assert.match(music, /const pageScrollKey = listView === 'playlist' \? `playlist:\$\{selectedPlaylistId\}` : listView === 'featured' \? `featured:\$\{featuredKey\}` : isChartView \? `\$\{listView\}:\$\{chartType\}` : listView;/);
   assert.match(music, /useLayoutEffect\(\(\) => \{\s*const page = pageRef\.current; if \(!page\) return;\s*const saved = scrollPositionsRef\.current\[pageScrollKey\];\s*page\.scrollTop = saved \|\| 0;/, 'A page comes back where it was left, or starts at the top');
   assert.match(music, /<div className="music-app-page" ref=\{pageRef\} onScroll=\{\(event\) => \{ scrollPositionsRef\.current\[pageScrollKey\] = event\.currentTarget\.scrollTop; \}\}>/);
   assert.match(music, /if \(restoredScrollRef\.current === pageScrollKey\) \{ restoredScrollRef\.current = ''; locatedTrackRef\.current = locationKey; return; \}/, 'A restored page is not pulled to the playing song');
@@ -182,6 +182,19 @@ test('library sync is silent and retries on its own', () => {
   assert.doesNotMatch(hook, /notify/, 'No sync notices');
   assert.match(hook, /\} catch \{ setSyncState\('pending'\); window\.setTimeout\(\(\) => setSyncRetry\(\(value\) => value \+ 1\), FAILED_SYNC_RETRY_MS\); \}/, 'A failed sync tries again by itself');
   assert.doesNotMatch(music, /music-app-sync|SYNC_STATE_LABELS/, 'No sync status on any page');
+});
+
+test('discover shows the Provider\'s featured playlists and opens one as a list page', () => {
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  assert.ok(app.includes(String.raw`/^\/featured\/(?:netease|qq)\/\d+$/.test(pathname)`), 'A featured playlist URL survives a reload');
+  assert.match(music, /path\?\.startsWith\('\/featured\/'\) \? 'featured' : 'random'/);
+  assert.match(music, /musicRequest\('playlists', \{ platform \}\)\.then\(providerPayload\)/, 'The list comes from the Provider');
+  assert.match(music, /const unsupported = error\?\.status === 501 \|\| error\?\.code === 'not_supported';/, 'A Provider without playlists hides the section');
+  assert.match(music, /\{providerClient && featuredLists\[featuredPlatform\]\?\.state !== 'unsupported' && <>/);
+  assert.match(music, /onClick=\{\(\) => navigate\(`\/featured\/\$\{featuredPlatform\}\/\$\{playlist\.id\}`\)\}/);
+  assert.match(music, /musicRequest\('playlists', \{ platform, id \}, controller\.signal\)/);
+  assert.match(music, /listView === 'featured' \? featuredTracks : listView === 'history'/, 'Its songs are the list and the queue');
+  assert.equal((music.match(/\(path === '\/' && \(routePath === '\/discover' \|\| routePath\?\.startsWith\('\/featured\/'\)\)\)/g) || []).length, 2, 'Discover stays highlighted in both navigations');
 });
 
 test('the top bar cycles the three themes with one button', () => {

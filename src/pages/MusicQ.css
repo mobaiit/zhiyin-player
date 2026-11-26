@@ -892,6 +892,9 @@ html[data-theme="glass"] :is(
   height: 17px;
 }
 
+/* A featured playlist keeps its back and play-all buttons on every screen size. */
+.music-app-featured-toolbar .music-app-back-button .music-icon { width: 17px; height: 17px; }
+
 .music-app-search-toolbar .music-app-quiet {
   display: inline-flex;
   align-items: center;

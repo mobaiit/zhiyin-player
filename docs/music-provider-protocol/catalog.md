@@ -52,6 +52,7 @@
 - `GET /v1/catalog/search?q=&page=&limit=` 返回 `{ tracks, page, hasMore }`。
 - `GET /v1/catalog/random` 返回 `{ singer?, tracks }`。
 - `GET /v1/catalog/charts?platform=&chart=&refresh=` 返回 `{ platform, chart, title, updatedAt, tracks }`。
+- `GET /v1/catalog/playlists?platform=` 返回精选歌单 `{ platform, playlists }`，每项为 `{ id, name, cover, trackCount, plays, description }`；带 `id` 时返回该歌单 `{ platform, id, name, cover, description, tracks }`。`platform` 为 `netease` 或 `qq`，`id` 为平台歌单的数字编号。
 - `POST /v1/tracks/resolve` 接收 `{ songId, title, artist, album, binding, quality?, refresh? }`。客户端和 Provider 对每个 `songId` 都只缓存一条最新成功的完整播放结果；只要 URL 非空且 `expiresAt` 未过期，就不因用户音质设置变化而丢弃。缓存无效时才按用户当前设置音质重新解析并执行音质降级。客户端实际播放失败后先清除本地缓存并发送一次普通请求，以复用可能已被其他客户端更新的后端缓存；后端仍返回同一失败 URL 或新 URL 仍无法播放时，再使用 `refresh: "url"` 强制绕过后端缓存。`refresh: "decode"` 表示浏览器无法解码或不支持媒体格式，Provider 绕过缓存，并优先从请求音质的下一档继续降级。上游未提供有效 `expiresAt` 或 `expiresIn` 时，Provider 和客户端统一使用 30 分钟默认有效期。
 - `GET /v1/tracks/{songId}/lyrics?title=&artist=&album=&binding=` 接收统一单曲上下文；`album` 未知时仍保留空参数，`binding` 必须是完整 Binding 经 JSON 序列化和 URL 编码后的字符串。返回 `{ songId, lyrics, translation?, binding }`；没有歌词时 `lyrics` 为空字符串，无法绑定到平台资源的外部歌词回退允许 `binding: null`。
 - `GET /v1/tracks/{songId}/artwork?title=&artist=&album=&binding=` 接收统一单曲上下文，返回 `{ songId, url, binding }`；没有封面时 `url` 为空字符串。

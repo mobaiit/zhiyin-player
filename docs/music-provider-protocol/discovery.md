@@ -13,7 +13,7 @@ Provider 必须直接返回 HTTP 200 和 `application/json`，不得通过 3xx �
     "name": "Example Provider",
     "homepage": "https://provider.example"
   },
-  "capabilities": ["search", "random", "charts", "lyrics", "artwork", "playback", "qualities"],
+  "capabilities": ["search", "random", "charts", "playlists", "lyrics", "artwork", "playback", "qualities"],
   "playback": {
     "mode": "direct",
     "qualities": ["128k", "320k", "flac"]
@@ -32,6 +32,7 @@ Provider 必须直接返回 HTTP 200 和 `application/json`，不得通过 3xx �
     "search": "https://provider.example/v1/catalog/search",
     "random": "https://provider.example/v1/catalog/random",
     "charts": "https://provider.example/v1/catalog/charts",
+    "playlists": "https://provider.example/v1/catalog/playlists",
     "resolve": "https://provider.example/v1/tracks/resolve",
     "lyrics": "https://provider.example/v1/tracks/{songId}/lyrics",
     "artwork": "https://provider.example/v1/tracks/{songId}/artwork"
@@ -43,7 +44,7 @@ Provider 必须直接返回 HTTP 200 和 `application/json`，不得通过 3xx �
 
 `protocol` 固定为 `music-provider`，`protocolVersion` 固定为 `1.0`。`provider.id` 必须稳定；`provider.name` 用于展示；`provider.homepage` 可选。
 
-标准能力为 `search`、`random`、`charts`、`lyrics`、`artwork`、`playback` 和 `qualities`。声明能力时必须同时提供对应端点；声明 `playback` 时必须提供 `playback.mode: "direct"` 和 `resolve` 端点。歌词和封面 URL 模板使用 `{songId}` 占位符。
+标准能力为 `search`、`random`、`charts`、`playlists`、`lyrics`、`artwork`、`playback` 和 `qualities`。声明能力时必须同时提供对应端点；声明 `playback` 时必须提供 `playback.mode: "direct"` 和 `resolve` 端点。歌词和封面 URL 模板使用 `{songId}` 占位符。
 
 所有协议端点必须使用 HTTPS、与发现地址同源并直接返回最终响应。客户端拒绝跳转、包含 URL 用户名或密码的地址、远程脚本及不受支持的版本。
 
