@@ -188,9 +188,8 @@ test('discover shows the Provider\'s featured playlists and opens one as a list 
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
   assert.ok(app.includes(String.raw`/^\/featured\/(?:netease|qq)\/\d+$/.test(pathname)`), 'A featured playlist URL survives a reload');
   assert.match(music, /path\?\.startsWith\('\/featured\/'\) \? 'featured' : 'random'/);
-  assert.match(music, /musicRequest\('playlists', \{ platform \}\)\.then\(providerPayload\)/, 'The list comes from the Provider');
   assert.match(music, /const unsupported = error\?\.status === 501 \|\| error\?\.code === 'not_supported';/, 'A Provider without playlists hides the section');
-  assert.match(music, /\{providerClient && featuredLists\[featuredPlatform\]\?\.state !== 'unsupported' && <>/);
+  assert.match(music, /\{providerClient && !featuredUnsupported && <section className="music-app-featured"/);
   assert.match(music, /onClick=\{\(\) => navigate\(`\/featured\/\$\{featuredPlatform\}\/\$\{playlist\.id\}`\)\}/);
   assert.match(music, /musicRequest\('playlists', \{ platform, id \}, controller\.signal\)/);
   assert.match(music, /listView === 'featured' \? featuredTracks : listView === 'history'/, 'Its songs are the list and the queue');
@@ -318,16 +317,16 @@ test('searching shows progress on phones, where the submit button is hidden', ()
   assert.match(music, /listView === 'search' && <div className=\{`music-app-empty\$\{isSearching \? ' is-searching' : ''\}`\} role="status"><strong>\{isSearching \? <><span className="music-spinner" \/> \{TEXT\.searching\}<\/> : resultPage > 0 \? TEXT\.noResult : TEXT\.searchHint\}/, 'The cleared list says it is searching, then no results, instead of 这里还没有歌曲');
 });
 
-test('home 最近发现 fills whole rows and links to every discovered song', () => {
-  const routes = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
-  assert.match(routes, /const MUSIC_ROUTES = new Set\(\['\/', '\/discover',/, '/discover is a real route, not normalised to the home page');
-  assert.match(music, /const HOME_DISCOVERED_DESKTOP = 12;\s*const HOME_DISCOVERED_PHONE = 8;/);
-  assert.match(music, /\{randomTracks\.length > HOME_DISCOVERED_PHONE && <button className="music-app-quiet" type="button" onClick=\{\(\) => navigate\('\/discover'\)\}>查看全部 \{randomTracks\.length\}<\/button>\}[\s\S]*?randomTracks\.slice\(0, HOME_DISCOVERED_DESKTOP\)/);
-  assert.match(layout, /@media \(max-width: 700px\) \{[\s\S]*?\.music-app-home-cards > button:nth-child\(n \+ 9\) \{ display: none; \}/, 'Phones keep four rows of two');
-  assert.match(layout, /@media \(min-width: 701px\) \{[\s\S]*?\.music-app-home-cards \{ grid-template-columns: repeat\(6, minmax\(0, 1fr\)\);/, 'Twelve is two full desktop rows');
-  assert.match(music, /path === '\/discover' \? 'discover'/);
-  assert.equal((music.match(/\['random', 'discover'\]\.includes\(listView\) \? randomTracks/g) || []).length, 2, 'The page lists and plays the discovered songs');
-  assert.match(music, /listView === 'discover' && <div className="music-app-toolbar music-app-library-back">[\s\S]*?navigate\('\/'\)[\s\S]*?返回首页/);
+test('the random card carries the recently discovered songs, and featured playlists page by style', () => {
+  assert.match(music, /const HOME_RECENT_LIMIT = 12;/);
+  assert.match(music, /\{randomTracks\.length > 0 && <div className="music-app-home-recent">[\s\S]*?onClick=\{\(\) => navigate\('\/discover'\)\}>查看全部 \{randomTracks\.length\}<\/button>[\s\S]*?randomTracks\.slice\(0, HOME_RECENT_LIMIT\)/, 'Inside the card, with a link to every discovered song');
+  assert.doesNotMatch(music, /<h3>最近发现<\/h3>/, 'No separate 最近发现 section');
+  assert.match(layout, /\.music-app-home-feature > \.music-app-home-recent \{ grid-column: 1 \/ -1;/, 'The strip spans the card');
+  assert.match(music, /musicRequest\('playlists', \{ platform, category, \.\.\.\(cursor \? \{ cursor \} : \{\}\) \}\)/, 'Pages are asked for by style and cursor');
+  assert.match(music, /\{featuredPage\?\.nextCursor && <div className="music-app-featured-more">/, 'More loads while the Provider has more');
+  assert.match(music, /<div className="music-app-featured-styles" role="group" aria-label="歌单风格">\{featuredCategories\.map/, 'Every style laid out flat');
+  assert.match(layout, /\.music-app-featured-styles \{ display: flex; flex-wrap: wrap;/);
+  assert.match(layout, /\.music-app-featured-cards > button:nth-child\(n \+ 9\) \{ display: grid; \}/, 'Phones show every loaded playlist');
 });
 
 test('library sub-pages offer a way back to 音乐库 on phones', () => {

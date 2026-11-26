@@ -34,9 +34,8 @@ const CHART_TYPES = [{ value: 'rising', label: '飙升榜' }, { value: 'new', la
 const CHART_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MEDIA_LOAD_TIMEOUT_MS = 20000;
 const RANDOM_TRACK_BUDGET_MS = 25000;
-// The home 最近发现 grid shows two full rows: 6 columns on desktop, 2 on phones.
-const HOME_DISCOVERED_DESKTOP = 12;
-const HOME_DISCOVERED_PHONE = 8;
+// The random card shows this many recently discovered songs in a strip that scrolls sideways.
+const HOME_RECENT_LIMIT = 12;
 // Random play stops after this many songs in a row fail, instead of requesting batches forever.
 const RANDOM_FAILURE_LIMIT = 10;
 const MIN_PLAYABLE_DURATION_SECONDS = 20;
@@ -208,7 +207,6 @@ const DEFAULT_RANDOM_PREFERENCES = { era: 'new', languages: ['zh'] };
 const SEARCH_SELECTION_LIMIT = 30;
 // Featured playlists come from the Provider's playlists capability.
 const FEATURED_PLATFORMS = [['netease', '网易云'], ['qq', 'QQ 音乐']];
-const FEATURED_HOME_LIMIT = 12;
 const playsLabel = (plays) => plays >= 1e8 ? `${(plays / 1e8).toFixed(1)}亿次播放` : plays >= 1e4 ? `${Math.round(plays / 1e4)}万次播放` : plays ? `${plays}次播放` : '';
 const featuredRoute = (path) => { const match = /^\/featured\/(netease|qq)\/(\d+)$/.exec(path || ''); return match ? { platform: match[1], id: match[2] } : null; };
 // Small headings in the desktop navigation, keyed by the index of the first item they head.
@@ -356,7 +354,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const randomBatchRef = useRef({ tracks: [], next: null, request: null }); const randomFailuresRef = useRef(0); const randomSingers = useRef(Array.isArray(storedRandomHistory.current.singers) ? storedRandomHistory.current.singers : []); const randomTrackKeys = useRef(Array.isArray(storedRandomHistory.current.tracks) ? storedRandomHistory.current.tracks : []);
   const [randomLoading, setRandomLoading] = useState(false);
   const [downloadingId, setDownloadingId] = useState('');
-  const [featuredPlatform, setFeaturedPlatform] = useState('netease'); const [featuredLists, setFeaturedLists] = useState({}); const [featuredDetail, setFeaturedDetail] = useState(null); const [featuredRetry, setFeaturedRetry] = useState(0); const featuredRequestedRef = useRef({});
+  const [featuredPlatform, setFeaturedPlatform] = useState('netease'); const [featuredCategory, setFeaturedCategory] = useState('recommend'); const [featuredCategories, setFeaturedCategories] = useState([]); const [featuredUnsupported, setFeaturedUnsupported] = useState(false); const [featuredLists, setFeaturedLists] = useState({}); const [featuredDetail, setFeaturedDetail] = useState(null); const [featuredRetry, setFeaturedRetry] = useState(0); const featuredRequestedRef = useRef({});
   const [selectingSongs, setSelectingSongs] = useState(false); const [selectedSongIds, setSelectedSongIds] = useState([]);
   // The ref drives playback logic; the state lets the home card show the random track.
   const [randomMode, setRandomMode] = useState(false);
@@ -1305,20 +1303,34 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   };
 
   const isChartView = listView === 'netease' || listView === 'qq';
-  // The discover page loads a platform's featured playlists once; a Provider without the capability hides the section.
-  useEffect(() => {
-    if (listView !== 'random' || !providerClient || featuredRequestedRef.current[featuredPlatform]) return;
-    const platform = featuredPlatform; featuredRequestedRef.current[platform] = true;
-    setFeaturedLists((lists) => ({ ...lists, [platform]: { playlists: [], state: 'loading' } }));
-    musicRequest('playlists', { platform }).then(providerPayload).then((payload) => {
-      setFeaturedLists((lists) => ({ ...lists, [platform]: { playlists: Array.isArray(payload.playlists) ? payload.playlists : [], state: 'ready' } }));
+  // Featured playlists load a page at a time for each platform and style. The first page of a style
+  // loads when it is chosen; later pages when asked for. A Provider without the capability hides the section.
+  const featuredPageKey = `${featuredPlatform}:${featuredCategory}`;
+  const featuredPage = featuredLists[featuredPageKey];
+  const loadFeatured = (platform, category, cursor = '') => {
+    const key = `${platform}:${category}`;
+    setFeaturedLists((lists) => ({ ...lists, [key]: cursor ? { ...lists[key], loadingMore: true } : { playlists: [], nextCursor: null, state: 'loading', loadingMore: false } }));
+    musicRequest('playlists', { platform, category, ...(cursor ? { cursor } : {}) }).then(providerPayload).then((payload) => {
+      if (Array.isArray(payload.categories) && payload.categories.length) setFeaturedCategories(payload.categories);
+      const incoming = Array.isArray(payload.playlists) ? payload.playlists : [];
+      setFeaturedLists((lists) => {
+        const before = cursor ? lists[key]?.playlists || [] : []; const seen = new Set(before.map((item) => item.id));
+        return { ...lists, [key]: { playlists: [...before, ...incoming.filter((item) => !seen.has(item.id))], nextCursor: payload.nextCursor || null, state: 'ready', loadingMore: false } };
+      });
     }).catch((error) => {
       const unsupported = error?.status === 501 || error?.code === 'not_supported';
-      featuredRequestedRef.current[platform] = unsupported;
-      setFeaturedLists((lists) => ({ ...lists, [platform]: { playlists: [], state: unsupported ? 'unsupported' : 'error' } }));
+      if (unsupported) setFeaturedUnsupported(true);
+      if (!cursor) featuredRequestedRef.current[key] = unsupported;
+      setFeaturedLists((lists) => ({ ...lists, [key]: cursor ? { ...lists[key], loadingMore: false } : { playlists: [], nextCursor: null, state: 'error', loadingMore: false } }));
     });
-  }, [listView, providerClient, featuredPlatform, featuredRetry, musicRequest]);
-  const retryFeatured = () => { featuredRequestedRef.current[featuredPlatform] = false; setFeaturedRetry((value) => value + 1); };
+  };
+  useEffect(() => {
+    if (listView !== 'random' || !providerClient || featuredUnsupported || featuredRequestedRef.current[featuredPageKey]) return;
+    featuredRequestedRef.current[featuredPageKey] = true;
+    loadFeatured(featuredPlatform, featuredCategory);
+  }, [listView, providerClient, featuredUnsupported, featuredPageKey, featuredRetry]);
+  const retryFeatured = () => { featuredRequestedRef.current[featuredPageKey] = false; setFeaturedRetry((value) => value + 1); };
+  const loadMoreFeatured = () => { if (featuredPage?.nextCursor && !featuredPage.loadingMore) loadFeatured(featuredPlatform, featuredCategory, featuredPage.nextCursor); };
   const featuredTarget = listView === 'featured' ? featuredRoute(routePath) : null;
   const featuredKey = featuredTarget ? `${featuredTarget.platform}:${featuredTarget.id}` : '';
   useEffect(() => {
@@ -1524,7 +1536,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       </header>
       <section className="music-app-body">
         <div className="music-app-page" ref={pageRef} onScroll={(event) => { scrollPositionsRef.current[pageScrollKey] = event.currentTarget.scrollTop; }}>
-          {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <Artwork src={rowArt(track)} key={`${track?.songId || 'empty'}:${index}`} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} />)}{!randomTracks.length && !current && <Artwork src="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3>{randomMode && current ? <p className="music-app-home-now"><span>正在播放：</span><PlayerTitle className="music-app-home-now__title">{[current.title, current.artist].filter(Boolean).join(' - ')}</PlayerTitle></p> : <p>每次点击都会从曲库中随机挑选一首歌开始播放。</p>}<ul>{randomTracks.slice(0, 3).map((track) => <li key={track.songId}><b>{track.title}</b><span>{track.artist}</span></li>)}</ul><div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div></section><div className="music-app-home-section-title"><div><h3>最近发现</h3><p>随机播放成功的歌曲会保留在这里</p></div>{randomTracks.length > HOME_DISCOVERED_PHONE && <button className="music-app-quiet" type="button" onClick={() => navigate('/discover')}>查看全部 {randomTracks.length}</button>}</div><div className="music-app-home-cards">{randomTracks.slice(0, HOME_DISCOVERED_DESKTOP).map((track) => <button type="button" key={track.songId} onClick={() => handleTrackAction(track)}><Artwork src={rowArt(track)} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><b>{track.title}</b><span>{track.artist}</span></button>)}{!randomTracks.length && <div className="music-app-empty"><strong>还没有发现记录</strong><span>点击“随机播放”开始探索。</span></div>}</div>{providerClient && featuredLists[featuredPlatform]?.state !== 'unsupported' && <><div className="music-app-home-section-title music-app-featured-title"><div><h3>精选歌单</h3><p>网易云音乐和 QQ 音乐的热门歌单</p></div><div className="music-app-segment" role="group" aria-label="歌单来源">{FEATURED_PLATFORMS.map(([value, label]) => <button type="button" key={value} className={featuredPlatform === value ? 'active' : ''} aria-pressed={featuredPlatform === value} onClick={() => setFeaturedPlatform(value)}>{label}</button>)}</div></div><div className="music-app-home-cards music-app-featured-cards">{(featuredLists[featuredPlatform]?.playlists || []).slice(0, FEATURED_HOME_LIMIT).map((playlist) => <button type="button" key={playlist.id} onClick={() => navigate(`/featured/${featuredPlatform}/${playlist.id}`)}><Artwork src={playlist.cover} /><b>{playlist.name}</b><span>{playsLabel(playlist.plays)}</span></button>)}{featuredLists[featuredPlatform]?.state === 'loading' && <div className="music-app-empty"><strong>正在加载歌单…</strong></div>}{featuredLists[featuredPlatform]?.state === 'error' && <div className="music-app-empty"><strong>歌单暂时无法加载</strong><button className="music-app-quiet" type="button" onClick={retryFeatured}>重试</button></div>}</div></>}</section>}
+          {listView === 'random' && <section className="music-app-home"><header><span>FOR YOU</span><h2>Hi，今天听点什么</h2><p>不知道听什么的时候，交给随机播放。</p></header><section className="music-app-home-feature"><div className="music-app-cover-mosaic">{(randomTracks.length ? randomTracks : [current].filter(Boolean)).slice(0, 4).map((track, index) => <Artwork src={rowArt(track)} key={`${track?.songId || 'empty'}:${index}`} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} />)}{!randomTracks.length && !current && <Artwork src="" />}</div><div className="music-app-home-copy"><span>为你发现</span><h3>随机精选{discoveredCount ? ` · ${discoveredCount} 首` : ''}</h3>{randomMode && current ? <p className="music-app-home-now"><span>正在播放：</span><PlayerTitle className="music-app-home-now__title">{[current.title, current.artist].filter(Boolean).join(' - ')}</PlayerTitle></p> : <p>每次点击都会从曲库中随机挑选一首歌开始播放。</p>}<div><button className="music-app-primary" type="button" onClick={startRandom} disabled={randomLoading}>{randomLoading ? <span className="music-spinner" /> : <MusicIcon name="play" />} 随机播放</button></div></div>{randomTracks.length > 0 && <div className="music-app-home-recent"><div className="music-app-home-recent__head"><b>最近发现</b><button className="music-app-home-recent__all" type="button" onClick={() => navigate('/discover')}>查看全部 {randomTracks.length}</button></div><div className="music-app-home-recent__list">{randomTracks.slice(0, HOME_RECENT_LIMIT).map((track) => <button type="button" key={track.songId} title={`${track.title} - ${track.artist}`} onClick={() => handleTrackAction(track)}><Artwork src={rowArt(track)} onError={() => requestRowArtwork(track)} onUnavailable={() => requestRowArtwork(track)} /><b>{track.title}</b><span>{track.artist}</span></button>)}</div></div>}</section>{providerClient && !featuredUnsupported && <section className="music-app-featured" aria-labelledby="music-featured-title"><div className="music-app-home-section-title music-app-featured-title"><div><h3 id="music-featured-title">精选歌单</h3><p>按风格浏览网易云音乐和 QQ 音乐的热门歌单</p></div><div className="music-app-segment" role="group" aria-label="歌单来源">{FEATURED_PLATFORMS.map(([value, label]) => <button type="button" key={value} className={featuredPlatform === value ? 'active' : ''} aria-pressed={featuredPlatform === value} onClick={() => setFeaturedPlatform(value)}>{label}</button>)}</div></div>{featuredCategories.length > 0 && <div className="music-app-featured-styles" role="group" aria-label="歌单风格">{featuredCategories.map((item) => <button type="button" key={item.id} className={featuredCategory === item.id ? 'active' : ''} aria-pressed={featuredCategory === item.id} onClick={() => setFeaturedCategory(item.id)}>{item.name}</button>)}</div>}<div className="music-app-home-cards music-app-featured-cards">{(featuredPage?.playlists || []).map((playlist) => <button type="button" key={playlist.id} onClick={() => navigate(`/featured/${featuredPlatform}/${playlist.id}`)}><Artwork src={playlist.cover} /><b>{playlist.name}</b><span>{playsLabel(playlist.plays)}</span></button>)}{(!featuredPage || featuredPage.state === 'loading') && <div className="music-app-empty"><strong>正在加载歌单…</strong></div>}{featuredPage?.state === 'error' && <div className="music-app-empty"><strong>歌单暂时无法加载</strong><button className="music-app-quiet" type="button" onClick={retryFeatured}>重试</button></div>}{featuredPage?.state === 'ready' && !featuredPage.playlists.length && <div className="music-app-empty"><strong>这个风格暂时没有歌单</strong></div>}</div>{featuredPage?.nextCursor && <div className="music-app-featured-more"><button className="music-app-quiet" type="button" disabled={featuredPage.loadingMore} onClick={loadMoreFeatured}>{featuredPage.loadingMore ? '正在加载…' : '加载更多歌单'}</button></div>}</section>}</section>}
           {isChartView && <div className="music-app-toolbar"><div className="music-app-segment"><button className={chartPlatform === 'netease' ? 'active' : ''} type="button" onClick={openNetease}>网易</button><button className={chartPlatform === 'qq' ? 'active' : ''} type="button" onClick={openQQ}>QQ</button></div><div className="music-app-segment">{CHART_TYPES.map((chart) => <button className={chartType === chart.value ? 'active' : ''} type="button" onClick={() => selectChartType(chart.value)} key={chart.value}>{chart.label}</button>)}</div><button className="music-app-quiet" type="button" onClick={() => loadChart(chartPlatform, chartType, true)} disabled={chartLoading}>刷新</button></div>}
           {listView === 'playlists' && <><div className="music-app-toolbar"><button className="music-app-primary" type="button" onClick={() => createPlaylist()}>新建歌单</button><button className="music-app-quiet" type="button" onClick={() => importRef.current?.click()}>导入</button></div><div className="music-app-playlists"><article className="music-app-playlist-pinned"><button type="button" onClick={() => navigate('/favorites')}>{playlistCover(likedTracks[0])}<b>我的喜欢</b><small>{likedTracks.length} 首歌曲</small></button></article>{library.playlists.map((playlist) => <article key={playlist.id}><button type="button" onClick={() => navigate(`/playlists/${encodeURIComponent(playlist.id)}`)}>{playlistCover(playlist.tracks[0])}<b>{playlist.name}</b><small>{playlist.tracks.length} 首歌曲</small></button><div><button type="button" onClick={() => renamePlaylist(playlist)}>重命名</button><button type="button" onClick={() => deletePlaylist(playlist)}>删除</button></div></article>)}{!library.playlists.length && <div className="music-app-empty"><strong>创建你的第一张歌单</strong><span>歌单会随账户在多端同步，音频文件本身不会上传。</span></div>}</div></>}
           {listView === 'featured' && <div className="music-app-toolbar music-app-featured-toolbar"><button className="music-app-quiet music-app-back-button" type="button" onClick={() => navigate('/')}><MusicIcon name="back" /><span>返回发现</span></button><button className="music-app-primary" type="button" disabled={!featuredTracks.length} onClick={() => { playbackListRef.current = `featured:${featuredKey}`; setActiveQueue('normal'); selectTrack(featuredTracks[0].songId, featuredTracks); }}>播放全部</button></div>}
