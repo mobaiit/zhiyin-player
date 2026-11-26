@@ -54,7 +54,7 @@ test('settings group account, playback and about rows and hide sign-in-only rows
   const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
   assert.match(settings, /\{user && <div className="music-app-settings__rows">[\s\S]*?修改密码[\s\S]*?退出登录/, 'Account actions live in the account card and only when signed in');
-  assert.match(settings, /\{user && <section aria-labelledby="music-playback-title">[\s\S]*?QUALITY_META\[playbackQuality\]\?\.label[\s\S]*?activeProvider\?\.displayName \|\| '未启用'/, 'Playback rows show readable values and are hidden from guests');
+  assert.match(settings, /\{user && <section className="music-app-settings__playback" aria-labelledby="music-playback-title">[\s\S]*?QUALITY_META\[playbackQuality\]\?\.label[\s\S]*?activeProvider\?\.displayName \|\| '未启用'/, 'Playback rows show readable values and are hidden from guests');
   assert.doesNotMatch(settings, /activeProvider\?\.name\b/, 'Providers expose displayName');
   assert.doesNotMatch(settings, /登录后设置|登录后配置|请先登录/);
 });

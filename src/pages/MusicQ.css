@@ -1242,3 +1242,54 @@ html[data-theme="dark"] {
   .music-app-featured-cards > button:nth-child(n + 9) { display: grid; }
   .music-app-featured-styles > button { min-height: 34px; }
 }
+
+/* Settings: two columns on wide screens and one below; one type scale; rows that read as links. */
+html[data-theme] .music-app-shell .music-app-settings { max-width: 1120px; gap: 16px; align-items: start; }
+.music-app-settings__column { display: grid; gap: 16px; align-content: start; min-width: 0; }
+html[data-theme] .music-app-shell .music-app-settings section { margin: 0; padding: 20px 22px; }
+@media (min-width: 1101px) {
+  html[data-theme] .music-app-shell .music-app-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px) {
+  /* One column keeps the reading order: account, playback, random play, theme, about. */
+  .music-app-settings__column { display: contents; }
+  .music-app-settings__account { order: 1; }
+  .music-app-settings__playback { order: 2; }
+  .music-app-settings__random { order: 3; }
+  .music-app-settings__themes { order: 4; }
+  .music-app-settings__about { order: 5; }
+}
+html[data-theme] .music-app-shell .music-app-settings section h2 { margin: 0 0 4px; font-size: 15px; font-weight: 600; line-height: 1.4; }
+html[data-theme] .music-app-shell .music-app-settings section p { font-size: 13px; line-height: 1.6; }
+html[data-theme] .music-app-shell .music-app-settings section > h2 { margin-bottom: 8px; }
+html[data-theme] .music-app-shell .music-app-settings__profile h2 { font-size: 18px; }
+html[data-theme] .music-app-shell .music-app-settings__profile p { font-size: 13px; }
+html[data-theme] .music-app-shell .music-app-settings__choice > b { font-size: 13px; font-weight: 600; }
+html[data-theme] .music-app-shell .music-app-choice-group > button { min-height: 34px; font-size: 13px; }
+html[data-theme] .music-app-shell .music-theme-options > button b { font-size: 14px; font-weight: 600; }
+html[data-theme] .music-app-shell .music-theme-options > button small { font-size: 12px; }
+html[data-theme] .music-app-shell .music-app-settings__rows > button { min-height: 50px; gap: 12px; }
+html[data-theme] .music-app-shell .music-app-settings__rows > button b { font-size: 14px; font-weight: 500; }
+html[data-theme] .music-app-shell .music-app-settings__rows > button span { margin-left: auto; font-size: 13px; }
+.music-app-settings__rows > button + button { box-shadow: inset 0 1px color-mix(in srgb, currentColor 7%, transparent); }
+.music-app-settings__rows > button:not(.danger)::after { flex: 0 0 auto; color: var(--color-text-muted); font-size: 18px; line-height: 1; content: "›"; }
+.music-app-settings__rows > button:not(.danger):hover::after { color: var(--app-accent); }
+.music-app-settings__rows > button.danger span { display: none; }
+
+/* Settings dialogs (password, quality, Provider): the theme surface, one title size, and on phones a sheet from the bottom. */
+html[data-theme] .lm-modal:is(.lm-password-modal, .lm-quality-modal, .lm-provider-modal) > div { border-radius: 20px !important; background: var(--zy-theme-surface) !important; }
+html[data-theme] .lm-modal:is(.lm-password-modal, .lm-quality-modal, .lm-provider-modal) > div > h2 { margin-bottom: 18px; font-size: 18px; font-weight: 600; }
+html[data-theme] .lm-quality-modal .lm-quality-options label { border: 1px solid var(--zy-theme-border); background: var(--zy-theme-surface-raised) !important; }
+html[data-theme] .lm-quality-modal .lm-quality-options label.active { border-color: color-mix(in srgb, var(--app-accent, var(--zy-red)) 60%, transparent) !important; background: color-mix(in srgb, var(--app-accent, var(--zy-red)) 10%, var(--zy-theme-surface-raised)) !important; }
+html[data-theme] .lm-provider-modal .lm-provider-list { background: var(--zy-theme-surface-raised) !important; }
+@media (max-width: 700px) {
+  html[data-theme] .lm-modal:is(.lm-password-modal, .lm-quality-modal, .lm-provider-modal) { align-items: end; padding: 0; }
+  html[data-theme] .lm-modal:is(.lm-password-modal, .lm-quality-modal, .lm-provider-modal) > div { width: 100%; max-width: none; max-height: 88dvh; overflow: auto; padding-bottom: calc(22px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0 !important; }
+  /* The Provider table becomes a list: name and status on one line, type below, actions on the right. */
+  .lm-provider-modal .lm-provider-table-head { display: none; }
+  html[data-theme] .lm-provider-modal .lm-provider-list article { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name status actions" "meta meta actions"; align-items: center; gap: 4px 12px; }
+  .lm-provider-modal .lm-provider-list article .lm-provider-summary { grid-area: name; min-width: 0; }
+  .lm-provider-modal .lm-provider-list article .lm-provider-type { grid-area: meta; }
+  .lm-provider-modal .lm-provider-list article .lm-provider-status { grid-area: status; }
+  html[data-theme] .lm-provider-modal .lm-provider-list article .lm-provider-actions { grid-area: actions; margin: 0; padding: 0; border-top: 0; }
+}
