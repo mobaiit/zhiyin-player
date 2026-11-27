@@ -73,7 +73,6 @@ export default function Turnstile({ siteKey, onVerify, onExpire, resetSignal }) 
   }, [state, failures]);
   return <div className="luri-turnstile-wrap" aria-label="人机验证">
     <div ref={containerRef} />
-    {state === 'loading' && <small role="status">正在加载人机验证…</small>}
     {state === 'error' && <div className="luri-turnstile-error" role="status"><small>人机验证加载失败，正在自动重试…</small></div>}
   </div>;
 }

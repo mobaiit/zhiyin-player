@@ -213,14 +213,16 @@ const SEARCH_SELECTION_LIMIT = 30;
 const WHOLE_LIST_SELECTION_LIMIT = 200;
 // Featured playlists come from the Provider's playlists capability.
 const FEATURED_PLATFORMS = [['netease', '网易云'], ['qq', 'QQ 音乐']];
-// Time left on the Provider's service: days under a month, months under a year, then years.
-const serviceTimeLeft = (expiresAt, now = Date.now()) => {
-  const end = Date.parse(expiresAt || ''); if (!Number.isFinite(end)) return '';
+// Time left on the Provider's service: days under a month, months under a year, years after that,
+// and long term from ten years on. Under 30 days it is expiring; past the end date it has expired.
+const SERVICE_LONG_TERM_DAYS = 3650; const SERVICE_EXPIRING_DAYS = 30;
+const serviceStatus = (expiresAt, now = Date.now()) => {
+  const end = Date.parse(expiresAt || ''); if (!Number.isFinite(end)) return null;
   const days = Math.ceil((end - now) / 864e5);
-  if (days <= 0) return '服务已过期';
-  if (days < 30) return `服务剩余 ${days} 天`;
-  if (days < 365) return `服务剩余 ${Math.floor(days / 30)} 个月`;
-  return `服务剩余 ${Math.floor(days / 365)} 年`;
+  if (days <= 0) return { text: '已过期', tone: 'expired' };
+  if (days >= SERVICE_LONG_TERM_DAYS) return { text: '长期有效', tone: 'normal', longTerm: true };
+  const left = days < 30 ? `${days} 天` : days < 365 ? `${Math.floor(days / 30)} 个月` : `${Math.floor(days / 365)} 年`;
+  return { text: `剩余 ${left}`, tone: days < SERVICE_EXPIRING_DAYS ? 'expiring' : 'normal' };
 };
 const serviceEndDate = (expiresAt) => { const end = Date.parse(expiresAt || ''); return Number.isFinite(end) ? new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(end)) : ''; };
 const playsLabel = (plays) => plays >= 1e8 ? `${(plays / 1e8).toFixed(1)}亿次播放` : plays >= 1e4 ? `${Math.round(plays / 1e4)}万次播放` : plays ? `${plays}次播放` : '';
@@ -1611,8 +1613,12 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const shellNav = [
     ['/', '发现', 'home'], ['/charts', '排行榜', 'chart'], ['/search', '搜索', 'search'],
     ['/favorites', '我的喜欢', 'heart'], ['/playlists', '我的歌单', 'playlist'], ['/history', '播放历史', 'history'], ['/local', '本地音乐', 'folder'],
-    ['/settings', '设置', 'settings'],
   ];
+  // Settings open from the account at the foot of the sidebar, which shows only the avatar and
+  // the name, plus a reminder once the service has under 30 days left or has ended.
+  const service = user && activeProvider ? serviceStatus(activeProvider.expiresAt) : null;
+  const serviceReminder = service && service.tone !== 'normal' ? service : null;
+  const avatarInitial = user ? Array.from(user.name || '?')[0] : '访';
   const selecting = (['search', 'featured'].includes(listView) || isChartView) && selectingSongs;
   // The same icon buttons choose songs from search results and from a featured playlist.
   const songSelectionTools = selectingSongs ? <><span className="music-app-selection__count" role="status">已选 {selectedSongs.length} / {Math.min(selectionLimit, selectionTracks.length)} 首</span><button className={`music-app-quiet music-app-icon-tool${allSongsChosen ? ' active' : ''}`} type="button" aria-pressed={allSongsChosen} onClick={() => setSelectedSongIds(allSongsChosen ? [] : selectionTracks.slice(0, selectionLimit).map((track) => track.songId))} aria-label={allSongsChosen ? '取消全选' : '全选'} title={allSongsChosen ? '取消全选' : '全选'}><MusicIcon name="check-all" /></button><button className="music-app-primary music-app-icon-tool" type="button" disabled={!selectedSongs.length} onClick={openAddSelectionToPlaylist} aria-label={`将已选 ${selectedSongs.length} 首加入歌单`} title="加入歌单"><MusicIcon name="playlist" /></button><button className="music-app-quiet music-app-icon-tool" type="button" onClick={finishSongSelection} aria-label="取消选择" title="取消选择"><MusicIcon name="close" /></button></> : <button className="music-app-quiet music-app-icon-tool" type="button" disabled={!selectionTracks.length} onClick={startSongSelection} aria-label="加入我的歌单" title="加入我的歌单"><MusicIcon name="playlist" /></button>;
@@ -1643,7 +1649,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     <aside className="music-app-sidebar">
       <button className="music-app-brand" type="button" onClick={() => navigate('/')}><img src="/zhiyin-logo.png" alt="" /><span><b>知音</b><small>ZHÍYĪN MUSIC</small></span></button>
       <nav aria-label="音乐主导航">{shellNav.map(([path, label, icon], index) => <Fragment key={path}>{NAV_SECTIONS[index] && <span className="music-app-sidebar__label">{NAV_SECTIONS[index]}</span>}<button type="button" className={`${routePath === path || (path === '/' && (routePath === '/discover' || routePath?.startsWith('/featured/'))) || (path === '/playlists' && routePath?.startsWith('/playlists/')) ? 'active' : ''}${index === 3 || index === 7 ? ' is-section-start' : ''}`} onClick={() => navigate(path)}><i><MusicIcon name={icon} /></i><span>{label}</span>{path === '/favorites' && <em>{likedTracks.length}</em>}</button></Fragment>)}</nav>
-      <button className="music-app-account" type="button" onClick={() => navigate('/settings')}><span>{user?.name || '访客模式'}</span><small>{!user ? '登录后同步音乐库' : !activeProvider ? '未启用 Provider' : serviceTimeLeft(activeProvider.expiresAt) || '服务可用'}</small></button>
+      <button className={`music-app-account${listView === 'settings' ? ' active' : ''}`} type="button" aria-current={listView === 'settings' ? 'page' : undefined} aria-label={`${user?.name || '访客模式'}，账户与设置`} onClick={() => navigate('/settings')}><span className="music-app-account__avatar" aria-hidden="true">{avatarInitial}</span><span className="music-app-account__copy"><b>{user?.name || '访客模式'}</b>{serviceReminder && <small className={`is-${serviceReminder.tone}`}>{serviceReminder.tone === 'expired' ? '服务已过期' : `服务${serviceReminder.text}`}</small>}</span></button>
     </aside>
     <section className="music-app-main">
       <header className="music-app-topbar">
@@ -1663,11 +1669,13 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
           {listView === 'local' && <div className="music-app-local-note"><div><b>播放此设备上的音乐</b><span>桌面端可选择整个文件夹；Android 建议选择一个或多个音频文件。不会上传、缓存或跨设备同步。</span></div><button className="music-app-primary" type="button" onClick={() => localFilesRef.current?.click()}>选择歌曲</button><button className="music-app-quiet music-app-folder-button" type="button" onClick={() => localFolderRef.current?.click()}>选择文件夹</button></div>}
           {listView === 'settings' && <div className="music-app-settings"><div className="music-app-settings__column">
             <section className="music-app-settings__account" aria-labelledby="music-account-title">
-              <div className="music-app-settings__profile"><span className="music-app-settings__avatar" aria-hidden="true">{user ? Array.from(user.name || '?')[0] : '访'}</span><div><h2 id="music-account-title">{accountBooting ? '正在恢复账户…' : user ? user.name : '访客模式'}</h2><p>{accountBooting ? '账户状态同步完成后即可使用在线功能' : user ? user.email : '登录后可同步音乐库，并配置 Provider 与播放音质。本机数据不会同步到其他设备。'}</p>{!accountBooting && user && <p className="music-app-settings__service">{!activeProvider ? '未启用 Provider' : activeProvider.expiresAt ? <>服务到期：<time dateTime={activeProvider.expiresAt}>{serviceEndDate(activeProvider.expiresAt)}</time> · {serviceTimeLeft(activeProvider.expiresAt).replace('服务', '')}</> : '服务到期：Provider 未提供'}</p>}</div></div>
+              <div className="music-app-settings__profile"><span className="music-app-settings__avatar" aria-hidden="true">{avatarInitial}</span><div><h2 id="music-account-title">{accountBooting ? '正在恢复账户…' : user ? user.name : '访客模式'}</h2><p>{accountBooting ? '账户状态同步完成后即可使用在线功能' : user ? user.email : '登录后可同步音乐库，并配置 Provider 与播放音质。本机数据不会同步到其他设备。'}</p></div></div>
               {!accountBooting && !user && <button className="music-app-settings__primary" type="button" onClick={() => onOpenAuth?.()}>登录 / 注册</button>}
               {user && <div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('name')}><b>修改用户名</b><span>{user.name}</span></button><button type="button" onClick={() => onOpenSettings?.('password')}><b>修改密码</b><span>修改后其他设备需要重新登录</span></button><button className="danger" type="button" onClick={() => onLogout?.()}><b>退出登录</b><span>退出当前设备</span></button></div>}
             </section>
-            {user && <section className="music-app-settings__playback" aria-labelledby="music-playback-title"><h2 id="music-playback-title">播放</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('quality')}><b>播放音质</b><span>{QUALITY_META[playbackQuality]?.label || playbackQuality}</span></button><button type="button" onClick={() => onOpenSettings?.('providers')}><b>Provider 配置</b><span>{activeProvider?.displayName || '未启用'}</span></button></div></section>}
+            {/* The service the account uses: which Provider, and until when. */}
+            {user && <section className="music-app-settings__service" aria-labelledby="music-service-title"><h2 id="music-service-title">服务</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('providers')}><b>Provider 配置</b><span>{activeProvider?.displayName || '未启用'}</span></button>{activeProvider && <div className="music-app-settings__status"><b>服务有效期</b><span className={`is-${service?.tone || 'normal'}`}>{!service ? 'Provider 未提供' : service.longTerm ? '长期有效' : <>{service.text} · <time dateTime={activeProvider.expiresAt}>{serviceEndDate(activeProvider.expiresAt)}</time>{service.tone === 'expired' ? '' : ' 到期'}</>}</span></div>}</div></section>}
+            {user && <section className="music-app-settings__playback" aria-labelledby="music-playback-title"><h2 id="music-playback-title">播放</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('quality')}><b>播放音质</b><span>{QUALITY_META[playbackQuality]?.label || playbackQuality}</span></button></div></section>}
             <section className="music-app-settings__about" aria-labelledby="music-about-title"><h2 id="music-about-title">关于</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenAnnouncement?.()}><b>网站公告</b><span>查看最新公告</span></button><button type="button" onClick={() => onOpenSettings?.('terms')}><b>使用条款</b><span>服务与隐私说明</span></button>{docsEnabled && <button type="button" onClick={openDocs}><b>帮助与文档</b><span>在新标签页打开</span></button>}</div></section></div>
             <div className="music-app-settings__column"><section className="music-app-settings__random" aria-labelledby="music-random-title">
               <div><h2 id="music-random-title">随机播放偏好</h2><p>首页随机播放按这里的偏好挑歌，至少九成符合偏好。修改后从下一首开始生效。</p></div>

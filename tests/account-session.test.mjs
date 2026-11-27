@@ -64,34 +64,43 @@ test('changing the user name saves a trimmed name of at most 40 characters', asy
   assert.ok(!empty.statements.some((item) => item.sql.startsWith('UPDATE')), 'An empty name changes nothing');
 });
 
-test('the account shows the name and time left on the service, settings show the end date', () => {
+test('the sidebar account shows the avatar and name, with a reminder only near the service end', () => {
   const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
-  const source = music.slice(music.indexOf('const serviceTimeLeft = '), music.indexOf('const serviceEndDate = '));
-  const serviceTimeLeft = new Function(`${source}; return serviceTimeLeft;`)();
+  const source = music.slice(music.indexOf('const SERVICE_LONG_TERM_DAYS = '), music.indexOf('const serviceEndDate = '));
+  const serviceStatus = new Function(`${source}; return serviceStatus;`)();
   const now = Date.parse('2026-01-01T00:00:00.000Z'); const day = 864e5; const at = (days) => new Date(now + days * day).toISOString();
-  assert.equal(serviceTimeLeft(at(0.2), now), '服务剩余 1 天');
-  assert.equal(serviceTimeLeft(at(29), now), '服务剩余 29 天');
-  assert.equal(serviceTimeLeft(at(30), now), '服务剩余 1 个月');
-  assert.equal(serviceTimeLeft(at(364), now), '服务剩余 12 个月');
-  assert.equal(serviceTimeLeft(at(365), now), '服务剩余 1 年');
-  assert.equal(serviceTimeLeft(at(800), now), '服务剩余 2 年');
-  assert.equal(serviceTimeLeft(at(-1), now), '服务已过期');
-  assert.equal(serviceTimeLeft(null, now), '');
-  assert.match(music, /<button className="music-app-account" type="button" onClick=\{\(\) => navigate\('\/settings'\)\}><span>\{user\?\.name \|\| '访客模式'\}<\/span><small>\{!user \? '登录后同步音乐库' : !activeProvider \? '未启用 Provider' : serviceTimeLeft\(activeProvider\.expiresAt\) \|\| '服务可用'\}<\/small><\/button>/);
-  assert.match(music, /服务到期：<time dateTime=\{activeProvider\.expiresAt\}>\{serviceEndDate\(activeProvider\.expiresAt\)\}<\/time>/);
+  assert.deepEqual(serviceStatus(at(0.2), now), { text: '剩余 1 天', tone: 'expiring' });
+  assert.deepEqual(serviceStatus(at(29), now), { text: '剩余 29 天', tone: 'expiring' });
+  assert.deepEqual(serviceStatus(at(30), now), { text: '剩余 1 个月', tone: 'normal' });
+  assert.deepEqual(serviceStatus(at(364), now), { text: '剩余 12 个月', tone: 'normal' });
+  assert.deepEqual(serviceStatus(at(365), now), { text: '剩余 1 年', tone: 'normal' });
+  assert.deepEqual(serviceStatus(at(3649), now), { text: '剩余 9 年', tone: 'normal' });
+  assert.deepEqual(serviceStatus(at(3650), now), { text: '长期有效', tone: 'normal', longTerm: true });
+  assert.deepEqual(serviceStatus(at(-1), now), { text: '已过期', tone: 'expired' });
+  assert.equal(serviceStatus(null, now), null);
+  assert.match(music, /const serviceReminder = service && service\.tone !== 'normal' \? service : null;/, 'Only an expiring or ended service is mentioned in the sidebar');
+  assert.match(music, /<span className="music-app-account__avatar" aria-hidden="true">\{avatarInitial\}<\/span><span className="music-app-account__copy"><b>\{user\?\.name \|\| '访客模式'\}<\/b>\{serviceReminder && <small className=\{`is-\$\{serviceReminder\.tone\}`\}>/);
+  assert.match(music, /className=\{`music-app-account\$\{listView === 'settings' \? ' active' : ''\}`\}[^>]*onClick=\{\(\) => navigate\('\/settings'\)\}/, 'The account opens settings and shows when they are open');
+  assert.doesNotMatch(music, /\['\/settings', '设置', 'settings'\],\n/, 'The sidebar has no separate settings row');
+  assert.match(music, /<b>服务有效期<\/b><span className=\{`is-\$\{service\?\.tone \|\| 'normal'\}`\}>\{!service \? 'Provider 未提供' : service\.longTerm \? '长期有效' : <>\{service\.text\} · <time dateTime=\{activeProvider\.expiresAt\}>\{serviceEndDate\(activeProvider\.expiresAt\)\}<\/time>/, 'Settings show when the service ends');
   assert.match(music, /onClick=\{\(\) => onOpenSettings\?\.\('name'\)\}><b>修改用户名<\/b>/);
   const shell = readFileSync(new URL('../src/luri-music/LuriMusic.jsx', import.meta.url), 'utf8');
   assert.match(shell, /\{dialog === 'name' && <NameDialog /);
   assert.match(shell, /api\('auth\/profile', \{ method: 'POST'/);
+  assert.match(shell, /onLogout=\{\(\) => openAccountDialog\('logout'\)\}/, 'Logging out asks first');
+  assert.match(shell, /<ConfirmDialog open=\{dialog === 'logout'\} title="退出登录？"[^\n]*?onConfirm=\{logout\} \/>/);
   const providers = readFileSync(new URL('../functions/luri-music/providers.js', import.meta.url), 'utf8');
   assert.match(providers, /const publicConfig = \(row, activeId, presentation = null\) => \(\{ expiresAt: serviceExpiresAt\(row, presentation\),/, 'Providers report when the service ends');
+  const widget = readFileSync(new URL('../src/luri-music/Turnstile.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(widget, /正在加载人机验证/, 'The human check loads without a text notice');
 });
 
-test('settings group account, playback and about rows and hide sign-in-only rows from guests', () => {
+test('settings group account, service, playback and about rows and hide sign-in-only rows from guests', () => {
   const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
-  assert.match(settings, /\{user && <div className="music-app-settings__rows">[\s\S]*?修改密码[\s\S]*?退出登录/, 'Account actions live in the account card and only when signed in');
-  assert.match(settings, /\{user && <section className="music-app-settings__playback" aria-labelledby="music-playback-title">[\s\S]*?QUALITY_META\[playbackQuality\]\?\.label[\s\S]*?activeProvider\?\.displayName \|\| '未启用'/, 'Playback rows show readable values and are hidden from guests');
+  assert.match(settings, /\{user && <div className="music-app-settings__rows">[\s\S]*?修改用户名[\s\S]*?修改密码[\s\S]*?退出登录/, 'Account actions live in the account card and only when signed in');
+  assert.match(settings, /\{user && <section className="music-app-settings__service" aria-labelledby="music-service-title">[\s\S]*?Provider 配置<\/b><span>\{activeProvider\?\.displayName \|\| '未启用'\}/, 'The Provider sits with the service, away from playback');
+  assert.match(settings, /\{user && <section className="music-app-settings__playback" aria-labelledby="music-playback-title">[\s\S]*?QUALITY_META\[playbackQuality\]\?\.label/, 'Playback rows show readable values and are hidden from guests');
   assert.doesNotMatch(settings, /activeProvider\?\.name\b/, 'Providers expose displayName');
   assert.doesNotMatch(settings, /登录后设置|登录后配置|请先登录/);
 });

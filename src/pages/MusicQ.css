@@ -13,7 +13,7 @@
 .music-app-sidebar nav button { grid-template-columns: 30px minmax(0, 1fr) auto; min-height: 50px; padding-inline: 12px; border-radius: 14px; font-weight: 650; }
 .music-app-sidebar nav i { color: var(--app-accent); }
 .music-app-sidebar nav i .music-icon { width: 20px; height: 20px; }
-.music-app-account { position: absolute; bottom: 124px; left: 16px; width: 166px; border: 1px solid var(--app-line); color: inherit; text-align: left; }
+.music-app-account { position: absolute; bottom: 124px; left: 16px; right: 16px; width: auto; color: inherit; text-align: left; }
 .music-app-main { min-height: 0; }
 .music-app-topbar { min-height: 76px; padding: 14px 28px; padding-right: 188px; }
 .music-app-topbar h1 { font-size: 1.45rem; }
@@ -230,7 +230,6 @@ html[data-theme="light"] .music-app-home-feature {
 .music-app-settings__profile { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .music-app-settings__profile > div { min-width: 0; }
 .music-app-settings__profile h2 { margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.music-app-settings__profile .music-app-settings__service { margin-top: 4px; color: var(--color-text-muted); }
 .music-app-settings__avatar {
   display: grid;
   flex: 0 0 auto;
@@ -1110,14 +1109,20 @@ html[data-theme="glass"] :is(
   .music-app-sidebar > nav { flex: 0 0 auto; }
   .music-app-account {
     position: static;
-    display: grid;
     width: auto;
     margin: auto 0 0;
-    padding: 12px 14px;
     flex: 0 0 auto;
     cursor: pointer;
   }
-  .music-app-account:hover { background: color-mix(in srgb, currentColor 7%, transparent); }
+  .music-app-account:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
+  /* Selected while settings are open, like the navigation rows above it. */
+  .music-app-account.active {
+    color: var(--app-accent-ink, #fff);
+    background: var(--app-accent);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--app-accent) 26%, transparent);
+  }
+  .music-app-account.active .music-app-account__avatar { color: var(--app-accent); background: var(--app-accent-ink, #fff); }
+  .music-app-account.active small { color: inherit; }
 }
 
 @media (max-width: 700px) {
@@ -1274,13 +1279,14 @@ html[data-theme] .music-app-shell .music-app-settings section { margin: 0; paddi
   html[data-theme] .music-app-shell .music-app-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 1100px) {
-  /* One column keeps the reading order: account, playback, random play, theme, about. */
+  /* One column keeps the reading order: account, service, playback, random play, theme, about. */
   .music-app-settings__column { display: contents; }
   .music-app-settings__account { order: 1; }
-  .music-app-settings__playback { order: 2; }
-  .music-app-settings__random { order: 3; }
-  .music-app-settings__themes { order: 4; }
-  .music-app-settings__about { order: 5; }
+  .music-app-settings__service { order: 2; }
+  .music-app-settings__playback { order: 3; }
+  .music-app-settings__random { order: 4; }
+  .music-app-settings__themes { order: 5; }
+  .music-app-settings__about { order: 6; }
 }
 html[data-theme] .music-app-shell .music-app-settings section h2 { margin: 0 0 4px; font-size: 15px; font-weight: 600; line-height: 1.4; }
 html[data-theme] .music-app-shell .music-app-settings section p { font-size: 13px; line-height: 1.6; }
@@ -1297,6 +1303,18 @@ html[data-theme] .music-app-shell .music-app-settings__rows > button span { marg
 .music-app-settings__rows > button + button { box-shadow: inset 0 1px color-mix(in srgb, currentColor 7%, transparent); }
 .music-app-settings__rows > button:not(.danger)::after { flex: 0 0 auto; color: var(--color-text-muted); font-size: 18px; line-height: 1; content: "›"; }
 .music-app-settings__rows > button:not(.danger):hover::after { color: var(--app-accent); }
+/* A row that only shows a value, such as when the service ends: no arrow, no hover. */
+.music-app-settings__rows > .music-app-settings__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+  padding: 0 10px;
+  box-shadow: inset 0 1px color-mix(in srgb, currentColor 7%, transparent);
+}
+.music-app-settings__status b { flex: 0 0 auto; font-size: 14px; font-weight: 500; }
+.music-app-settings__status span { min-width: 0; margin-left: auto; overflow: hidden; color: var(--color-text-muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .music-app-settings__rows > button.danger span { display: none; }
 
 /* Settings dialogs (password, quality, Provider): the theme surface, one title size, and on phones a sheet from the bottom. */

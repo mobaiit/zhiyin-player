@@ -199,11 +199,11 @@ test('discover shows the Provider\'s featured playlists and opens one as a list 
 
 test('settings use two columns on wide screens and keep the reading order in one column', () => {
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
-  const order = ['music-app-settings__account', 'music-app-settings__playback', 'music-app-settings__about', 'music-app-settings__random', 'music-app-settings__themes'].map((name) => settings.indexOf(name));
-  assert.ok(order.every((position, index) => position > 0 && (index === 0 || position > order[index - 1])), 'Left column: account, playback, about; right: random, themes');
+  const order = ['music-app-settings__account', 'music-app-settings__service', 'music-app-settings__playback', 'music-app-settings__about', 'music-app-settings__random', 'music-app-settings__themes'].map((name) => settings.indexOf(name));
+  assert.ok(order.every((position, index) => position > 0 && (index === 0 || position > order[index - 1])), 'Left column: account, service, playback, about; right: random, themes');
   assert.equal((settings.match(/<div className="music-app-settings__column">/g) || []).length, 2);
   assert.match(layout, /@media \(min-width: 1101px\) \{\s*html\[data-theme\] \.music-app-shell \.music-app-settings \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
-  assert.match(layout, /\.music-app-settings__column \{ display: contents; \}[\s\S]*?\.music-app-settings__about \{ order: 5; \}/, 'One column reads account, playback, random, theme, about');
+  assert.match(layout, /\.music-app-settings__column \{ display: contents; \}[\s\S]*?\.music-app-settings__about \{ order: 6; \}/, 'One column reads account, service, playback, random, theme, about');
   assert.match(layout, /\.music-app-settings__rows > button:not\(\.danger\)::after \{[^}]*content: "›";/, 'Rows that open something show an arrow');
   const luri = readFileSync(new URL('../src/luri-music/LuriMusic.jsx', import.meta.url), 'utf8');
   assert.match(luri, /<Modal className="lm-password-modal" title="修改密码"/);

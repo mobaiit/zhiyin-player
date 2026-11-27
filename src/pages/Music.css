@@ -128,9 +128,14 @@
 .music-app-sidebar nav button.is-section-start { margin-top: 16px; }
 .music-app-sidebar nav i { display: grid; place-items: center; width: 24px; height: 24px; font-size: 1.1rem; font-style: normal; }
 .music-app-sidebar nav em { min-width: 24px; padding: 2px 7px; border-radius: 99px; color: var(--color-text-muted); background: color-mix(in srgb, currentColor 8%, transparent); font-size: .68rem; font-style: normal; text-align: center; }
-.music-app-account { display: grid; gap: 3px; margin: 24px 8px 0; padding: 14px; border: 1px solid var(--app-line); border-radius: 14px; background: color-mix(in srgb, currentColor 4%, transparent); }
-.music-app-account span { font-size: .83rem; font-weight: 700; }
-.music-app-account small { overflow: hidden; color: var(--color-text-muted); font-size: .69rem; text-overflow: ellipsis; white-space: nowrap; }
+/* The account at the foot of the sidebar reads like a navigation row: avatar, name, and a reminder only near the service end. */
+.music-app-account { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: 10px; margin: 24px 8px 0; padding: 8px 12px; border: 1px solid transparent; border-radius: 14px; background: transparent; }
+.music-app-account__avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--app-accent-ink, #fff); background: var(--app-accent); font-size: .82rem; font-weight: 700; line-height: 1; }
+.music-app-account__copy { display: grid; gap: 2px; min-width: 0; }
+.music-app-account__copy b { overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.music-app-account__copy small { overflow: hidden; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+:is(.music-app-account__copy, .music-app-settings__status) .is-expiring { color: #d9822b; }
+:is(.music-app-account__copy, .music-app-settings__status) .is-expired { color: #e5484d; }
 .music-app-main { grid-column: 2; grid-row: 1; display: flex; min-width: 0; min-height: 0; flex-direction: column; }
 .music-app-topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 92px; padding: 18px 26px; border-bottom: 1px solid var(--app-line); }
 .music-app-topbar h1 { margin: 0; color: var(--color-text); font-size: clamp(1.3rem, 2vw, 1.8rem); line-height: 1.2; }
