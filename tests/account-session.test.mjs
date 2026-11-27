@@ -100,7 +100,7 @@ test('settings group account, service, playback and about rows and hide sign-in-
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
   assert.match(settings, /\{user && <div className="music-app-settings__rows">[\s\S]*?修改用户名[\s\S]*?修改密码[\s\S]*?退出登录/, 'Account actions live in the account card and only when signed in');
   assert.match(settings, /\{user && <section className="music-app-settings__service" aria-labelledby="music-service-title">[\s\S]*?Provider 配置<\/b><span>\{activeProvider\?\.displayName \|\| '未启用'\}/, 'The Provider sits with the service, away from playback');
-  assert.match(settings, /\{user && <section className="music-app-settings__playback" aria-labelledby="music-playback-title">[\s\S]*?QUALITY_META\[playbackQuality\]\?\.label/, 'Playback rows show readable values and are hidden from guests');
+  assert.match(settings, /<section className="music-app-settings__playback" aria-labelledby="music-playback-title">[\s\S]*?\{user && <div className="music-app-settings__rows">[\s\S]*?QUALITY_META\[playbackQuality\]\?\.label/, 'The quality row shows a readable value and is hidden from guests');
   assert.doesNotMatch(settings, /activeProvider\?\.name\b/, 'Providers expose displayName');
   assert.doesNotMatch(settings, /登录后设置|登录后配置|请先登录/);
 });

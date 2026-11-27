@@ -199,11 +199,12 @@ test('discover shows the Provider\'s featured playlists and opens one as a list 
 
 test('settings use two columns on wide screens and keep the reading order in one column', () => {
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
-  const order = ['music-app-settings__account', 'music-app-settings__service', 'music-app-settings__playback', 'music-app-settings__about', 'music-app-settings__random', 'music-app-settings__themes'].map((name) => settings.indexOf(name));
-  assert.ok(order.every((position, index) => position > 0 && (index === 0 || position > order[index - 1])), 'Left column: account, service, playback, about; right: random, themes');
+  const order = ['music-app-settings__account', 'music-app-settings__service', 'music-app-settings__about', 'music-app-settings__playback', 'music-app-settings__preferences', 'music-app-settings__themes'].map((name) => settings.indexOf(name));
+  assert.ok(order.every((position, index) => position > 0 && (index === 0 || position > order[index - 1])), 'Left column: account, service, about; right: playback (quality, then song preferences), themes');
+  assert.doesNotMatch(settings, /music-app-settings__random/, 'Song preferences belong to playback');
   assert.equal((settings.match(/<div className="music-app-settings__column">/g) || []).length, 2);
   assert.match(layout, /@media \(min-width: 1101px\) \{\s*html\[data-theme\] \.music-app-shell \.music-app-settings \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
-  assert.match(layout, /\.music-app-settings__column \{ display: contents; \}[\s\S]*?\.music-app-settings__about \{ order: 6; \}/, 'One column reads account, service, playback, random, theme, about');
+  assert.match(layout, /\.music-app-settings__column \{ display: contents; \}[\s\S]*?\.music-app-settings__playback \{ order: 3; \}\s*\.music-app-settings__themes \{ order: 4; \}\s*\.music-app-settings__about \{ order: 5; \}/, 'One column reads account, service, playback, theme, about');
   assert.match(layout, /\.music-app-settings__rows > button:not\(\.danger\)::after \{[^}]*content: "›";/, 'Rows that open something show an arrow');
   const luri = readFileSync(new URL('../src/luri-music/LuriMusic.jsx', import.meta.url), 'utf8');
   assert.match(luri, /<Modal className="lm-password-modal" title="修改密码"/);
@@ -504,7 +505,7 @@ test('settings offer random play preferences that default to new Chinese songs a
   assert.match(music, /updateLibrary\(\(value\) => \(\{ \.\.\.value, settings: \{ \.\.\.\(value\.settings \|\| \{\}\), randomPreferences: next \} \}\)\);\s*const batch = randomBatchRef\.current;\s*batch\.request\?\.abort\(\); batch\.request = null; batch\.next = null;/, 'Saved in the synced library; a batch requested with old preferences is dropped');
   assert.match(music, /if \(playMode\.current !== 'random'\) return;\s*batch\.tracks = batch\.tracks\.filter\(\(track\) => track\.songId === currentId\);\s*requestNextRandomBatch\(next\);/, 'During random play the next song already follows the new preferences');
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
-  assert.match(settings, /<div className="music-app-settings__column"><section className="music-app-settings__random"/, 'Guests can set it too');
+  assert.match(settings, /<div className="music-app-settings__column"><section className="music-app-settings__playback" aria-labelledby="music-playback-title"><h2 id="music-playback-title">播放<\/h2>\s*\{user && <div className="music-app-settings__rows">[\s\S]*?播放音质[\s\S]*?<\/div>\}\s*<div className="music-app-settings__preferences"/, 'Quality is for signed-in users; guests still set song preferences');
   assert.match(settings, /\[\['', '不限'\], \.\.\.RANDOM_LANGUAGE_OPTIONS\]/);
   assert.match(music, /const RANDOM_ERA_OPTIONS = \[\['any', '不限'\], \['new', '新歌优先'\], \['classic', '经典老歌'\]\];/, '不限 leads both groups');
 });

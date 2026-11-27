@@ -275,7 +275,12 @@ html[data-theme="light"] .music-app-home-feature {
   background: var(--app-accent);
   font-weight: 750;
 }
-.music-app-settings__random { display: grid; gap: 16px; }
+.music-app-settings__playback { display: grid; gap: 6px; }
+/* Song preferences sit under the quality row, divided by a line when that row is shown. */
+.music-app-settings__preferences { display: grid; gap: 16px; }
+.music-app-settings__rows + .music-app-settings__preferences { padding-top: 14px; border-top: 1px solid var(--app-line); }
+.music-app-settings__preferences > div:first-child { display: grid; gap: 4px; }
+.music-app-settings__preferences > div:first-child > b { font-size: 14px; font-weight: 500; }
 .music-app-settings__choice { display: grid; gap: 8px; }
 .music-app-settings__choice > b { font-size: .8rem; }
 .music-app-choice-group { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1279,14 +1284,13 @@ html[data-theme] .music-app-shell .music-app-settings section { margin: 0; paddi
   html[data-theme] .music-app-shell .music-app-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 1100px) {
-  /* One column keeps the reading order: account, service, playback, random play, theme, about. */
+  /* One column keeps the reading order: account, service, playback, theme, about. */
   .music-app-settings__column { display: contents; }
   .music-app-settings__account { order: 1; }
   .music-app-settings__service { order: 2; }
   .music-app-settings__playback { order: 3; }
-  .music-app-settings__random { order: 4; }
-  .music-app-settings__themes { order: 5; }
-  .music-app-settings__about { order: 6; }
+  .music-app-settings__themes { order: 4; }
+  .music-app-settings__about { order: 5; }
 }
 html[data-theme] .music-app-shell .music-app-settings section h2 { margin: 0 0 4px; font-size: 15px; font-weight: 600; line-height: 1.4; }
 html[data-theme] .music-app-shell .music-app-settings section p { font-size: 13px; line-height: 1.6; }
