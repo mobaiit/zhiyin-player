@@ -90,7 +90,7 @@ test('the sidebar account shows the avatar and name, with a reminder only near t
   assert.match(shell, /onLogout=\{\(\) => openAccountDialog\('logout'\)\}/, 'Logging out asks first');
   assert.match(shell, /<ConfirmDialog open=\{dialog === 'logout'\} title="退出登录？"[^\n]*?onConfirm=\{logout\} \/>/);
   const providers = readFileSync(new URL('../functions/luri-music/providers.js', import.meta.url), 'utf8');
-  assert.match(providers, /const publicConfig = \(row, activeId, presentation = null\) => \(\{ expiresAt: serviceExpiresAt\(row, presentation\),/, 'Providers report when the service ends');
+  assert.match(providers, /const publicConfig = \(row, activeId, presentation = null\) => \(\{ expiresAt: serviceExpiresAt\(row\),/, 'Providers report when the service ends');
   const widget = readFileSync(new URL('../src/luri-music/Turnstile.jsx', import.meta.url), 'utf8');
   assert.doesNotMatch(widget, /正在加载人机验证/, 'The human check loads without a text notice');
 });

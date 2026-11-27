@@ -1,12 +1,20 @@
 <p align="center">
-  <img src="./public/zhiyin-logo.png" alt="知音 Logo" width="112" />
+  <a href="https://zhiyin.us.ci"><img src="./public/zhiyin-logo.png" alt="知音 Logo" width="88" height="88" /></a>
 </p>
 
-# 知音
+<h1 align="center">知音</h1>
 
-知音是一个可扩展的 Web 音乐播放器，支持通过 Music Provider Protocol 连接用户选择的内容服务。
+<p align="center">可扩展的 Web 音乐播放器，通过 Music Provider Protocol 连接用户选择的内容服务。</p>
 
-线上地址：https://zhiyin.us.ci
+<p align="center">
+  <a href="https://zhiyin.us.ci">在线体验</a> ·
+  <a href="./docs/music-provider-protocol/README.md">MPP 1.0 协议</a> ·
+  <a href="https://zhiyin.us.ci/docs">接入文档</a>
+</p>
+
+## 网站示例
+
+![知音发现页：随机精选、精选歌单与底部播放栏](./docs/images/zhiyin-discover.png)
 
 ## 功能
 

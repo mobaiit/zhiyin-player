@@ -1,4 +1,5 @@
 import { id, json, now, loginRequired } from './shared.js';
+import { clientSignatureHeaders } from './provider-clients.js';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -6,10 +7,15 @@ const fromBase64 = (value) => Uint8Array.from(atob(value), (character) => charac
 const toBase64 = (value) => btoa(String.fromCharCode(...value));
 const parseBody = async (request) => request.json().catch(() => ({}));
 const providerAccessCache = new Map();
+// The Worker's env, set once per request by handleProviderRequest. It is the same object for every
+// request of a deployment, and lets providerFetch sign requests without threading env everywhere.
+let signingEnv = null;
 
 async function providerFetch(url, options = {}) {
   try {
-    const response = await fetch(url, { ...options, redirect: 'manual' });
+    const target = new URL(url);
+    const signature = await clientSignatureHeaders(signingEnv, target, options.method || 'GET', options.body).catch(() => null);
+    const response = await fetch(target.href, { ...options, ...(signature ? { headers: { ...(options.headers || {}), ...signature } } : {}), redirect: 'manual' });
     if (response.status >= 300 && response.status < 400) throw new Error('Provider 接口返回了重定向，请在 Provider 配置中填写最终 HTTPS 地址');
     return response;
   } catch (error) {
@@ -136,7 +142,14 @@ async function authenticateConnection(connection, manifest, user) {
   await providerResponseError(response, 'Provider 认证失败');
   const authorization = await response.json().catch(() => ({}));
   if (!authorization.accessToken || (authorization.tokenType && authorization.tokenType !== 'Bearer')) throw new Error('Provider 认证响应无效，请联系 Provider 管理员检查接口配置');
-  return { accessToken: String(authorization.accessToken), expiresIn: Math.max(30, Number(authorization.expiresIn) || 900), presentation: cleanPresentation(authorization.presentation) };
+  return { accessToken: String(authorization.accessToken), expiresIn: Math.max(30, Number(authorization.expiresIn) || 900), account: cleanAccount(authorization.account), presentation: cleanPresentation(authorization.presentation) };
+}
+
+// The machine-readable service state from authenticate: a status word and when the service ends.
+function cleanAccount(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const expiresAt = Date.parse(value.expiresAt || '');
+  return { status: String(value.status || '').slice(0, 40), expiresAt: Number.isFinite(expiresAt) ? new Date(expiresAt).toISOString() : null };
 }
 
 function prepareConnection(data) {
@@ -229,7 +242,7 @@ async function currentManifest(config, credential) {
   return manifest;
 }
 
-async function proxyProviderRequest(config, credential, user, kind, params = {}) {
+async function proxyProviderRequest(config, credential, user, kind, params = {}, env = null) {
   if (!PROVIDER_CAPABILITIES.has(kind)) {
     const failure = new Error('不支持的 Provider 请求类型');
     failure.status = 400;
@@ -250,6 +263,9 @@ async function proxyProviderRequest(config, credential, user, kind, params = {})
       const discovered = await discoverConnection(credential.connection);
       const authorization = await authenticateConnection(discovered.connection, discovered.manifest, user);
       manifest = discovered.manifest;
+      // Each authentication reports when the service ends; store it only when it changed.
+      const expiresAt = authorization.account?.expiresAt || null;
+      if (env && expiresAt && expiresAt !== config.cached_expires_at) await env.LURI_MUSIC_DB.prepare('UPDATE luri_music_provider_configs SET cached_status=?,cached_expires_at=?,last_synced_at=? WHERE id=?').bind(authorization.account.status || 'active', expiresAt, now(), config.id).run().catch(() => {});
       headers = { accept: 'application/json', authorization: `Bearer ${authorization.accessToken}` };
       providerAccessCache.set(cacheKey, { manifest, headers, expiresAt: Date.now() + authorization.expiresIn * 1000 });
     }
@@ -372,17 +388,16 @@ async function prepareCredential(manifest, providerUrl, data, user) {
   return { connectionType, authType, credential: { manifest }, account: null, initialAccess: { accessToken: '', expiresIn: 3600, authorization: null } };
 }
 
-// When the service ends: the account's expiresAt, else a date the Provider shows as its valid
-// time (a connection has no account call, only the presentation it returned when connecting).
-const serviceExpiresAt = (row, presentation) => {
+// When the service ends, from the account the Provider reported (MPP account.expiresAt). The
+// presentation block is display only and never parsed for dates.
+const serviceExpiresAt = (row) => {
   const cached = Date.parse(row.cached_expires_at || '');
-  if (Number.isFinite(cached)) return new Date(cached).toISOString();
-  const shown = presentation?.items?.find((item) => /有效|到期|过期|expire/i.test(item.label) && Number.isFinite(Date.parse(item.value)));
-  return shown ? new Date(Date.parse(shown.value)).toISOString() : null;
+  return Number.isFinite(cached) ? new Date(cached).toISOString() : null;
 };
-const publicConfig = (row, activeId, presentation = null) => ({ expiresAt: serviceExpiresAt(row, presentation), id: row.id, providerId: row.provider_id, providerUrl: row.provider_url, displayName: row.display_name, protocolVersion: row.protocol_version, connectionType: row.auth_type === 'connection' ? (row.connection_type === 'official' ? 'official' : 'third_party') : row.connection_type || 'third_party', status: row.auth_type === 'connection' ? 'configured' : row.cached_status, presentation, lastSyncedAt: row.last_synced_at, active: row.id === activeId, createdAt: row.created_at });
+const publicConfig = (row, activeId, presentation = null) => ({ expiresAt: serviceExpiresAt(row), id: row.id, providerId: row.provider_id, providerUrl: row.provider_url, displayName: row.display_name, protocolVersion: row.protocol_version, connectionType: row.auth_type === 'connection' ? (row.connection_type === 'official' ? 'official' : 'third_party') : row.connection_type || 'third_party', status: row.auth_type === 'connection' ? 'configured' : row.cached_status, presentation, lastSyncedAt: row.last_synced_at, active: row.id === activeId, createdAt: row.created_at });
 
 export async function handleProviderRequest(request, env, action, user) {
+  signingEnv = env;
   if (!user) return loginRequired();
   if (action === 'providers' && request.method === 'GET') {
     const [configs, preference] = await Promise.all([
@@ -439,7 +454,7 @@ export async function handleProviderRequest(request, env, action, user) {
   if (configMatch[2] === 'proxy' && request.method === 'POST') {
     try {
       const data = await parseBody(request);
-      return await proxyProviderRequest(config, await decryptCredential(config, env), user, String(data.kind || ''), data.params && typeof data.params === 'object' ? data.params : {});
+      return await proxyProviderRequest(config, await decryptCredential(config, env), user, String(data.kind || ''), data.params && typeof data.params === 'object' ? data.params : {}, env);
     } catch (error) {
       return json({ error: error.message || 'Provider 请求失败，请稍后重试', code: error.code || 'provider_request_failed' }, error.status || 502);
     }

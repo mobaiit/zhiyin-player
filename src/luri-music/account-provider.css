@@ -894,3 +894,8 @@
   min-height: 1.1rem;
   font-size: 0.625rem;
 }
+
+/* Provider client keys: an inline checkbox in the form and a long secret that wraps. */
+.admin-form .admin-checkbox { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.admin-form .admin-checkbox input { width: auto; min-height: 0; }
+.admin-secret-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }

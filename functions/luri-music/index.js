@@ -1,5 +1,6 @@
 import { cookie, hash, id, json, now, passwordHash, sessionCookie, token, verifyPassword, verifyTurnstileToken, loginRequired } from './shared.js';
 import { handleProviderRequest } from './providers.js';
+import { handleProviderClientAdmin } from './provider-clients.js';
 import { handleFavoriteRequest } from './favorites.js';
 import { handleLibraryRequest } from './library.js';
 import { parseUserData } from './user-data.js';
@@ -27,6 +28,9 @@ const ADMIN_ACTIONS = new Set([
   'admin/account-password',
   'admin/account-delete',
   'admin/password',
+  'admin/provider-clients',
+  'admin/provider-client-secret',
+  'admin/provider-client-delete',
 ]);
 
 const currentUser = async (request, env, includeFavorites = false) => {
@@ -192,6 +196,7 @@ export async function handleLuriMusic(request, env) {
   const admin = await currentAdmin(request, env);
   if (!admin) return json({ error: '管理员登录已失效' }, 401);
   if (action === 'admin/me' && request.method === 'GET') return json({ admin: { id: admin.id, username: admin.username } });
+  if (action.startsWith('admin/provider-client')) return handleProviderClientAdmin(request, env, action, body);
   if (action === 'admin/email-config' && request.method === 'GET') {
     return json(await publicSmtpConfig(env));
   }

@@ -11,11 +11,12 @@ const manifestExample = `{
     "name": "Example Library",
     "homepage": "https://provider.example.com"
   },
-  "capabilities": ["search", "random", "charts", "lyrics", "artwork", "playback", "qualities"],
+  "capabilities": ["search", "random", "charts", "playlists", "lyrics", "artwork", "playback", "qualities"],
   "playback": {
     "mode": "direct",
     "qualities": ["128k", "192k", "320k", "flac", "flac24bit"]
   },
+  "clientAuthentication": { "type": "hmac-sha256", "required": false },
   "endpoints": {
     "authenticate": "https://provider.example.com/v1/auth/authenticate",
     "terms": "https://provider.example.com/terms",
@@ -23,6 +24,7 @@ const manifestExample = `{
     "search": "https://provider.example.com/v1/catalog/search",
     "random": "https://provider.example.com/v1/catalog/random",
     "charts": "https://provider.example.com/v1/catalog/charts",
+    "playlists": "https://provider.example.com/v1/catalog/playlists",
     "resolve": "https://provider.example.com/v1/tracks/resolve",
     "lyrics": "https://provider.example.com/v1/tracks/{songId}/lyrics",
     "artwork": "https://provider.example.com/v1/tracks/{songId}/artwork"
@@ -40,7 +42,46 @@ const connectionExample = `{
     "Authorization": "Bearer opaque-value",
     "X-Provider-Key": "opaque-value"
   },
-  "credentials": "include"
+  "credentials": "omit"
+}`;
+
+const authenticateResponse = `{
+  "accessToken": "short-lived-token",
+  "tokenType": "Bearer",
+  "expiresIn": 900,
+  "account": {
+    "status": "active",
+    "expiresAt": "2027-10-20T12:00:00.000Z"
+  },
+  "presentation": {
+    "title": "服务状态",
+    "badge": { "text": "可用", "tone": "positive" }
+  }
+}`;
+
+const signatureExample = `X-Client-Id: zhiyin
+X-Client-Timestamp: 1764230400
+X-Client-Signature: lowercaseHex(HMAC-SHA256(Secret, 签名内容))
+
+签名内容（四行，以 \\n 连接，末尾没有换行）：
+GET
+/v1/catalog/search?q=%E6%9E%97&page=1
+1764230400
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`;
+
+const signatureCode = `const hex = (buffer) => [...new Uint8Array(buffer)]
+  .map((byte) => byte.toString(16).padStart(2, '0')).join('');
+
+async function signedHeaders(method, url, body, clientId, secret) {
+  const encoder = new TextEncoder();
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const target = new URL(url);
+  const bodyHash = hex(await crypto.subtle.digest('SHA-256', encoder.encode(body || '')));
+  const key = await crypto.subtle.importKey('raw', encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const content = [method.toUpperCase(), target.pathname + target.search, timestamp, bodyHash].join('\\n');
+  const signature = hex(await crypto.subtle.sign('HMAC', key, encoder.encode(content)));
+  return { 'X-Client-Id': clientId, 'X-Client-Timestamp': timestamp, 'X-Client-Signature': signature };
 }`;
 
 const trackExample = `{
@@ -129,6 +170,7 @@ const nav = [
   ['protocol', '协议概览', 'developer'],
   ['discovery', '服务发现', 'developer'],
   ['authentication', '认证与连接', 'developer'],
+  ['client-signature', '客户端签名', 'developer'],
   ['track-model', 'Track 与 Binding', 'developer'],
   ['catalog', '目录接口', 'developer'],
   ['resources', '单曲接口', 'developer'],
@@ -230,7 +272,7 @@ export default function Docs() {
             <li>注册并登录知音。</li>
             <li>从账户菜单打开“Provider 配置”，点击“添加 Provider”。</li>
             <li>选择官方源或第三方 Provider，填写完整 URL；需要 Header 或 Cookie 时使用高级 JSON。</li>
-            <li>点击“认证并添加”。客户端公开读取发现文件，再将连接凭据和当前账号信息发送到 authenticate 端点换取短期 Token。</li>
+            <li>点击“认证并添加”。知音后端公开读取发现文件，再将连接凭据和当前账号信息发送到 authenticate 端点换取短期 Token。</li>
             <li>启用 Provider，进入播放器使用其已声明的搜索、榜单、播放、歌词和封面能力。</li>
           </ol>
           <div className="docs-note"><b>连接前检查</b><span>请确认 Provider 的运营主体、服务条款、隐私政策和内容授权范围。兼容本协议只代表接口格式正确，不代表知音对服务或内容进行审核、推荐或授权。</span></div>
@@ -254,7 +296,7 @@ export default function Docs() {
           <h3>浏览器数据</h3>
           <p>播放队列、搜索记录、随机历史、榜单缓存和短期资源地址保存在浏览器中，其中播放队列和资源缓存按 Provider 隔离。登录用户的收藏按账号保存，并同步到浏览器供离线展示。</p>
           <h3>播放地址</h3>
-          <p>播放 URL 通常有较短有效期。客户端发现地址过期、返回空地址或实际播放失败时，会丢弃旧结果并向当前 Provider 强制刷新一次，不会无限重试。</p>
+          <p>播放 URL 通常有较短有效期。地址过期或实际播放失败时，客户端先丢弃本地结果重新请求一次，仍失败再要求 Provider 强制刷新；Provider 明确返回没有资源时直接切换下一首。连续 8 首无法播放时停止并提示，不会无限重试。</p>
         </section>
 
         <section id="troubleshooting">
@@ -281,11 +323,15 @@ export default function Docs() {
             <li>Provider 只声明确实实现的能力。协议 1.0 的播放模式为 <code>direct</code>。</li>
             <li>所有 Provider 请求的客户端超时为 60 秒。</li>
           </ul>
+          <h3>交互模型</h3>
+          <p>知音是服务端客户端：发现、认证、目录、播放解析、歌词和封面请求全部由知音后端发出，浏览器不直接访问 Provider 协议端点；只有 Provider 返回的播放地址和封面地址由浏览器直接加载。其他客户端也可以在浏览器中直接实现本协议，请求与响应格式相同。</p>
+          <Code>{`浏览器 ──> 知音后端 ──> Provider 协议端点
+浏览器 ──────────────> 播放 URL、封面 URL`}</Code>
         </section>
 
         <section id="discovery">
           <h2>服务发现</h2>
-          <Endpoint method="GET" path="/.well-known/music-provider.json">公开返回 Provider 身份、协议版本、能力、播放配置和端点。发现请求不携带连接凭据。</Endpoint>
+          <Endpoint method="GET" path="/.well-known/music-provider.json">公开返回 Provider 身份、协议版本、能力、播放配置和端点。发现请求不携带连接凭据，也不得重定向。</Endpoint>
           <Code>{manifestExample}</Code>
           <SchemaTable title="发现文件字段" rows={[
             ['protocol', 'string', '是', '固定为 music-provider。'],
@@ -293,15 +339,18 @@ export default function Docs() {
             ['provider.id', 'string', '是', '全局稳定的 Provider 标识。'],
             ['provider.name', 'string', '是', '面向用户展示的 Provider 名称。'],
             ['provider.homepage', 'HTTPS URL', '否', 'Provider 官网或运营主体页面。'],
-            ['capabilities', 'string[]', '是', 'search、random、charts、lyrics、artwork、playback、qualities 中已实现的能力。'],
+            ['capabilities', 'string[]', '是', 'search、random、charts、playlists、lyrics、artwork、playback、qualities 中已实现的能力；客户端忽略不认识的能力。'],
             ['playback.mode', 'direct', '条件', '声明 playback 时必填；resolve 返回浏览器可尝试播放的 URL。'],
             ['playback.qualities', 'string[]', '否', '声明 qualities 时给出可请求的音质标识。'],
+            ['clientAuthentication', 'object', '否', '支持或要求客户端签名时声明：type 为 hmac-sha256，required 表示是否强制。'],
             ['endpoints.authenticate', 'HTTPS URL', '是', '使用连接凭据和客户端账号换取短期 Bearer Token；客户端使用 POST 请求。'],
             ['endpoints.terms', 'HTTPS URL', '是', '服务条款与内容授权范围。'],
             ['endpoints.privacy', 'HTTPS URL', '是', '隐私政策、运营主体与联系方式。'],
+            ['endpoints.health', 'HTTPS URL', '否', '健康检查，客户端不依赖它。'],
             ['endpoints.search', 'HTTPS URL', '条件', '声明 search 时必填。'],
             ['endpoints.random', 'HTTPS URL', '条件', '声明 random 时必填。'],
             ['endpoints.charts', 'HTTPS URL', '条件', '声明 charts 时必填。'],
+            ['endpoints.playlists', 'HTTPS URL', '条件', '声明 playlists 时必填。'],
             ['endpoints.resolve', 'HTTPS URL', '条件', '声明 playback 时必填。'],
             ['endpoints.lyrics', 'URL template', '条件', '声明 lyrics 时必填，使用 {songId} 占位符。'],
             ['endpoints.artwork', 'URL template', '条件', '声明 artwork 时必填，使用 {songId} 占位符。'],
@@ -315,20 +364,55 @@ export default function Docs() {
             ['items', 'array', '否', '最多 12 个 label/value 纯文本键值项，按返回顺序展示。'],
             ['notice', 'string', '否', '底部提示。'],
           ]} />
-          <div className="docs-note"><b>仅用于展示</b><span>客户端不解析 presentation 内容、不计算日期，也不据此判断能力或访问权限；没有值的字段隐藏，整个对象不存在时不渲染展示区块。</span></div>
+          <div className="docs-note"><b>仅用于展示</b><span>客户端不解析 presentation 内容，也不据此判断能力或访问权限；需要机器可读的服务到期时间时使用认证响应中的 account.expiresAt。没有值的字段隐藏，整个对象不存在时不渲染展示区块。</span></div>
+          <p>保存的发现文件缺少某个端点时，客户端会重新读取发现文件，同一配置最多每 10 分钟一次，Provider 新增的能力无需用户重新配置即可生效。发现文件中的其他扩展字段（例如 mcp 端点）会被忽略。</p>
         </section>
 
         <section id="authentication">
           <h2>认证与连接配置</h2>
-          <p>客户端不理解 Provider 的凭据含义，只在认证请求中按声明式配置发送 URL 参数、静态 Header、浏览器 Cookie 或其组合，并携带当前知音账号信息。认证成功后，业务请求只使用 Provider 返回的短期 Bearer Token。</p>
-          <Endpoint method="POST" path="/v1/auth/authenticate">接收客户端账号上下文，并通过 URL 参数、静态 Header 或 Cookie 验证连接凭据；成功时返回短期 Bearer Token。</Endpoint>
+          <p>客户端不理解 Provider 的凭据含义，只在认证请求中按声明式配置发送 URL 参数和静态 Header，并携带当前知音账号信息。认证成功后，业务请求只使用 Provider 返回的短期 Bearer Token。</p>
+          <Endpoint method="POST" path="/v1/auth/authenticate">接收客户端账号上下文，并通过 URL 参数或静态 Header 验证连接凭据；成功时返回短期 Bearer Token。</Endpoint>
           <Code>{connectionExample}</Code>
           <SchemaTable title="连接配置" rows={[
             ['url', 'HTTPS URL', '是', 'Provider 地址；查询参数仅附加到 authenticate 请求。'],
             ['headers', 'object', '否', '仅附加到 authenticate 请求的静态 Header。'],
-            ['credentials', 'string', '否', 'authenticate 请求的 Cookie 策略：omit、same-origin 或 include；默认 omit。'],
+            ['credentials', 'string', '否', '浏览器客户端的 Cookie 策略：omit、same-origin 或 include，默认 omit。知音由后端发出请求，忽略此字段，也不会转发浏览器 Cookie。'],
           ]} />
+          <SchemaTable title="认证请求体" rows={[
+            ['clientAccount.id', 'string', '是', '客户端内部账号 ID，最多 100 个字符。'],
+            ['clientAccount.name', 'string', '否', '账号显示名称，最多 80 个字符。'],
+            ['clientAccount.email', 'string', '是', '去除首尾空格并转为小写的邮箱，最多 160 个字符，是账号的唯一凭证。'],
+          ]} />
+          <Code>{authenticateResponse}</Code>
+          <SchemaTable title="认证响应" rows={[
+            ['accessToken', 'string', '是', '短期令牌，其他请求以 Authorization: Bearer 发送。'],
+            ['tokenType', 'string', '是', '固定为 Bearer。'],
+            ['expiresIn', 'integer', '是', '令牌有效秒数；小于 30 按 30 处理，缺失时按 900 处理。'],
+            ['account.status', 'string', '否', '服务状态，例如 active。'],
+            ['account.expiresAt', 'ISO 8601 string', '否', '服务到期时间，客户端用它显示剩余时长；没有期限时省略。'],
+            ['presentation', 'object', '否', '纯文本展示区块，结构同发现文件。'],
+          ]} />
+          <p>客户端按用户和 Provider 配置缓存令牌，到期前 15 秒停止使用并重新认证；任何请求返回 401 或 403 时也会丢弃令牌。协议 1.0 没有单独的刷新端点，因此同一凭据和账号大约每 15 分钟认证一次。Provider 必须保证重复认证是幂等的：返回新令牌，不改变服务到期时间，也不重复消耗凭据；同一凭据被其他邮箱使用时返回 409 connection_credential_bound。</p>
           <div className="docs-note"><b>职责边界</b><span>Provider 服务端自行验证连接凭据与客户端账号。客户端不解释凭据，不把原始 key 附加到搜索、歌词或播放等业务请求。</span></div>
+        </section>
+
+        <section id="client-signature">
+          <h2>客户端签名</h2>
+          <p>用户凭证只能证明是哪个用户，无法证明请求来自哪个客户端软件。Provider 只想让自己认可的客户端（例如知音后端）调用时，可以要求客户端对每个协议请求签名。这样即使用户凭证或令牌泄露，未登记的服务端也无法调用。签名是 1.0 的可选扩展，不要求签名的 Provider 忽略这些请求头即可。</p>
+          <p>Provider 为每个客户端分配 Client ID 和至少 32 个字符的 Secret。两者只保存在客户端服务端（知音保存在后台的加密数据库中），不下发到浏览器，也不写进连接配置。客户端只要配置了密钥，就对除发现文件外的所有协议请求签名，包括 authenticate。</p>
+          <Code>{signatureExample}</Code>
+          <SchemaTable title="签名请求头" rows={[
+            ['X-Client-Id', 'string', '是', 'Provider 分配的客户端标识。'],
+            ['X-Client-Timestamp', 'integer', '是', 'Unix 时间，单位秒；与 Provider 服务器时间相差不得超过 300 秒。'],
+            ['X-Client-Signature', 'hex string', '是', 'HMAC-SHA256(Secret, 签名内容) 的 64 位小写十六进制。签名内容依次是大写的 HTTP 方法、实际请求的路径和查询字符串、时间戳、请求体 SHA-256 的小写十六进制（没有请求体时是空字符串的哈希）。'],
+          ]} />
+          <Code>{signatureCode}</Code>
+          <SimpleTable rows={[
+            ['401 client_authentication_required', '要求签名但请求缺少签名请求头。'],
+            ['401 client_authentication_failed', 'Client ID 不存在、签名错误或时间戳超出范围。'],
+            ['403 client_forbidden', '客户端已停用或无权访问该接口。'],
+          ]} />
+          <div className="docs-note"><b>浏览器客户端</b><span>浏览器无法安全保存 Secret，不能使用签名。Provider 可以另外按 Origin 允许指定网页调用，但浏览器以外的程序可以伪造 Origin；需要强限制时应只接受签名请求。</span></div>
         </section>
 
         <section id="track-model">
@@ -357,13 +441,16 @@ export default function Docs() {
         <section id="catalog">
           <h2>目录接口</h2>
           <Endpoint method="GET" path="/v1/catalog/search?q={keyword}&page={page}&limit={limit}">返回 {`{ tracks, page, hasMore }`}；无结果时 tracks 为空数组。</Endpoint>
-          <Endpoint method="GET" path="/v1/catalog/random?limit={limit}&exclude={artists}&era={era}&languages={languages}">返回 {`{ singer?, tracks }`}；exclude 是 URL 编码、逗号分隔的近期艺人列表。era 与 languages 是可选的偏好提示：era 为 new（新歌优先）、any 或 classic（经典老歌）；languages 是逗号分隔的 zh、en、jk、yue、instrumental，表示优先的语言，不传表示不限。Provider 可以忽略不支持的提示，客户端会按批次播放返回的歌曲。</Endpoint>
-          <Endpoint method="GET" path="/v1/catalog/charts?platform={platform}&chart={chart}&refresh={refresh}">返回 {`{ platform, chart, title, updatedAt, tracks }`}；refresh=1 表示用户主动刷新。</Endpoint>
+          <Endpoint method="GET" path="/v1/catalog/random?exclude={artists}&era={era}&languages={languages}">返回 {`{ tracks, singer?, playlist?, playlists? }`}，可选字段说明这批歌曲的来源，客户端不依赖它们；exclude 是逐项 URL 编码、逗号分隔的近期艺人列表。era 与 languages 是可选的偏好提示：era 为 new（新歌优先）、any 或 classic（经典老歌）；languages 是逗号分隔的 zh、en、jk、yue、instrumental，表示优先的语言，不传表示不限。Provider 可以忽略不支持的提示，客户端会按批次播放返回的歌曲。</Endpoint>
+          <Endpoint method="GET" path="/v1/catalog/charts?platform={platform}&chart={chart}&refresh={refresh}">返回 {`{ platform, chart, title, updatedAt, stale?, tracks }`}；refresh=1 表示用户主动刷新，stale 为 true 表示刷新失败、返回的是上一次成功的数据。</Endpoint>
+          <Endpoint method="GET" path="/v1/catalog/playlists?platform={platform}&category={category}&cursor={cursor}">返回一页精选歌单 {`{ platform, category, categories, playlists, nextCursor }`}。categories 是可选风格 {`{ id, name }`} 的列表；每个歌单为 {`{ id, name, cover, trackCount, plays, description }`}；把 nextCursor 作为 cursor 传回取下一页，为 null 时没有更多。</Endpoint>
+          <Endpoint method="GET" path="/v1/catalog/playlists?platform={platform}&id={id}">返回一个歌单的详情 {`{ platform, id, name, cover, description, tracks }`}。</Endpoint>
           <SchemaTable title="通用目录规则" rows={[
             ['tracks', 'Track[]', '是', '每一项必须符合统一 Track 与 Binding 模型。'],
             ['page', 'integer', '搜索必填', '从 1 开始的实际页码。'],
             ['hasMore', 'boolean', '搜索必填', '是否可以继续请求下一页。'],
             ['updatedAt', 'ISO 8601 string', '榜单必填', '榜单数据的获取或更新时间。'],
+            ['nextCursor', 'string | null', '歌单列表必填', '下一页的游标；null 表示没有更多。'],
             ['refresh', '0 | 1', '请求可选', '为 1 时跳过普通缓存；Provider 可以限制刷新频率。'],
           ]} />
         </section>
@@ -393,6 +480,7 @@ export default function Docs() {
           <Code>{resolveResponse}</Code>
           <p>HTTP 200 与空 URL仍可用于兼容简单 Provider；推荐使用 no_candidate、all_resolvers_failed、quality_unavailable、upstream_timeout 等稳定错误码，让客户端直接切歌、降级或稍后重试：</p>
           <Code>{emptyResolveResponse}</Code>
+          <p>Provider 不可达（超时、5xx、网络错误）时客户端只额外重试一次；播放列表连续 8 首无法播放时停止并提示用户。</p>
           <div className="docs-retry-flow"><span>首次 resolve</span><i>→</i><span>地址失败后普通请求复查</span><i>→</i><span>仍失败 refresh=url</span><i>→</i><span>解码失败 refresh=decode</span><i>→</i><span>成功播放或结束重试</span></div>
 
           <h3>歌词与封面</h3>
@@ -422,13 +510,13 @@ export default function Docs() {
         <section id="methods">
           <h2>HTTP 方法与跨域</h2>
           <SimpleTable rows={[
-            ['GET', '发现、health、terms、privacy、search、random、charts、lyrics、artwork。'],
+            ['GET', '发现、health、terms、privacy、search、random、charts、playlists、lyrics、artwork。'],
             ['POST', 'authenticate、resolve。'],
             ['OPTIONS', '仅用于 CORS 预检，不得执行端点业务逻辑。'],
             ['其他方法', '已知端点必须返回 405、Allow 响应头和 method_not_allowed 错误。'],
           ]} />
-          <p>浏览器直接访问 Provider。Provider 必须允许已登记的知音 Origin、实际使用的认证请求头以及 GET、POST、OPTIONS。音频和图片资源也应支持 HTTPS、跨域访问；音频地址建议支持 Range 请求。</p>
-          <Code>{`Access-Control-Allow-Origin: https://zhiyin.us.ci
+          <p>知音的协议请求由后端发出，不需要 CORS；浏览器只直接加载播放地址和封面，audio 和 img 不要求 CORS 响应头，音频地址建议支持 Range 请求。在浏览器中直接调用协议端点的客户端，需要 Provider 允许其 Origin、实际使用的请求头以及 GET、POST、OPTIONS：</p>
+          <Code>{`Access-Control-Allow-Origin: https://client.example
 Access-Control-Allow-Methods: GET, POST, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization, X-Provider-Key
 Access-Control-Allow-Credentials: true
@@ -447,11 +535,14 @@ Access-Control-Max-Age: 86400`}</Code>
           <SimpleTable rows={[
             ['400', 'invalid_request / invalid_song_id：字段缺失、Binding 不合法或 songId 校验失败。'],
             ['401 / 403', 'invalid_connection_credential / access_denied：连接凭据无效，或 Provider 拒绝当前请求。'],
+            ['401', 'client_authentication_required / client_authentication_failed：客户端签名缺失或无效。'],
+            ['403', 'client_forbidden / entitlement_inactive：客户端无权访问，或服务已到期、被停用。'],
             ['409', 'connection_credential_bound：连接凭据已绑定其他客户端账号。'],
-            ['404', 'not_found：端点或协议资源不存在。'],
+            ['404', 'not_found / no_candidate：端点或资源不存在；播放解析没有找到资源。'],
             ['405', 'method_not_allowed：HTTP 方法不符合端点定义，同时返回 Allow。'],
             ['429', 'rate_limited：请求或强制刷新频率超限。'],
-            ['502', 'upstream_unavailable：Provider 上游暂时不可用。'],
+            ['501', 'not_supported：请求的能力未实现。'],
+            ['502', 'upstream_unavailable / all_resolvers_failed / quality_unavailable：上游暂时不可用或播放解析失败。'],
             ['504', 'provider_timeout：Provider 请求超过客户端 60 秒期限。'],
           ]} />
         </section>
@@ -459,7 +550,8 @@ Access-Control-Max-Age: 86400`}</Code>
         <section id="security">
           <h2>安全与合规</h2>
           <ul>
-            <li>完整 URL、Header 值和 Cookie 可能包含敏感信息，不得写入日志、分析数据或界面摘要。</li>
+            <li>完整 URL、Header 值、Cookie、访问令牌和客户端 Secret 可能包含敏感信息，不得写入日志、分析数据或界面摘要。</li>
+            <li>只依赖用户凭证时，凭证泄露后任何人都能调用 Provider；需要限制调用方时应启用客户端签名。</li>
             <li>客户端允许 URL 携带不透明查询参数，但不得解析、修改或向其他来源转发。</li>
             <li>播放 URL 应短期有效，不得暴露上游长期凭证；日志不得记录完整播放 URL。</li>
             <li>发现文件中的端点必须与 Provider 连接地址同源，客户端拒绝重定向和带账号密码的 URL。</li>

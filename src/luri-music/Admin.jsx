@@ -15,8 +15,9 @@ const ADMIN_NAV = [
   ['users', 'users', '用户管理'],
   ['admins', 'shield', '管理员账号'],
   ['email', 'mail', 'SMTP 邮件'],
+  ['providers', 'key', 'Provider 接入'],
 ];
-const ADMIN_PAGE_TITLES = { users: '用户管理', admins: '管理员账号', email: 'SMTP 邮件' };
+const ADMIN_PAGE_TITLES = { users: '用户管理', admins: '管理员账号', email: 'SMTP 邮件', providers: 'Provider 接入' };
 
 export default function Admin() {
   const [booting, setBooting] = useState(true); const [admin, setAdmin] = useState(null); const [page, setPage] = useState('users'); const [turnstile, setTurnstile] = useState({ enabled: false, siteKey: '' }); const [toast, setToast] = useState(null); const [accountOpen, setAccountOpen] = useState(false); const [navOpen, setNavOpen] = useState(false); const [passwordOpen, setPasswordOpen] = useState(false);
@@ -59,7 +60,7 @@ export default function Admin() {
     {navOpen && <button className="admin-nav-backdrop" type="button" aria-label="关闭后台导航" onClick={() => setNavOpen(false)} />}
     <section className="admin-content">
       <header><button ref={navTriggerRef} className="admin-nav-toggle" type="button" aria-label="打开后台导航" aria-controls="admin-navigation" aria-expanded={navOpen} onClick={() => setNavOpen(true)}><AdminIcon name="menu" /></button><div className="admin-context"><small>管理控制台</small><strong>{ADMIN_PAGE_TITLES[page]}</strong></div><div className="admin-header-actions"><ThemeToggle /><div className="admin-current-account"><button className="admin-account-trigger" type="button" aria-expanded={accountOpen} aria-label={`当前登录账号 ${admin.username}`} onClick={() => setAccountOpen((value) => !value)}><AdminIcon name="user" /><span>{admin.username}</span><AdminIcon name="chevron" /></button>{accountOpen && <><button className="admin-account-backdrop" type="button" aria-label="关闭账号菜单" onClick={() => setAccountOpen(false)} /><section className="admin-account-menu"><button type="button" onClick={() => { setPasswordOpen(true); setAccountOpen(false); }}><AdminIcon name="lock" />修改密码</button><button type="button" className="admin-logout" onClick={logout}><AdminIcon name="logout" />退出登录</button></section></>}</div></div></header>
-      {page === 'users' && <Users notify={notify} />}{page === 'admins' && <AdminAccounts notify={notify} />}{page === 'email' && <EmailConfig notify={notify} />}
+      {page === 'users' && <Users notify={notify} />}{page === 'admins' && <AdminAccounts notify={notify} />}{page === 'email' && <EmailConfig notify={notify} />}{page === 'providers' && <ProviderClients notify={notify} />}
     </section>
     {passwordOpen && <AdminPassword close={() => setPasswordOpen(false)} notify={notify} />}
     <Toast toast={toast} onClose={() => setToast(null)} />
@@ -166,6 +167,25 @@ function EmailConfig({ notify }) {
   </section>;
 }
 
+// Client keys Providers issued to Zhiyin. Requests to a Provider whose address matches are signed
+// with its key, so a Provider with access control on accepts them.
+function ProviderClients({ notify }) {
+  const [items, setItems] = useState(null); const [editing, setEditing] = useState(null); const [saving, setSaving] = useState(false); const [confirmId, setConfirmId] = useState(''); const [revealed, setRevealed] = useState(null);
+  const load = useCallback(async () => { try { setItems((await api('admin/provider-clients')).items); } catch (error) { setItems([]); notify('接入密钥加载失败', error.message, 'error'); } }, [notify]);
+  useEffect(() => { load(); }, [load]);
+  const save = async (event) => { event.preventDefault(); const form = new FormData(event.currentTarget); setSaving(true); try { const data = await api('admin/provider-clients', { method: 'POST', body: JSON.stringify({ id: editing.id || undefined, providerOrigin: form.get('providerOrigin'), clientKey: form.get('clientKey'), secret: form.get('secret') || undefined, enabled: form.get('enabled') === 'on' }) }); setItems(data.items); setEditing(null); notify('保存成功', '最多 1 分钟内用于新的 Provider 请求', 'success'); } catch (error) { notify('保存失败', error.message, 'error'); } finally { setSaving(false); } };
+  const toggle = async (item) => { try { setItems((await api('admin/provider-clients', { method: 'POST', body: JSON.stringify({ id: item.id, enabled: !item.enabled }) })).items); notify(item.enabled ? '已停用' : '已启用', item.providerOrigin, 'success'); } catch (error) { notify('保存失败', error.message, 'error'); } };
+  const remove = async (item) => { if (confirmId !== item.id) { setConfirmId(item.id); return; } try { setItems((await api('admin/provider-client-delete', { method: 'POST', body: JSON.stringify({ id: item.id }) })).items); setConfirmId(''); notify('删除成功', '发往该 Provider 的请求将不再签名', 'success'); } catch (error) { notify('删除失败', error.message, 'error'); } };
+  const reveal = async (item) => { try { setRevealed({ ...item, secret: (await api('admin/provider-client-secret', { method: 'POST', body: JSON.stringify({ id: item.id }) })).secret }); } catch (error) { notify('读取失败', error.message, 'error'); } };
+  const copy = (value, label) => navigator.clipboard.writeText(value).then(() => notify('复制成功', label + ' 已复制', 'success')).catch(() => notify('复制失败', '请手动选择后复制', 'warning'));
+  return <section className="admin-view">
+    <div className="view-heading"><div><span>PROVIDER CLIENTS</span><h1>Provider 接入密钥</h1><p>Provider 开启访问控制后，只接受签名请求。在 Provider 后台创建标准签名白名单，把得到的 Key 和 Secret 填到这里。</p></div><button className="admin-secondary-action primary" type="button" onClick={() => setEditing({})}>添加接入密钥</button></div>
+    <div className="admin-account-list">{!items ? <div className="admin-inline-loading"><Spinner />加载中…</div> : items.length ? items.map((item) => <div key={item.id}><span><b>{item.providerOrigin}</b><small>Key {item.clientKey} · Secret ••••{item.secretHint} · {item.enabled ? '启用' : '已停用'} · 更新于 {formatDate(item.updatedAt)}</small></span><span className="row-actions"><button type="button" onClick={() => reveal(item)}>查看 Secret</button><button type="button" onClick={() => setEditing(item)}>编辑</button><button type="button" onClick={() => toggle(item)}>{item.enabled ? '停用' : '启用'}</button><button type="button" className={confirmId === item.id ? 'confirm-delete' : ''} onClick={() => remove(item)}>{confirmId === item.id ? '确认删除' : '删除'}</button></span></div>) : <div className="admin-empty"><strong>还没有接入密钥</strong><span>未配置时，发往 Provider 的请求不签名。</span></div>}</div>
+    {editing && <AdminOverlay label={editing.id ? '编辑接入密钥' : '添加接入密钥'} onClose={() => setEditing(null)}><section className="small-modal"><button className="modal-close" onClick={() => setEditing(null)} aria-label="关闭">×</button><header><span>CLIENT SIGNATURE</span><h2>{editing.id ? '编辑接入密钥' : '添加接入密钥'}</h2><p>请求地址与 Provider 地址同源时，知音后端会用这组密钥签名。Secret 加密保存。</p></header><form className="admin-form" onSubmit={save}><label>Provider 地址<input name="providerOrigin" defaultValue={editing.providerOrigin} placeholder="https://provider.example" required autoFocus /></label><label>Key<input name="clientKey" defaultValue={editing.clientKey} maxLength="128" autoComplete="off" spellCheck="false" required /></label><PasswordField label={editing.id ? 'Secret（留空保持不变）' : 'Secret'} name="secret" minLength="32" maxLength="256" autoComplete="off" spellCheck="false" required={!editing.id} /><label className="admin-checkbox"><input name="enabled" type="checkbox" defaultChecked={editing.id ? editing.enabled : true} />启用</label><button className="primary" disabled={saving}>{saving ? <><Spinner /> 保存中…</> : '保存'}</button></form></section></AdminOverlay>}
+    {revealed && <AdminOverlay label="查看 Secret" onClose={() => setRevealed(null)}><section className="small-modal"><button className="modal-close" onClick={() => setRevealed(null)} aria-label="关闭">×</button><header><span>CLIENT SECRET</span><h2>{revealed.providerOrigin}</h2><p>仅在需要时查看，不要通过不安全的渠道发送。</p></header><div className="admin-config-list"><div><span>Key</span><strong>{revealed.clientKey}</strong></div><div><span>Secret</span><strong className="admin-secret-value">{revealed.secret}</strong></div></div><div className="admin-dialog-actions"><button type="button" onClick={() => copy(revealed.clientKey, 'Key')}>复制 Key</button><button type="button" className="primary" onClick={() => copy(revealed.secret, 'Secret')}>复制 Secret</button></div></section></AdminOverlay>}
+  </section>;
+}
+
 function AdminIcon({ name }) {
   const paths = {
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
@@ -177,6 +197,7 @@ function AdminIcon({ name }) {
     lock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
     logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></>,
     menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
+    key: <><circle cx="8" cy="15" r="4" /><path d="m11 12 9-9M17 6l3 3M15 8l2 2" /></>,
   };
   return <svg className="admin-icon" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
