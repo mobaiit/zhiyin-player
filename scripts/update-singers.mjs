@@ -1,195 +1,147 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pinyin } from 'pinyin-pro';
 
-const SONG_LIMIT = 1000;
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const NETEASE_TOPLIST_URL = 'https://music.163.com/api/toplist/detail';
-const NETEASE_PLAYLIST_URL = 'https://music.163.com/api/v6/playlist/detail';
-const QQ_API_URL = 'https://u.y.qq.com/cgi-bin/musicu.fcg';
-const GENERATED_AT = new Date().toISOString();
+const NETEASE_URL = 'https://music.163.com/api/v1/artist/list';
+const QQ_URL = 'https://u.y.qq.com/cgi-bin/musicu.fcg';
+const REPORT_NOTES = `\n## 筛选字段与前端加载\n\n网易云分类记录包含 musicSize（歌曲数）和 albumSize（专辑数）。QQ 分类记录不含这两个数字，但批量 \`Concern.ConcernSystemServer/cgi_qry_concern_num\` 接口可返回 user_fansnum（关注数）。单个 QQ 歌手的 \`musichall.song_list_server/GetSingerSongList\` 还能返回 totalNum（歌曲总数）；逐个查询成本更高，因此未作为默认筛选。\n\n歌手池只包含显示名和预计算的拼音首字母，由应用静态加载；输入搜索词时不发第三方网络请求。名称和拼音都可能与平台后续数据不同，更新时重新运行脚本。\n`;
+const BROAD = process.argv.includes('--all');
+const NETEASE_PER_CATEGORY = BROAD ? 1000 : 200;
+const QQ_MIN_FANS = 1000;
+const NETEASE_MIN_SONGS = 10;
+const PAGE_SIZE = 100;
+const QQ_PAGE_SIZE = 80;
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
-const headers = (referer) => ({
-  accept: 'application/json, text/plain, */*',
-  referer,
-  'user-agent': 'Mozilla/5.0 (compatible; LuriSingerPool/1.0)',
-});
-
-async function getJson(url, referer, attempts = 3) {
+async function getJson(url, referer) {
   let lastError;
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
-      const response = await fetch(url, { headers: headers(referer) });
-      if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      const response = await fetch(url, {
+        headers: { accept: 'application/json, text/plain, */*', referer, 'user-agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status} ${url}`);
       return await response.json();
     } catch (error) {
       lastError = error;
-      if (attempt < attempts) await new Promise((done) => setTimeout(done, attempt * 500));
+      if (attempt < 3) await sleep(500 * (attempt + 1));
     }
   }
   throw lastError;
 }
 
-function qqUrl(requests) {
-  const data = { comm: { cv: 1602, ct: 20 }, ...requests };
-  const url = new URL(QQ_API_URL);
-  url.searchParams.set('data', JSON.stringify(data));
-  return url;
+function qqRequest(name, module, method, param) {
+  const url = new URL(QQ_URL);
+  url.searchParams.set('data', JSON.stringify({ comm: { cv: 1602, ct: 20 }, [name]: { module, method, param } }));
+  return getJson(url, 'https://y.qq.com/').then((payload) => {
+    if (payload.code !== 0 || payload[name]?.code !== 0) throw new Error(`QQ Music ${method} failed`);
+    return payload[name].data;
+  });
 }
 
 export function normalizeSingerName(value) {
-  return String(value || '')
-    .normalize('NFKC')
-    .replace(/[\u200B-\u200D\u2060\uFEFF]/gu, '')
-    .trim()
-    .replace(/\s+/gu, ' ')
-    .toLocaleLowerCase();
+  return String(value || '').normalize('NFKC').replace(/[\u200B-\u200D\u2060\uFEFF]/gu, '').trim().replace(/\s+/gu, ' ');
 }
 
-function addUniqueSongs(target, seen, songs, songId, artists, chart, limit = SONG_LIMIT) {
-  let added = 0;
-  for (const song of songs) {
-    if (target.length >= limit) break;
-    const id = songId(song);
-    if (id === undefined || id === null || id === '' || seen.has(String(id))) continue;
-    seen.add(String(id));
-    target.push({ id: String(id), artists: artists(song) });
-    added += 1;
-  }
-  if (added) chart.uniqueSongsUsed = added;
+function addSinger(pool, raw, score = 0) {
+  const name = normalizeSingerName(raw);
+  const key = name.toLocaleLowerCase();
+  if (key && (!pool.has(key) || score > pool.get(key).score)) pool.set(key, { name, score });
 }
 
-async function fetchNeteaseSongs() {
-  const catalog = await getJson(NETEASE_TOPLIST_URL, 'https://music.163.com/');
-  const songs = [];
-  const seen = new Set();
-  const charts = [];
-
-  for (const item of catalog.list || []) {
-    if (songs.length >= SONG_LIMIT) break;
-    const url = new URL(NETEASE_PLAYLIST_URL);
-    url.searchParams.set('id', item.id);
-    url.searchParams.set('n', Math.max(Number(item.trackCount) || 1000, 1000));
-    const payload = await getJson(url, 'https://music.163.com/');
-    const tracks = payload.playlist?.tracks || [];
-    const chart = { id: String(item.id), name: item.name, fetchedSongs: tracks.length };
-    addUniqueSongs(songs, seen, tracks, (track) => track.id, (track) => track.ar || [], chart);
-    charts.push(chart);
-  }
-
-  if (songs.length < SONG_LIMIT) throw new Error(`网易榜单仅抓到 ${songs.length} 首去重歌曲`);
-  return { songs, charts };
-}
-
-async function fetchQqSongs() {
-  const catalog = await getJson(qqUrl({
-    toplist: { module: 'musicToplist.ToplistInfoServer', method: 'GetAll', param: {} },
-  }), 'https://y.qq.com/');
-  const toplists = (catalog.toplist?.data?.group || []).flatMap((group) => group.toplist || []);
-  const songs = [];
-  const seen = new Set();
-  const charts = [];
-
-  for (const item of toplists) {
-    if (songs.length >= SONG_LIMIT) break;
-    const requested = Math.max(Number(item.totalNum) || 100, 100);
-    const payload = await getJson(qqUrl({
-      detail: {
-        module: 'musicToplist.ToplistInfoServer',
-        method: 'GetDetail',
-        param: { topId: item.topId, offset: 0, num: requested, period: item.period || '' },
-      },
-    }), 'https://y.qq.com/');
-    const tracks = payload.detail?.data?.songInfoList || [];
-    const chart = { id: String(item.topId), name: item.title, fetchedSongs: tracks.length };
-    addUniqueSongs(songs, seen, tracks, (track) => track.mid || track.id, (track) => track.singer || [], chart);
-    charts.push(chart);
-  }
-
-  if (songs.length < SONG_LIMIT) throw new Error(`QQ 音乐榜单仅抓到 ${songs.length} 首去重歌曲`);
-  return { songs, charts };
-}
-
-function collectSingers(songs) {
-  const singers = new Map();
-  for (const song of songs) {
-    for (const artist of song.artists) {
-      const name = String(artist?.name || '').normalize('NFKC').trim().replace(/\s+/gu, ' ');
-      const key = normalizeSingerName(name);
-      if (key && !singers.has(key)) singers.set(key, name);
+async function fetchNetease() {
+  const pool = new Map();
+  const categories = [];
+  for (const type of [1, 2, 3]) for (const area of [7, 96, 8, 16, 0]) {
+    let received = 0;
+    let kept = 0;
+    let more = false;
+    for (let offset = 0; offset < NETEASE_PER_CATEGORY; offset += PAGE_SIZE) {
+      const url = new URL(NETEASE_URL);
+      for (const [key, value] of Object.entries({ type, area, initial: -1, limit: PAGE_SIZE, offset })) url.searchParams.set(key, value);
+      const payload = await getJson(url, 'https://music.163.com/');
+      if (payload.code !== 200 || !Array.isArray(payload.artists)) throw new Error(`NetEase artist list failed: ${url}`);
+      received += payload.artists.length;
+      more = payload.more === true;
+      for (const artist of payload.artists) {
+        if (BROAD || Number(artist.musicSize) >= NETEASE_MIN_SONGS) {
+          addSinger(pool, artist.name);
+          kept += 1;
+        }
+      }
+      if (!more || payload.artists.length < PAGE_SIZE) break;
+      await sleep(60);
     }
+    categories.push({ type, area, received, kept, more });
+    console.log(`NetEase ${type}/${area}: ${received} rows, ${kept} qualified`);
   }
-  return singers;
+  return { pool, categories };
 }
 
-function formatSingerModule(singers, stats) {
-  const names = [...singers.values()].sort((left, right) => left.localeCompare(right, 'zh-Hans-CN', { sensitivity: 'base' }));
-  const rows = names.map((name) => `  ${JSON.stringify(name)},`).join('\n');
-  return `// Generated by npm run update:singers at ${GENERATED_AT}.
-// Songs: NetEase ${stats.neteaseSongs}, QQ Music ${stats.qqSongs}; normalized singers: ${stats.mergedSingers}.
-export const SINGERS = [
-${rows}
-];
-`;
+async function fetchQq() {
+  const pool = new Map();
+  let total = null;
+  let received = 0;
+  let qualified = 0;
+  for (let offset = 0; total === null || offset < total; offset += QQ_PAGE_SIZE) {
+    const data = await qqRequest('singer', 'Music.SingerListServer', 'get_singer_list', {
+      area: -100, sex: -100, genre: -100, index: -100, sin: offset, cur_page: 1 + Math.floor(offset / QQ_PAGE_SIZE),
+    });
+    if (!Array.isArray(data?.singerlist) || !Number.isInteger(data.total) || !data.singerlist.length) throw new Error(`QQ artist list failed at ${offset}`);
+    if (total !== null && total !== data.total) throw new Error(`QQ artist total changed: ${total} -> ${data.total}`);
+    total = data.total;
+    received += data.singerlist.length;
+    if (BROAD) {
+      data.singerlist.forEach((artist) => addSinger(pool, artist.singer_name));
+      qualified += data.singerlist.length;
+    } else {
+      const fans = await qqRequest('fans', 'Concern.ConcernSystemServer', 'cgi_qry_concern_num', {
+        vec_userinfo: data.singerlist.map((artist) => ({ usertype: 1, userid: artist.singer_mid })),
+      });
+      if (!fans?.map_singer_num) throw new Error(`QQ fan counts unavailable at ${offset}`);
+      for (const artist of data.singerlist) {
+        const fanCount = Number(fans.map_singer_num[artist.singer_mid]?.user_fansnum);
+        if (fanCount >= QQ_MIN_FANS) {
+          addSinger(pool, artist.singer_name, fanCount);
+          qualified += 1;
+        }
+      }
+    }
+    if (offset % 1600 === 0) console.log(`QQ Music ${Math.min(offset + QQ_PAGE_SIZE, total)}/${total}`);
+    await sleep(60);
+  }
+  return { pool, total, received, qualified };
 }
 
-function chartTable(charts) {
-  return charts.map((chart) => `| ${chart.id} | ${String(chart.name).replaceAll('|', '\\|')} | ${chart.fetchedSongs} | ${chart.uniqueSongsUsed || 0} |`).join('\n');
+function initials(name) {
+  return pinyin(name, { pattern: 'first', toneType: 'none', type: 'array' }).join('').normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 }
 
-function formatReport(netease, qq, stats) {
-  return `# 本地歌手池抓取统计
+function singerModule(pool, timestamp) {
+  const names = [...pool.values()].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh-Hans-CN')).map((item) => item.name);
+  return `// Generated by npm run update:singers at ${timestamp}.\n// [name, precomputed pinyin initials]\nexport const SINGERS = [\n${names.map((name) => `  [${JSON.stringify(name)},${JSON.stringify(initials(name))}],`).join('\n')}\n];\n`;
+}
 
-- 抓取时间（UTC）：${GENERATED_AT}
-- 网易榜单歌曲：${stats.neteaseSongs} 首；标准化去重歌手：${stats.neteaseSingers} 名
-- QQ 音乐榜单歌曲：${stats.qqSongs} 首；标准化去重歌手：${stats.qqSingers} 名
-- 两平台合并：${stats.mergedSingers} 名（重合 ${stats.overlapSingers} 名）
-
-口径：按平台官方榜单目录顺序抓取，歌曲 ID 去重后各取前 ${SONG_LIMIT} 首。歌手名经过 Unicode NFKC、移除零宽字符、去除首尾空白、连续空白合并为一个空格、转小写生成去重键；歌手池展示名保留接口中的首个标准化原文。
-
-## 网易榜单
-
-数据源：\`${NETEASE_TOPLIST_URL}\` 及榜单详情接口。
-
-| 榜单 ID | 榜单 | 接口返回歌曲 | 纳入的去重歌曲 |
-| --- | --- | ---: | ---: |
-${chartTable(netease.charts)}
-
-## QQ 音乐榜单
-
-数据源：\`${QQ_API_URL}\` 的 \`GetAll\` 与 \`GetDetail\`。
-
-| 榜单 ID | 榜单 | 接口返回歌曲 | 纳入的去重歌曲 |
-| --- | --- | ---: | ---: |
-${chartTable(qq.charts)}
-`;
+function report(netease, qq, merged, timestamp) {
+  const rows = netease.categories.map((row) => `| ${row.type} | ${row.area} | ${row.received} | ${row.kept} | ${row.more ? '是' : '否'} |`).join('\n');
+  const neteaseRows = netease.categories.reduce((sum, row) => sum + row.received, 0);
+  return `# 本地歌手池抓取统计\n\n- 抓取时间（UTC）：${timestamp}\n- 模式：${BROAD ? '广覆盖（--all）' : '作品量与关注数筛选'}\n- 网易云分类：15 个类型/地区组合，共返回 ${neteaseRows} 条，筛选后名称去重 ${netease.pool.size} 名。\n- QQ 全部歌手分类：接口报告 ${qq.total} 条，实际返回 ${qq.received} 条，筛选后 ${qq.qualified} 条、名称去重 ${qq.pool.size} 名。\n- 合并去重：${merged.size} 名。\n\n默认口径：网易云各分类前 ${NETEASE_PER_CATEGORY} 条，且歌曲数 ≥ ${NETEASE_MIN_SONGS}；QQ 抓取全部分类页，仅保留关注数 ≥ ${QQ_MIN_FANS} 的歌手。关注数与作品量只是可核验的筛选指标，不能准确判定歌手身份或作品质量。\n\n运行 \`npm run update:singers -- --all\` 可抓取 QQ 分类接口全部返回条目和网易云每类前 1000 条。网易云接口每页最多有效返回 100 条，offset=900 仍可能显示 more=true，但 offset=1000 返回空页；因此单个分类不能保证全量。QQ 接口按 total 分页，每页实际返回 80 条。上述接口只在更新本地数据时使用，浏览器联想不请求第三方。\n\n去重：歌手名经 Unicode NFKC、零宽字符清理、空白合并、不区分大小写后比较；拼音首字母由 pinyin-pro 在更新时预计算。\n\n## 网易云分类明细\n\n| 类型 | 地区 | 返回条目 | 满足条件 | 仍有后续 |\n| ---: | ---: | ---: | ---: | :---: |\n${rows}\n`;
 }
 
 async function main() {
-  const [netease, qq] = await Promise.all([fetchNeteaseSongs(), fetchQqSongs()]);
-  const neteaseSingers = collectSingers(netease.songs);
-  const qqSingers = collectSingers(qq.songs);
-  const merged = new Map(neteaseSingers);
-  for (const [key, name] of qqSingers) if (!merged.has(key)) merged.set(key, name);
-  const overlap = [...neteaseSingers.keys()].filter((key) => qqSingers.has(key)).length;
-  const stats = {
-    neteaseSongs: netease.songs.length,
-    qqSongs: qq.songs.length,
-    neteaseSingers: neteaseSingers.size,
-    qqSingers: qqSingers.size,
-    overlapSingers: overlap,
-    mergedSingers: merged.size,
-  };
-
+  const timestamp = new Date().toISOString();
+  const [netease, qq] = await Promise.all([fetchNetease(), fetchQq()]);
+  const merged = new Map(netease.pool);
+  for (const [key, singer] of qq.pool) if (!merged.has(key) || singer.score > merged.get(key).score) merged.set(key, singer);
   const singerPath = resolve(ROOT, 'src/data/singers.js');
   const reportPath = resolve(ROOT, 'docs/singer-pool-stats.md');
   await mkdir(dirname(singerPath), { recursive: true });
-  await writeFile(singerPath, formatSingerModule(merged, stats), 'utf8');
-  await writeFile(reportPath, formatReport(netease, qq, stats), 'utf8');
-  console.log(JSON.stringify(stats, null, 2));
+  await writeFile(singerPath, singerModule(merged, timestamp), 'utf8');
+  await writeFile(reportPath, report(netease, qq, merged, timestamp) + REPORT_NOTES, 'utf8');
+  console.log(JSON.stringify({ netease: netease.pool.size, qq: qq.pool.size, merged: merged.size }, null, 2));
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main().catch((error) => { console.error(error); process.exitCode = 1; });

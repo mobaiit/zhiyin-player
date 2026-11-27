@@ -1,6 +1,6 @@
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { ConfirmDialog, Toast } from '../luri-music/UiFeedback';
-import { SINGERS } from '../data/singers';
+import { singerSearchKey, singerSuggestionsFor } from '../data/singer-search';
 import { songIdFor } from '../../shared/song-identity';
 import PlayerTitle from '../components/PlayerTitle';
 import ThemeToggle from '../components/ThemeToggle';
@@ -114,7 +114,6 @@ const providerPayload = async (response) => {
   failure.code = detail.code || 'provider_request_failed'; failure.status = response.status;
   throw failure;
 };
-const singerSearchKey = (value) => String(value || '').normalize('NFKC').trim().toLocaleLowerCase().replace(/\s+/g, ' ');
 // The source status is shown only while an operation is in progress.
 TEXT.source = '';
 TEXT.unavailable = '加载失败，请重新播放';
@@ -392,8 +391,8 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   const resolveSongId = current?.songId; const resolveUrl = current?.url;
   const lyricsTrackRef = useRef(current); lyricsTrackRef.current = current;
   const singerQuery = singerSearchKey(query);
-  const singerSuggestions = singerQuery ? SINGERS.filter((singer) => singerSearchKey(singer).startsWith(singerQuery)) : [];
-  const searchSuggestions = singerSuggestions.length ? singerSuggestions : recentSearches;
+  const singerSuggestions = useMemo(() => singerSuggestionsFor(singerQuery), [singerQuery]);
+  const searchSuggestions = singerQuery ? singerSuggestions : recentSearches;
   const searchHistoryOpen = searchFocused && searchSuggestions.length > 0;
   const lyricLines = useMemo(() => {
     const translatedByTime = new Map(parsedLyrics(translation).filter((line) => line.time >= 0).map((line) => [line.time.toFixed(3), line.text]));
