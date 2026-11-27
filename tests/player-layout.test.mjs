@@ -217,6 +217,19 @@ test('list pages keep their toolbar at the top, and the phone platform switch st
   assert.match(sticky, /\.music-app-featured-title \.music-app-segment button \{ min-height: 30px; padding: 0 10px; border-radius: 8px; font-size: 13px; \}/);
 });
 
+test('list playback: shuffle starts at the chosen song, failures stop after a run, the next address loads early', () => {
+  assert.match(music, /if \(playbackMode === 'shuffle'\) resetShufflePlayback\(queue, track\.songId\);\s*setSwitchDirection\('next'\); selectTrack\(track\.songId, queue\);/, 'A chosen song opens a fresh shuffle order');
+  assert.match(music, /const first = playbackMode === 'shuffle' \? list\[Math\.floor\(Math\.random\(\) \* list\.length\)\] : list\[0\];/, 'Play all in shuffle starts anywhere');
+  assert.match(music, /onClick=\{\(\) => playAll\(selectedPlaylist\.tracks, `playlist:\$\{selectedPlaylist\.id\}`\)\}>播放全部<\/button>/, 'Playlist play all marks its list');
+  assert.match(music, /const LIST_FAILURE_LIMIT = 8;/);
+  assert.match(music, /if \(failed >= LIST_FAILURE_LIMIT\) \{[^}]*setPlaybackState\('error'\);/, 'A run of failures stops the list');
+  assert.match(music, /if \(playbackMode === 'shuffle'\) \{\s*const state = syncShufflePlayback\(queue\);[\s\S]*?state\.index \+= 1;/, 'Skipping a failed song follows the shuffle order');
+  assert.match(music, /\} else if \(unreachable\(error\)\) \{[\s\S]*?unreachableRetriesRef\.current\.add\(resolvingTrack\.songId\); setPlaybackAttempt/, 'An unreachable Provider gets one more try');
+  assert.match(music, /onPlaying=\{\(\) => \{[^}]*resolveUpcomingTrack\(\);/, 'The next address is asked for while a song plays');
+  assert.match(music, /const TrackRow = memo\(function TrackRow\(/, 'Rows are memoized');
+  assert.match(music, /const lyricLines = useMemo\(\(\) => \{/, 'Lyrics parse only when they change');
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);
@@ -308,7 +321,8 @@ test('favourites store artwork; the Provider is asked only for the playing song 
   for (const value of ['data:image/png;base64,AAAA', 'blob:https://zhiyin.us.ci/1', '', undefined]) assert.equal(storableArt(value), '', String(value));
   assert.match(music, /const artworkFor = \(track\) => \{[\s\S]*?songCache\(\)\[track\.songId\]\?\.art[\s\S]*?track\.binding\?\.art/);
   assert.doesNotMatch(music, /prefetch/i, 'Lists never fetch artwork in bulk');
-  assert.match(music, /<Artwork src=\{rowArt\(track\)\} loading="lazy" onError=\{\(\) => requestRowArtwork\(track\)\} onUnavailable=\{\(\) => requestRowArtwork\(track\)\} \/>/, 'A list cover that fails, or has no usable URL, may ask the Provider');
+  assert.match(music, /<Artwork src=\{art\} loading="lazy" onError=\{\(\) => requestRowArtwork\(track\)\} onUnavailable=\{\(\) => requestRowArtwork\(track\)\} \/>/, 'A list cover that fails, or has no usable URL, may ask the Provider');
+  assert.match(music, /<TrackRow [^>]*art=\{rowArt\(track\)\}/, 'Each row gets its cover from rowArt');
   assert.match(music, /new IntersectionObserver\([\s\S]*?observer\.disconnect\(\); onUnavailableRef\.current\?\.\(\);[\s\S]*?rootMargin: '200px 0px'/, 'Missing covers are requested only once they scroll near the viewport');
   assert.match(music, /function requestRowArtwork\(track\) \{[\s\S]*?state\.tried\.has\(track\.songId\)\) return;[\s\S]*?state\.tried\.add\(track\.songId\)/, 'Each song is requested at most once per session');
   assert.match(music, /while \(state\.active < 2 && state\.queue\.length\)/, 'At most two list cover requests run at once');
