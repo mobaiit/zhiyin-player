@@ -50,6 +50,43 @@ test('a wrong current password changes nothing', async () => {
   assert.ok(!db.statements.some((item) => /^(?:UPDATE|DELETE)/.test(item.sql)));
 });
 
+test('changing the user name saves a trimmed name of at most 40 characters', async () => {
+  const user = { 'SELECT u.id': { id: 'u1', email: 'a@example.test', display_name: 'A', session_expires_at: '2030-01-01T00:00:00.000Z' } };
+  const db = fakeDatabase(user);
+  const response = await handleLuriMusic(request('auth/profile', { name: `  ${'名'.repeat(45)}  ` }), { LURI_MUSIC_DB: db });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { name: '名'.repeat(40) });
+  const updated = db.statements.find((item) => item.sql.startsWith('UPDATE luri_music_users SET display_name'));
+  assert.equal(updated.values[0], '名'.repeat(40));
+  assert.equal(updated.values[2], 'u1');
+  const empty = fakeDatabase(user);
+  assert.equal((await handleLuriMusic(request('auth/profile', { name: '   ' }), { LURI_MUSIC_DB: empty })).status, 400);
+  assert.ok(!empty.statements.some((item) => item.sql.startsWith('UPDATE')), 'An empty name changes nothing');
+});
+
+test('the account shows the name and time left on the service, settings show the end date', () => {
+  const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
+  const source = music.slice(music.indexOf('const serviceTimeLeft = '), music.indexOf('const serviceEndDate = '));
+  const serviceTimeLeft = new Function(`${source}; return serviceTimeLeft;`)();
+  const now = Date.parse('2026-01-01T00:00:00.000Z'); const day = 864e5; const at = (days) => new Date(now + days * day).toISOString();
+  assert.equal(serviceTimeLeft(at(0.2), now), '服务剩余 1 天');
+  assert.equal(serviceTimeLeft(at(29), now), '服务剩余 29 天');
+  assert.equal(serviceTimeLeft(at(30), now), '服务剩余 1 个月');
+  assert.equal(serviceTimeLeft(at(364), now), '服务剩余 12 个月');
+  assert.equal(serviceTimeLeft(at(365), now), '服务剩余 1 年');
+  assert.equal(serviceTimeLeft(at(800), now), '服务剩余 2 年');
+  assert.equal(serviceTimeLeft(at(-1), now), '服务已过期');
+  assert.equal(serviceTimeLeft(null, now), '');
+  assert.match(music, /<button className="music-app-account" type="button" onClick=\{\(\) => navigate\('\/settings'\)\}><span>\{user\?\.name \|\| '访客模式'\}<\/span><small>\{!user \? '登录后同步音乐库' : !activeProvider \? '未启用 Provider' : serviceTimeLeft\(activeProvider\.expiresAt\) \|\| '服务可用'\}<\/small><\/button>/);
+  assert.match(music, /服务到期：<time dateTime=\{activeProvider\.expiresAt\}>\{serviceEndDate\(activeProvider\.expiresAt\)\}<\/time>/);
+  assert.match(music, /onClick=\{\(\) => onOpenSettings\?\.\('name'\)\}><b>修改用户名<\/b>/);
+  const shell = readFileSync(new URL('../src/luri-music/LuriMusic.jsx', import.meta.url), 'utf8');
+  assert.match(shell, /\{dialog === 'name' && <NameDialog /);
+  assert.match(shell, /api\('auth\/profile', \{ method: 'POST'/);
+  const providers = readFileSync(new URL('../functions/luri-music/providers.js', import.meta.url), 'utf8');
+  assert.match(providers, /const publicConfig = \(row, activeId, presentation = null\) => \(\{ expiresAt: serviceExpiresAt\(row, presentation\),/, 'Providers report when the service ends');
+});
+
 test('settings group account, playback and about rows and hide sign-in-only rows from guests', () => {
   const music = readFileSync(new URL('../src/pages/Music.jsx', import.meta.url), 'utf8');
   const settings = music.slice(music.indexOf("{listView === 'settings' &&"), music.indexOf("{!['playlists', 'settings', 'random'].includes(listView)"));
@@ -61,7 +98,7 @@ test('settings group account, playback and about rows and hide sign-in-only rows
 
 test('every signed-in endpoint answers an ended session with code login_required', async () => {
   // A cookie whose session is gone: the user lookup finds nothing.
-  for (const [method, path] of [['GET', 'library'], ['PUT', 'library'], ['GET', 'favorites'], ['PUT', 'favorites'], ['GET', 'providers'], ['POST', 'providers/p1/proxy'], ['PATCH', 'preferences'], ['POST', 'auth/password']]) {
+  for (const [method, path] of [['GET', 'library'], ['PUT', 'library'], ['GET', 'favorites'], ['PUT', 'favorites'], ['GET', 'providers'], ['POST', 'providers/p1/proxy'], ['PATCH', 'preferences'], ['POST', 'auth/password'], ['POST', 'auth/profile']]) {
     const response = await handleLuriMusic(new Request(`https://example.test/api/${path}`, { method, headers: { 'content-type': 'application/json', cookie: 'zy_music_session=ended' }, ...(method === 'GET' ? {} : { body: '{}' }) }), { LURI_MUSIC_DB: fakeDatabase() });
     assert.equal(response.status, 401, `${method} ${path}`);
     assert.deepEqual(await response.json(), { error: '请先登录', code: 'login_required' }, `${method} ${path}`);

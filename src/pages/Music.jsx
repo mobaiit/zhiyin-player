@@ -213,6 +213,16 @@ const SEARCH_SELECTION_LIMIT = 30;
 const WHOLE_LIST_SELECTION_LIMIT = 200;
 // Featured playlists come from the Provider's playlists capability.
 const FEATURED_PLATFORMS = [['netease', '网易云'], ['qq', 'QQ 音乐']];
+// Time left on the Provider's service: days under a month, months under a year, then years.
+const serviceTimeLeft = (expiresAt, now = Date.now()) => {
+  const end = Date.parse(expiresAt || ''); if (!Number.isFinite(end)) return '';
+  const days = Math.ceil((end - now) / 864e5);
+  if (days <= 0) return '服务已过期';
+  if (days < 30) return `服务剩余 ${days} 天`;
+  if (days < 365) return `服务剩余 ${Math.floor(days / 30)} 个月`;
+  return `服务剩余 ${Math.floor(days / 365)} 年`;
+};
+const serviceEndDate = (expiresAt) => { const end = Date.parse(expiresAt || ''); return Number.isFinite(end) ? new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(end)) : ''; };
 const playsLabel = (plays) => plays >= 1e8 ? `${(plays / 1e8).toFixed(1)}亿次播放` : plays >= 1e4 ? `${Math.round(plays / 1e4)}万次播放` : plays ? `${plays}次播放` : '';
 const featuredRoute = (path) => { const match = /^\/featured\/(netease|qq)\/(\d+)$/.exec(path || ''); return match ? { platform: match[1], id: match[2] } : null; };
 // Small headings in the desktop navigation, keyed by the index of the first item they head.
@@ -1633,7 +1643,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     <aside className="music-app-sidebar">
       <button className="music-app-brand" type="button" onClick={() => navigate('/')}><img src="/zhiyin-logo.png" alt="" /><span><b>知音</b><small>ZHÍYĪN MUSIC</small></span></button>
       <nav aria-label="音乐主导航">{shellNav.map(([path, label, icon], index) => <Fragment key={path}>{NAV_SECTIONS[index] && <span className="music-app-sidebar__label">{NAV_SECTIONS[index]}</span>}<button type="button" className={`${routePath === path || (path === '/' && (routePath === '/discover' || routePath?.startsWith('/featured/'))) || (path === '/playlists' && routePath?.startsWith('/playlists/')) ? 'active' : ''}${index === 3 || index === 7 ? ' is-section-start' : ''}`} onClick={() => navigate(path)}><i><MusicIcon name={icon} /></i><span>{label}</span>{path === '/favorites' && <em>{likedTracks.length}</em>}</button></Fragment>)}</nav>
-      <button className="music-app-account" type="button" onClick={() => navigate('/settings')}><span>{user?.name || '访客模式'}</span><small>{activeProvider?.displayName || activeProvider?.name || (user ? '未启用 Provider' : '登录后同步音乐库')}</small></button>
+      <button className="music-app-account" type="button" onClick={() => navigate('/settings')}><span>{user?.name || '访客模式'}</span><small>{!user ? '登录后同步音乐库' : !activeProvider ? '未启用 Provider' : serviceTimeLeft(activeProvider.expiresAt) || '服务可用'}</small></button>
     </aside>
     <section className="music-app-main">
       <header className="music-app-topbar">
@@ -1653,9 +1663,9 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
           {listView === 'local' && <div className="music-app-local-note"><div><b>播放此设备上的音乐</b><span>桌面端可选择整个文件夹；Android 建议选择一个或多个音频文件。不会上传、缓存或跨设备同步。</span></div><button className="music-app-primary" type="button" onClick={() => localFilesRef.current?.click()}>选择歌曲</button><button className="music-app-quiet music-app-folder-button" type="button" onClick={() => localFolderRef.current?.click()}>选择文件夹</button></div>}
           {listView === 'settings' && <div className="music-app-settings"><div className="music-app-settings__column">
             <section className="music-app-settings__account" aria-labelledby="music-account-title">
-              <div className="music-app-settings__profile"><span className="music-app-settings__avatar" aria-hidden="true">{user ? Array.from(user.name || '?')[0] : '访'}</span><div><h2 id="music-account-title">{accountBooting ? '正在恢复账户…' : user ? user.name : '访客模式'}</h2><p>{accountBooting ? '账户状态同步完成后即可使用在线功能' : user ? user.email : '登录后可同步音乐库，并配置 Provider 与播放音质。本机数据不会同步到其他设备。'}</p></div></div>
+              <div className="music-app-settings__profile"><span className="music-app-settings__avatar" aria-hidden="true">{user ? Array.from(user.name || '?')[0] : '访'}</span><div><h2 id="music-account-title">{accountBooting ? '正在恢复账户…' : user ? user.name : '访客模式'}</h2><p>{accountBooting ? '账户状态同步完成后即可使用在线功能' : user ? user.email : '登录后可同步音乐库，并配置 Provider 与播放音质。本机数据不会同步到其他设备。'}</p>{!accountBooting && user && <p className="music-app-settings__service">{!activeProvider ? '未启用 Provider' : activeProvider.expiresAt ? <>服务到期：<time dateTime={activeProvider.expiresAt}>{serviceEndDate(activeProvider.expiresAt)}</time> · {serviceTimeLeft(activeProvider.expiresAt).replace('服务', '')}</> : '服务到期：Provider 未提供'}</p>}</div></div>
               {!accountBooting && !user && <button className="music-app-settings__primary" type="button" onClick={() => onOpenAuth?.()}>登录 / 注册</button>}
-              {user && <div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('password')}><b>修改密码</b><span>修改后其他设备需要重新登录</span></button><button className="danger" type="button" onClick={() => onLogout?.()}><b>退出登录</b><span>退出当前设备</span></button></div>}
+              {user && <div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('name')}><b>修改用户名</b><span>{user.name}</span></button><button type="button" onClick={() => onOpenSettings?.('password')}><b>修改密码</b><span>修改后其他设备需要重新登录</span></button><button className="danger" type="button" onClick={() => onLogout?.()}><b>退出登录</b><span>退出当前设备</span></button></div>}
             </section>
             {user && <section className="music-app-settings__playback" aria-labelledby="music-playback-title"><h2 id="music-playback-title">播放</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenSettings?.('quality')}><b>播放音质</b><span>{QUALITY_META[playbackQuality]?.label || playbackQuality}</span></button><button type="button" onClick={() => onOpenSettings?.('providers')}><b>Provider 配置</b><span>{activeProvider?.displayName || '未启用'}</span></button></div></section>}
             <section className="music-app-settings__about" aria-labelledby="music-about-title"><h2 id="music-about-title">关于</h2><div className="music-app-settings__rows"><button type="button" onClick={() => onOpenAnnouncement?.()}><b>网站公告</b><span>查看最新公告</span></button><button type="button" onClick={() => onOpenSettings?.('terms')}><b>使用条款</b><span>服务与隐私说明</span></button>{docsEnabled && <button type="button" onClick={openDocs}><b>帮助与文档</b><span>在新标签页打开</span></button>}</div></section></div>

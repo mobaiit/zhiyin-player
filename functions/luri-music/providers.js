@@ -372,7 +372,15 @@ async function prepareCredential(manifest, providerUrl, data, user) {
   return { connectionType, authType, credential: { manifest }, account: null, initialAccess: { accessToken: '', expiresIn: 3600, authorization: null } };
 }
 
-const publicConfig = (row, activeId, presentation = null) => ({ id: row.id, providerId: row.provider_id, providerUrl: row.provider_url, displayName: row.display_name, protocolVersion: row.protocol_version, connectionType: row.auth_type === 'connection' ? (row.connection_type === 'official' ? 'official' : 'third_party') : row.connection_type || 'third_party', status: row.auth_type === 'connection' ? 'configured' : row.cached_status, presentation, lastSyncedAt: row.last_synced_at, active: row.id === activeId, createdAt: row.created_at });
+// When the service ends: the account's expiresAt, else a date the Provider shows as its valid
+// time (a connection has no account call, only the presentation it returned when connecting).
+const serviceExpiresAt = (row, presentation) => {
+  const cached = Date.parse(row.cached_expires_at || '');
+  if (Number.isFinite(cached)) return new Date(cached).toISOString();
+  const shown = presentation?.items?.find((item) => /有效|到期|过期|expire/i.test(item.label) && Number.isFinite(Date.parse(item.value)));
+  return shown ? new Date(Date.parse(shown.value)).toISOString() : null;
+};
+const publicConfig = (row, activeId, presentation = null) => ({ expiresAt: serviceExpiresAt(row, presentation), id: row.id, providerId: row.provider_id, providerUrl: row.provider_url, displayName: row.display_name, protocolVersion: row.protocol_version, connectionType: row.auth_type === 'connection' ? (row.connection_type === 'official' ? 'official' : 'third_party') : row.connection_type || 'third_party', status: row.auth_type === 'connection' ? 'configured' : row.cached_status, presentation, lastSyncedAt: row.last_synced_at, active: row.id === activeId, createdAt: row.created_at });
 
 export async function handleProviderRequest(request, env, action, user) {
   if (!user) return loginRequired();

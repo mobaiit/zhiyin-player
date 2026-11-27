@@ -230,6 +230,7 @@ html[data-theme="light"] .music-app-home-feature {
 .music-app-settings__profile { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .music-app-settings__profile > div { min-width: 0; }
 .music-app-settings__profile h2 { margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-app-settings__profile .music-app-settings__service { margin-top: 4px; color: var(--color-text-muted); }
 .music-app-settings__avatar {
   display: grid;
   flex: 0 0 auto;

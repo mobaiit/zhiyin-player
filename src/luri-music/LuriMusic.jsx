@@ -67,9 +67,11 @@ export default function LuriMusic({ active = true, standalone = false, docsEnabl
   const [routePath, setRoutePath] = useState(() => window.location.pathname || '/');
   const [cachedAccount] = useState(readAccountCache); const [booting, setBooting] = useState(() => !cachedAccount); const [user, setUser] = useState(() => cachedAccount?.user || null); const [providers, setProviders] = useState(() => cachedAccount?.providers || []); const [playbackQuality, setPlaybackQuality] = useState(() => cachedAccount?.playbackQuality || '128k'); const [turnstile, setTurnstile] = useState(() => cachedAccount?.turnstile || { enabled: false, siteKey: '' }); const [authMode, setAuthMode] = useState('login'); const [dialog, setDialog] = useState(''); const [, setMenuOpen] = useState(false); const [toast, setToast] = useState(null); const [announcement, setAnnouncement] = useState(shouldShowAnnouncement);
   const notify = useCallback((title, message = '', type = 'info') => setToast({ title, message, type }), []);
-  const loadProviders = useCallback(async (identity = null) => { const data = await api('providers'); const items = data.items || []; const quality = data.preferences?.playbackQuality === 'auto' ? '128k' : data.preferences?.playbackQuality || '128k'; setProviders(items); setPlaybackQuality(quality); const snapshot = identity || readAccountCache(); if (snapshot) writeAccountCache({ ...snapshot, providers: items, playbackQuality: quality }); return items; }, []);
+  const loadProviders = useCallback(async (identity = null) => { const data = await api('providers'); const items = data.items || []; const quality = data.preferences?.playbackQuality === 'auto' ? '128k' : data.preferences?.playbackQuality || '128k'; setProviders((current) => JSON.stringify(current) === JSON.stringify(items) ? current : items); setPlaybackQuality(quality); const snapshot = identity || readAccountCache(); if (snapshot) writeAccountCache({ ...snapshot, providers: items, playbackQuality: quality }); return items; }, []);
   const refresh = useCallback(async () => { const data = await api('auth/me'); const nextTurnstile = data.turnstile || { enabled: false, siteKey: '' }; setUser(data.user || null); setTurnstile(nextTurnstile); if (data.user && data.sessionExpiresAt) await loadProviders({ user: data.user, providers: [], playbackQuality: '128k', turnstile: nextTurnstile, expiresAt: data.sessionExpiresAt }); else { clearAccountCache(); setProviders([]); setPlaybackQuality('128k'); } return data.user; }, [loadProviders]);
   useEffect(() => { if (cachedAccount) return; refresh().catch((error) => notify('加载失败', error.message, 'error')).finally(() => setBooting(false)); }, [cachedAccount, refresh, notify]);
+  // A cached account still reloads its Providers once in the background, so the service end date stays current.
+  useEffect(() => { if (cachedAccount) loadProviders().catch(() => {}); }, [cachedAccount, loadProviders]);
   // The page signs in from a cached account without asking the server, so a session ended
   // elsewhere (password changed, signed out, expired) is only noticed when a request fails.
   // Sign this device out once and ask to log in again instead of blaming the Provider.
@@ -110,6 +112,7 @@ export default function LuriMusic({ active = true, standalone = false, docsEnabl
     {dialog === 'providers' && <ProviderDialog user={user} providers={providers} refresh={loadProviders} close={() => setDialog('')} notify={notify} />}
     {dialog === 'quality' && <QualityDialog value={playbackQuality} saved={(quality) => { setPlaybackQuality(quality); const snapshot = readAccountCache(); if (snapshot) writeAccountCache({ ...snapshot, playbackQuality: quality }); setDialog(''); }} close={() => setDialog('')} notify={notify} />}
     {dialog === 'password' && <PasswordDialog close={() => setDialog('')} notify={notify} />}
+    {dialog === 'name' && <NameDialog name={user?.name || ''} saved={(name) => { setUser((value) => value && { ...value, name }); const snapshot = readAccountCache(); if (snapshot) writeAccountCache({ ...snapshot, user: { ...snapshot.user, name } }); setDialog(''); }} close={() => setDialog('')} notify={notify} />}
     {dialog === 'terms' && <LegalDocument type="terms" close={() => setDialog('')} />}
     <Toast toast={toast} onClose={() => setToast(null)} />
   </main>;
@@ -225,6 +228,11 @@ function ProviderInfo({ provider, showProviderStatus = false, showConnection = f
 function PasswordDialog({ close, notify }) {
   const [loading, setLoading] = useState(false); const submit = async (event) => { event.preventDefault(); const form = new FormData(event.currentTarget); if (form.get('next') !== form.get('confirm')) return notify('两次密码不一致', '请检查确认密码后再提交', 'warning'); setLoading(true); try { await api('auth/password', { method: 'POST', body: JSON.stringify({ currentPassword: form.get('current'), password: form.get('next') }) }); close(); notify('修改成功', '密码已更新，其他设备需要重新登录', 'success'); } catch (error) { notify('修改失败', error.message, 'error'); } finally { setLoading(false); } };
   return <Modal className="lm-password-modal" title="修改密码" close={close}><form onSubmit={submit}><PasswordField label="当前密码" name="current" required autoComplete="current-password" autoFocus /><PasswordField label="新密码" name="next" minLength="8" required autoComplete="new-password" /><PasswordField label="确认新密码" name="confirm" minLength="8" required autoComplete="new-password" /><button className="primary" disabled={loading}>{loading ? <><Spinner /> 保存中…</> : '保存修改'}</button></form></Modal>;
+}
+
+function NameDialog({ name, saved, close, notify }) {
+  const [loading, setLoading] = useState(false); const submit = async (event) => { event.preventDefault(); const next = String(new FormData(event.currentTarget).get('name') || '').trim(); if (!next) return notify('请填写用户名', '用户名不能为空', 'warning'); if (next === name) return close(); setLoading(true); try { const data = await api('auth/profile', { method: 'POST', body: JSON.stringify({ name: next }) }); saved(data.name); notify('修改成功', `用户名已改为 ${data.name}`, 'success'); } catch (error) { notify('修改失败', error.message, 'error'); } finally { setLoading(false); } };
+  return <Modal className="lm-name-modal" title="修改用户名" close={close}><form onSubmit={submit}><label>用户名<input name="name" defaultValue={name} required maxLength="40" autoComplete="nickname" autoFocus /></label><button className="primary" disabled={loading}>{loading ? <><Spinner /> 保存中…</> : '保存修改'}</button></form></Modal>;
 }
 
 function QualityDialog({ value, saved, close, notify }) {

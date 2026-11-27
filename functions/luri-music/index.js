@@ -147,6 +147,15 @@ export async function handleLuriMusic(request, env) {
     return json({ ok: true }, 200, { 'set-cookie': sessionCookie(USER_COOKIE, '', 0) });
   }
   if (action === 'admin/logout') return json({ ok: true }, 200, { 'set-cookie': sessionCookie(ADMIN_COOKIE, '', 0) });
+  if (action === 'auth/profile' && request.method === 'POST') {
+    const user = await currentUser(request, env); const data = await body(request);
+    if (!user) return loginRequired();
+    // The same rule as registration: a trimmed name of 1 to 40 characters.
+    const name = String(data.name || '').trim().slice(0, 40);
+    if (!name) return json({ error: '请填写用户名' }, 400);
+    await env.LURI_MUSIC_DB.prepare('UPDATE luri_music_users SET display_name=?,updated_at=? WHERE id=?').bind(name, now(), user.id).run();
+    return json({ name });
+  }
   if (action === 'auth/password' && request.method === 'POST') {
     const user = await currentUser(request, env); const data = await body(request);
     if (!user) return loginRequired();
