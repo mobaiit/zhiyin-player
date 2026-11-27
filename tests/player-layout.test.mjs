@@ -99,10 +99,11 @@ test('song rows always offer favourite, add to playlist, play and download', () 
 
 test('chosen search results, up to 30, go into playlists without duplicates or removals', () => {
   assert.match(music, /const SEARCH_SELECTION_LIMIT = 30;/);
-  assert.match(music, /if \(selectedSongIds\.length >= SEARCH_SELECTION_LIMIT\) \{ showToast\(`一次最多选择 \$\{SEARCH_SELECTION_LIMIT\} 首`, 'warning'\); return; \}/);
-  assert.match(music, /onClick=\{\(\) => setSelectedSongIds\(results\.slice\(0, SEARCH_SELECTION_LIMIT\)\.map\(\(track\) => track\.songId\)\)\}>选择前/);
+  assert.match(music, /const selectionLimit = choosesWholeList \? WHOLE_LIST_SELECTION_LIMIT : SEARCH_SELECTION_LIMIT;/);
+  assert.match(music, /if \(selectedSongIds\.length >= selectionLimit\) \{ showToast\(`一次最多选择 \$\{selectionLimit\} 首`, 'warning'\); return; \}/);
+  assert.match(music, /onClick=\{\(\) => setSelectedSongIds\(allSongsChosen \? \[\] : selectionTracks\.slice\(0, selectionLimit\)\.map\(\(track\) => track\.songId\)\)\}/, 'One icon chooses all or none');
   assert.match(music, /onClick=\{\(\) => selecting \? toggleSongSelection\(track\) : handleTrackAction\(track\)\}/, 'In selection mode a row click selects');
-  assert.match(music, /const snapshots = canonicalTracks\(selectedSongs\)\.slice\(0, SEARCH_SELECTION_LIMIT\);/);
+  assert.match(music, /const snapshots = canonicalTracks\(selectedSongs\)\.slice\(0, selectionLimit\);/);
   assert.match(music, /if \(!append\) \{ setSelectedSongIds\(\[\]\);/, 'A new search starts with nothing chosen');
   assert.match(music, /const missing = snapshots\.filter\(\(track\) => !playlist\.tracks\.some\(\(item\) => samePlaylistTrack\(item, track\)\)\);\s*const room = Math\.max\(0, 200 - playlist\.tracks\.length\);/, 'Songs already there are skipped and a playlist stops at 200');
   assert.match(music, /if \(!selected\.has\(playlist\.id\)\) return playlist;/, 'Unselected playlists keep every song');
@@ -393,6 +394,26 @@ test('random play gives each song a fixed time to start and refreshes it only on
   assert.match(music, /function playNextRandom\(message = '', recover = false\) \{\s*if \(message\) \{\s*showToast\(message, 'warning'\); randomFailuresRef\.current \+= 1;/, 'Skipping in random play is announced and counted');
   assert.match(music, /if \(randomFailuresRef\.current >= RANDOM_FAILURE_LIMIT\) \{ stopRandom\(\);/, 'A run of failures stops random play instead of requesting batches forever');
   assert.match(music, /const RANDOM_FAILURE_LIMIT = 8;/, 'Random play stops after as many failures as a list');
+});
+
+test('search, charts and a featured playlist share back, play all and an icon to add to my playlists', () => {
+  assert.match(music, /const WHOLE_LIST_SELECTION_LIMIT = 200;/);
+  assert.match(music, /const choosesWholeList = listView === 'featured' \|\| isChartView;/);
+  assert.match(music, /setSelectedSongIds\(choosesWholeList \? selectionTracks\.slice\(0, selectionLimit\)\.map\(\(track\) => track\.songId\) : \[\]\)/, 'A featured playlist or chart starts with every song chosen, search with none');
+  assert.match(music, /const selecting = \(\['search', 'featured'\]\.includes\(listView\) \|\| isChartView\) && selectingSongs;/);
+  assert.match(music, /aria-label="加入我的歌单" title="加入我的歌单"><MusicIcon name="playlist" \/><\/button>/, 'The entry is an icon');
+  assert.doesNotMatch(music, /选择歌曲加入歌单|选择前 \{/, 'No text buttons remain');
+  assert.match(music, /useEffect\(\(\) => \{ setSelectingSongs\(false\); setSelectedSongIds\(\[\]\); \}, \[selectionScope\]\);/, 'Leaving the list ends the choice');
+  // Search: back to where search opened, play all, add.
+  assert.match(music, /<div className="music-app-toolbar music-app-search-toolbar"><button className="music-app-quiet music-app-back-button" type="button" onClick=\{leaveSearch\}><MusicIcon name="back" \/><span>返回<\/span><\/button>\{results\.length > 0 && <>\{!selectingSongs && <button className="music-app-primary" type="button" onClick=\{\(\) => playAll\(results, `search:\$\{activeSearchRef\.current\}`\)\}>播放全部<\/button>\}\{songSelectionTools\}<\/>\}<\/div>/);
+  assert.match(music, /const leaveSearch = \(\) => \{ const \{ path, view \} = searchOriginRef\.current; if \(path !== routePath\) navigate\(path\); else setListView\(view\); \};/);
+  // Charts: no back; actions on the first row, platform, chart type and refresh on the second.
+  assert.match(music, /<div className="music-app-toolbar music-app-chart-toolbar"><div className="music-app-chart-toolbar__actions">\{!selectingSongs && <button className="music-app-primary" type="button" disabled=\{!chartData\.tracks\.length\} onClick=\{\(\) => playAll\(chartData\.tracks, `charts:\$\{listView\}:\$\{chartType\}`\)\}>播放全部<\/button>\}\{songSelectionTools\}<\/div><div className="music-app-chart-toolbar__filters">/);
+  assert.match(music, /aria-label="刷新榜单" title="刷新榜单"><MusicIcon name="refresh" \/><\/button><\/div><\/div>\}/, 'Refresh is an icon');
+  // Featured playlist: back, play all, add.
+  assert.match(music, /<span>返回发现<\/span><\/button>\{!selectingSongs && <button className="music-app-primary" type="button" disabled=\{!featuredTracks\.length\} onClick=\{\(\) => playAll\(featuredTracks, `featured:\$\{featuredKey\}`\)\}>播放全部<\/button>\}\{songSelectionTools\}<\/div>\}/);
+  assert.match(layout, /\.music-app-toolbar\.music-app-chart-toolbar \{\s*flex-direction: column;/);
+  assert.match(layout, /\.music-app-shell \.music-app-toolbar \.music-app-icon-tool \{[^}]*width: 44px;/);
 });
 
 test('player buttons do not stay highlighted after a tap', () => {

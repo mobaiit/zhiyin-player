@@ -895,24 +895,58 @@ html[data-theme="glass"] :is(
 /* A featured playlist keeps its back and play-all buttons on every screen size. */
 .music-app-featured-toolbar .music-app-back-button .music-icon { width: 17px; height: 17px; }
 
-.music-app-search-toolbar .music-app-quiet {
-  display: inline-flex;
+/* Search, charts and a featured playlist share one toolbar: back, play all, then add to my playlists.
+   A chart puts its platform, chart type and refresh on a second row, so phones keep every button. */
+.music-app-toolbar.music-app-chart-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  overflow: visible;
+}
+
+.music-app-chart-toolbar > div {
+  display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.music-app-search-toolbar .music-icon {
-  width: 17px;
-  height: 17px;
+.music-app-chart-toolbar > div > * { flex: 0 0 auto; }
+
+.music-app-search-toolbar .music-app-back-button .music-icon { width: 17px; height: 17px; }
+
+/* Adding songs to my playlists and refreshing a chart: icon buttons only. */
+.music-app-shell .music-app-toolbar .music-app-icon-tool {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
 }
 
-.music-app-search-toolbar__count {
+.music-app-icon-tool .music-icon {
+  width: 19px;
+  height: 19px;
+}
+
+.music-app-quiet.music-app-icon-tool.active {
+  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-line));
+  color: var(--app-accent);
+}
+
+.music-app-icon-tool:disabled { opacity: .45; cursor: default; }
+
+.music-app-selection__count {
   color: var(--color-text-muted);
   font-size: .8rem;
   white-space: nowrap;
 }
 
-/* Choosing search results: the index becomes a check box and row actions step aside. */
+/* Choosing songs: the index becomes a check box and row actions step aside. */
 .music-app-track__check {
   display: grid;
   place-items: center;
