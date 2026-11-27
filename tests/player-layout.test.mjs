@@ -209,6 +209,14 @@ test('settings use two columns on wide screens and keep the reading order in one
   assert.match(layout, /@media \(max-width: 700px\) \{\s*html\[data-theme\] \.lm-modal:is\(\.lm-password-modal, \.lm-quality-modal, \.lm-provider-modal\) \{ align-items: end; padding: 0; \}/, 'Settings dialogs open from the bottom on phones');
 });
 
+test('list pages keep their toolbar at the top, and the phone platform switch stays compact', () => {
+  const sticky = layout.slice(layout.indexOf('/* List pages keep their toolbar'));
+  assert.match(sticky, /\.music-app-shell:not\(\.view-random\):not\(\.view-playlists\):not\(\.view-settings\) \.music-app-page > \.music-app-toolbar \{ position: sticky; top: 0; z-index: 4; \}/);
+  assert.match(sticky, /@media \(min-width: 701px\) \{[\s\S]*?margin: -22px -26px 12px;[\s\S]*?background: var\(--zy-theme-surface\);/, 'Desktop bar spans the card');
+  assert.match(sticky, /@media \(max-width: 700px\) \{[\s\S]*?background: var\(--mobile-app-bg\);/, 'Phone bar covers the songs under it');
+  assert.match(sticky, /\.music-app-featured-title \.music-app-segment button \{ min-height: 30px; padding: 0 10px; border-radius: 8px; font-size: 13px; \}/);
+});
+
 test('the top bar cycles the three themes with one button', () => {
   assert.match(music, /import ThemeToggle from '\.\.\/components\/ThemeToggle';/);
   assert.match(music, /<\/form><ThemeToggle className="music-app-theme-toggle" \/>/);

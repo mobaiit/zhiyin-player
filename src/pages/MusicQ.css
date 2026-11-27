@@ -1281,3 +1281,37 @@ html[data-theme] .lm-provider-modal .lm-provider-list { background: var(--zy-the
   .lm-provider-modal .lm-provider-list article .lm-provider-status { grid-area: status; }
   html[data-theme] .lm-provider-modal .lm-provider-list article .lm-provider-actions { grid-area: actions; margin: 0; padding: 0; border-top: 0; }
 }
+
+/* List pages keep their toolbar (charts, search, playlists) at the top while the songs scroll. */
+.music-app-shell:not(.view-random):not(.view-playlists):not(.view-settings) .music-app-page > .music-app-toolbar { position: sticky; top: 0; z-index: 4; }
+@media (min-width: 701px) {
+  /* The bar reaches the card edges so songs pass under it, not beside it. */
+  html[data-theme] .music-app-shell:not(.view-random):not(.view-playlists):not(.view-settings) .music-app-page > .music-app-toolbar {
+    /* Sticky offsets count from inside the page padding, so the bar rises by it to reach the edge. */
+    top: -22px;
+    margin: -22px -26px 12px;
+    padding: 18px 26px 12px;
+    background: var(--zy-theme-surface);
+    -webkit-backdrop-filter: blur(var(--zy-theme-blur));
+    backdrop-filter: blur(var(--zy-theme-blur));
+  }
+}
+@media (max-width: 700px) {
+  html[data-theme] .music-app-shell:not(.view-random):not(.view-playlists):not(.view-settings) .music-app-page > .music-app-toolbar {
+    top: -18px;
+    margin: -18px -14px 10px;
+    padding: 12px 14px 10px;
+    background: var(--mobile-app-bg);
+  }
+  html[data-theme="glass"] .music-app-shell:not(.view-random):not(.view-playlists):not(.view-settings) .music-app-page > .music-app-toolbar {
+    background: var(--zy-theme-surface);
+    -webkit-backdrop-filter: blur(var(--zy-theme-blur));
+    backdrop-filter: blur(var(--zy-theme-blur));
+  }
+  /* The NetEase / QQ Music switch beside the featured title stays compact on phones. */
+  .music-app-featured-title .music-app-segment { padding: 2px; border-radius: 10px; }
+  html[data-theme] .music-app-shell .music-app-featured-title .music-app-segment button { min-height: 30px; padding: 0 10px; border-radius: 8px; font-size: 13px; }
+}
+@media (max-width: 390px) {
+  html[data-theme] .music-app-shell:not(.view-random):not(.view-playlists):not(.view-settings) .music-app-page > .music-app-toolbar { margin-inline: -12px; padding-inline: 12px; }
+}
