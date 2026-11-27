@@ -331,10 +331,9 @@ test('searching shows progress on phones, where the submit button is hidden', ()
 });
 
 test('the random card carries the recently discovered songs, and featured playlists page by style', () => {
-  assert.match(music, /const HOME_RECENT_LIMIT = 12;/);
-  assert.match(music, /\{randomTracks\.length > 0 && <div className="music-app-home-recent">[\s\S]*?onClick=\{\(\) => navigate\('\/discover'\)\}>查看全部 \{randomTracks\.length\}<\/button>[\s\S]*?randomTracks\.slice\(0, HOME_RECENT_LIMIT\)/, 'Inside the card, with a link to every discovered song');
-  assert.doesNotMatch(music, /<h3>最近发现<\/h3>/, 'No separate 最近发现 section');
-  assert.match(layout, /\.music-app-home-feature > \.music-app-home-recent \{ grid-column: 1 \/ -1;/, 'The strip spans the card');
+  assert.match(music, /随机播放<\/button>\{randomTracks\.length > 0 && <button className="music-app-home-more" type="button" onClick=\{\(\) => navigate\('\/discover'\)\}>查看更多<\/button>\}/, 'Recently discovered songs open from one button beside random play');
+  assert.doesNotMatch(music, /<h3>最近发现<\/h3>|music-app-home-recent/, 'No row of covers and no separate section');
+  assert.doesNotMatch(music, /setPlayMode\('random'\); setListView\('random'\); setMobileView\('now'\)/, 'Random play does not open the full-screen player');
   assert.match(music, /musicRequest\('playlists', \{ platform, category, \.\.\.\(cursor \? \{ cursor \} : \{\}\) \}\)/, 'Pages are asked for by style and cursor');
   assert.match(music, /\{featuredPage\?\.nextCursor && <div className="music-app-featured-more">/, 'More loads while the Provider has more');
   assert.match(music, /<div className="music-app-featured-styles" role="group" aria-label="歌单风格">\{featuredCategories\.map/, 'Every style laid out flat');

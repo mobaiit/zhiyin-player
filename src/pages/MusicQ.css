@@ -1211,18 +1211,9 @@ html[data-theme="dark"] {
   html[data-theme] .music-app-shell .music-app-home-cards span { font-size: 12px; }
 }
 
-/* Random card: recently discovered songs in a strip along the bottom of the card. */
-.music-app-home-feature > .music-app-home-recent { grid-column: 1 / -1; min-width: 0; padding-top: 16px; border-top: 1px solid var(--app-line); }
-.music-app-home-recent__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-.music-app-home-recent__head b { font-size: 14px; font-weight: 600; }
-.music-app-home-recent .music-app-home-recent__all { min-height: 32px; padding: 0 4px; border: 0; color: var(--color-text-muted); background: transparent; font-size: 13px; cursor: pointer; }
-.music-app-home-recent .music-app-home-recent__all:hover { color: var(--app-accent); }
-.music-app-home-recent__list { display: grid; grid-auto-columns: 96px; grid-auto-flow: column; gap: 14px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
-.music-app-home-recent__list > button { display: grid; gap: 5px; min-width: 0; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
-.music-app-home-recent__list img { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; }
-.music-app-home-recent__list b, .music-app-home-recent__list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.music-app-home-recent__list b { font-size: 13px; font-weight: 600; }
-.music-app-home-recent__list span { color: var(--color-text-muted); font-size: 12px; }
+/* Random card: recently discovered songs open from a quiet button beside random play. */
+.music-app-home-copy .music-app-home-more { min-height: 42px; padding: 0 16px; border: 1px solid var(--app-line); border-radius: 11px; color: var(--color-text); background: transparent; font-size: 14px; white-space: nowrap; cursor: pointer; }
+.music-app-home-copy .music-app-home-more:hover { border-color: color-mix(in srgb, var(--app-accent) 45%, var(--app-line)); color: var(--app-accent); }
 
 /* Featured playlists: every style laid out flat, then the loaded pages and a way to load more. */
 .music-app-featured { margin-top: 30px; }
@@ -1235,9 +1226,6 @@ html[data-theme="dark"] {
 .music-app-featured-more > .music-app-quiet { min-width: 160px; }
 
 @media (max-width: 700px) {
-  .music-app-home-feature > .music-app-home-recent { padding-top: 14px; }
-  .music-app-home-recent__list { grid-auto-columns: 84px; gap: 12px; }
-  .music-app-home-recent__list img { width: 84px; height: 84px; }
   /* Phones show every loaded featured playlist, unlike the home card rule that keeps eight. */
   .music-app-featured-cards > button:nth-child(n + 9) { display: grid; }
   .music-app-featured-styles > button { min-height: 34px; }
