@@ -142,4 +142,4 @@ wrangler.toml   Cloudflare 部署配置
 
 ## License
 
-本项目采用仓库中声明的许可证条款。
+本项目采用 [CC BY-NC 4.0](./LICENSE) 协议：允许自由分发和修改，但须署名 mobaiit；禁止商业使用，商用需联系 mobaiit（37010871@qq.com）获取授权。
