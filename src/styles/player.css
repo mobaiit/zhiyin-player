@@ -313,10 +313,12 @@ html[data-theme="glass"] .music-app-player {
 .music-app-player .music-controls .music-icon-button:disabled { opacity: 0.4; cursor: default; }
 .music-app-player .music-controls .music-player__add { margin-right: 6px; }
 
-.music-app-player .music-controls .music-icon-button:hover {
-  border-color: rgba(229, 72, 77, 0.55);
-  color: var(--zy-text);
-  background: var(--zy-red-soft);
+/* Hover only where a pointer can hover: a tap would otherwise leave the button looking selected. */
+@media (hover: hover) {
+  .music-app-player .music-controls .music-icon-button:hover {
+    color: var(--zy-text);
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
 }
 
 .music-app-player .music-controls .music-icon-button:active { transform: scale(0.9); }
@@ -333,10 +335,11 @@ html[data-theme="glass"] .music-app-player {
   box-shadow: 0 8px 18px rgba(199, 53, 59, 0.32);
 }
 
-.music-app-player .music-controls .play-button:hover {
-  border-color: transparent;
-  color: #fff;
-  background: var(--zy-red-hover);
+@media (hover: hover) {
+  .music-app-player .music-controls .play-button:hover {
+    color: #fff;
+    background: var(--zy-red-hover);
+  }
 }
 
 .music-app-player .music-controls .play-button:disabled {

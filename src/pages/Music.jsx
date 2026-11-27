@@ -35,7 +35,8 @@ const CHART_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MEDIA_LOAD_TIMEOUT_MS = 20000;
 const RANDOM_TRACK_BUDGET_MS = 25000;
 // Random play stops after this many songs in a row fail, instead of requesting batches forever.
-const RANDOM_FAILURE_LIMIT = 10;
+// Same as LIST_FAILURE_LIMIT, so an offline player stops at the same point in both.
+const RANDOM_FAILURE_LIMIT = 8;
 // Timeouts, server errors and lost connections, as opposed to a song with no source.
 const unreachable = (error) => error?.code === 'provider_timeout' || error?.code === 'provider_unreachable' || Number(error?.status) >= 500 || error?.name === 'TypeError';
 // A list stops trying after this many songs in a row cannot play (offline, Provider down).
@@ -984,15 +985,19 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     return true;
   };
   // While a song plays, ask the Provider for the next one's address; the client cache keeps it,
-  // so the switch does not wait for a resolve. Repeat-one and random play are left alone.
-  const resolveUpcomingTrack = () => {
-    if (!providerClient || playMode.current === 'random' || playbackMode === 'repeat-one') return;
+  // so the switch does not wait for a resolve. Random play picks its next song now. Repeat-one is left alone.
+  const upcomingListTrack = () => {
     const queue = playbackQueue.length ? playbackQueue : activeTracks;
-    if (queue.length < 2) return;
+    if (queue.length < 2) return null;
     let nextId = '';
     if (playbackMode === 'shuffle') { const state = shufflePlaybackRef.current; nextId = state.history[state.index + 1] || ''; }
     else { const index = queue.findIndex((track) => track.songId === currentId); nextId = queue[(index + 1) % queue.length]?.songId || ''; }
-    const upcoming = queue.find((track) => track.songId === nextId);
+    return queue.find((track) => track.songId === nextId);
+  };
+  const resolveUpcomingTrack = () => {
+    if (!providerClient || playbackMode === 'repeat-one') return;
+    const upcoming = playMode.current === 'random' ? pickUpcomingRandom() : upcomingListTrack();
+    const nextId = upcoming?.songId;
     if (!upcoming || upcoming.sourceType === 'local' || (upcoming.url && !playbackUrlExpired(upcoming)) || upcomingResolvedRef.current.has(nextId)) return;
     upcomingResolvedRef.current.add(nextId);
     if (upcomingResolvedRef.current.size > 50) upcomingResolvedRef.current.clear();
@@ -1102,11 +1107,11 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
   // One Provider request returns a batch; random play works through it before asking for another.
   // Songs heard recently (the last 50) count as played, so a batch never repeats them.
   function unplayedRandomTracks() { return randomBatchRef.current.tracks.filter((track) => !randomTrackKeys.current.includes(randomTrackKey(track))); }
-  function startRandomBatch(tracks, singer = '') {
+  function startRandomBatch(tracks, singer = '', upcomingId = '') {
     randomBatchRef.current.request?.abort();
-    randomBatchRef.current = { tracks, next: null, request: null };
+    randomBatchRef.current = { tracks, next: null, request: null, upcoming: '' };
     const fresh = unplayedRandomTracks(); const candidates = fresh.length ? fresh : tracks;
-    const selected = candidates[Math.floor(Math.random() * candidates.length)];
+    const selected = candidates.find((track) => track.songId === upcomingId) || candidates[Math.floor(Math.random() * candidates.length)];
     rememberRandomTrack(selected, singer);
     randomListWriteIdRef.current = selected.songId;
     if (randomSwitchRef.current) randomSwitchRef.current.targetId = selected.songId;
@@ -1121,8 +1126,20 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     const controller = new AbortController(); batch.request = controller;
     musicRequest('random', randomRequestParams(preferences), controller.signal).then(providerPayload).then((payload) => {
       const tracks = canonicalTracks(payload.tracks).filter((track) => track.binding);
-      if (randomBatchRef.current === batch && tracks.length) batch.next = { tracks, singer: payload.singer || '' };
+      if (randomBatchRef.current === batch && tracks.length) { batch.next = { tracks, singer: payload.singer || '', upcoming: '' }; resolveUpcomingTrack(); }
     }).catch(() => { /* The batch is requested again when it runs out. */ }).finally(() => { if (batch.request === controller) batch.request = null; });
+  }
+  // The next random song is chosen while the current one plays, from this batch or the one requested
+  // after it, so its address can be resolved early; the switch then plays that same song.
+  function pickUpcomingRandom() {
+    const batch = randomBatchRef.current; const unplayed = unplayedRandomTracks();
+    const holder = unplayed.length ? batch : batch.next;
+    if (!holder) return null;
+    const fresh = unplayed.length ? unplayed : holder.tracks.filter((track) => !randomTrackKeys.current.includes(randomTrackKey(track)));
+    const candidates = fresh.length ? fresh : holder.tracks;
+    const track = candidates.find((item) => item.songId === holder.upcoming) || candidates[Math.floor(Math.random() * candidates.length)];
+    holder.upcoming = track?.songId || '';
+    return track;
   }
   function playNextRandom(message = '', recover = false) {
     if (message) {
@@ -1131,7 +1148,8 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
     }
     const unplayed = unplayedRandomTracks();
     if (unplayed.length) {
-      const track = unplayed[Math.floor(Math.random() * unplayed.length)];
+      const track = unplayed.find((item) => item.songId === randomBatchRef.current.upcoming) || unplayed[Math.floor(Math.random() * unplayed.length)];
+      randomBatchRef.current.upcoming = '';
       rememberRandomTrack(track);
       randomListWriteIdRef.current = track.songId;
       if (randomSwitchRef.current) randomSwitchRef.current.targetId = track.songId;
@@ -1142,7 +1160,7 @@ export default function Music({ forceMusicPage = false, providerClient = null, p
       return;
     }
     const ready = randomBatchRef.current.next;
-    if (ready) { startRandomBatch(ready.tracks, ready.singer); return; }
+    if (ready) { startRandomBatch(ready.tracks, ready.singer, ready.upcoming); return; }
     startRandom({ recover });
   }
 

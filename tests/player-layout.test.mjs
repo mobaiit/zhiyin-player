@@ -392,6 +392,20 @@ test('random play gives each song a fixed time to start and refreshes it only on
   assert.match(music, /if \(retryWithRefresh\(refreshMode\)\) \{ setToast\(\{ title: '正在重新获取音源'/, 'A retry says so instead of claiming the next song plays');
   assert.match(music, /function playNextRandom\(message = '', recover = false\) \{\s*if \(message\) \{\s*showToast\(message, 'warning'\); randomFailuresRef\.current \+= 1;/, 'Skipping in random play is announced and counted');
   assert.match(music, /if \(randomFailuresRef\.current >= RANDOM_FAILURE_LIMIT\) \{ stopRandom\(\);/, 'A run of failures stops random play instead of requesting batches forever');
+  assert.match(music, /const RANDOM_FAILURE_LIMIT = 8;/, 'Random play stops after as many failures as a list');
+});
+
+test('player buttons do not stay highlighted after a tap', () => {
+  assert.match(player, /@media \(hover: hover\) \{\s*\.music-app-player \.music-controls \.music-icon-button:hover \{/, 'Control hover is limited to devices that can hover');
+  assert.match(player, /@media \(hover: hover\) \{\s*\.music-app-player \.music-controls \.play-button:hover \{/);
+  assert.doesNotMatch(player, /\.music-icon-button:hover \{\s*border-color: rgba\(229, 72, 77, 0\.55\)/, 'Hover no longer looks like a selected state');
+});
+
+test('random play picks its next song early and resolves its address while the current one plays', () => {
+  assert.match(music, /const upcoming = playMode\.current === 'random' \? pickUpcomingRandom\(\) : upcomingListTrack\(\);/, 'Random play is no longer skipped');
+  assert.match(music, /const track = unplayed\.find\(\(item\) => item\.songId === randomBatchRef\.current\.upcoming\) \|\| unplayed\[/, 'The switch plays the song picked ahead');
+  assert.match(music, /if \(ready\) \{ startRandomBatch\(ready\.tracks, ready\.singer, ready\.upcoming\); return; \}/, 'A new batch starts at the song picked ahead');
+  assert.match(music, /batch\.next = \{ tracks, singer: payload\.singer \|\| '', upcoming: '' \}; resolveUpcomingTrack\(\);/, 'A batch requested ahead resolves its first song early');
 });
 
 test('random play works through one batch before asking the Provider again', () => {
